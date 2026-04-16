@@ -1,0 +1,6 @@
+{
+  "name": "Agent OS Terminal",
+  "description": "A sci-fi/hacker style agent terminal interface.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}
