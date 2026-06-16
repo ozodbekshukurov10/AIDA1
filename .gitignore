@@ -8,6 +8,11 @@ coverage/
 __pycache__/
 *.pyc
 db.sqlite3
+aida_memory.db
 staticfiles/
 .env*
 !.env.example
+.aida_runtime.json
+srv.txt
+test_body.json
+aida_test.py
