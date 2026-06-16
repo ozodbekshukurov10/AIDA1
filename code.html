@@ -7,6 +7,30 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0b0d12;--surface:#13161e;--surface2:#1a1f2b;--surface3:#202638;--border:#252b3a;--text:#e4e7ed;--text2:#8a91a5;--text3:#5c6378;--accent:#5b7aff;--accent-hover:#6f8aff;--accent-glow:rgba(91,122,255,0.15);--green:#3ccf7e;--green-dim:rgba(60,207,126,0.12);--red:#f05a5a;--orange:#f39c12;--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:'SF Mono','Fira Code','Cascadia Code',Consolas,monospace;--radius:6px}
+.CodeMirror{height:100%!important;font-family:var(--mono)!important;font-size:12px!important;line-height:1.5!important;background:var(--bg)!important;color:var(--text)!important}
+.CodeMirror-gutters{background:var(--surface)!important;border-right:1px solid var(--border)!important}
+.CodeMirror-linenumber{color:var(--text3)!important;font-size:10px!important;padding:0 6px!important}
+.CodeMirror-cursor{border-left:2px solid var(--accent)!important}
+.CodeMirror-selected{background:var(--accent-glow)!important}
+.cm-s-default .cm-keyword{color:#c792ea!important}
+.cm-s-default .cm-atom{color:#f78c6c!important}
+.cm-s-default .cm-number{color:#f78c6c!important}
+.cm-s-default .cm-def{color:#82aaff!important}
+.cm-s-default .cm-variable{color:var(--text)!important}
+.cm-s-default .cm-variable-2{color:#80cbc4!important}
+.cm-s-default .cm-variable-3{color:#82aaff!important}
+.cm-s-default .cm-comment{color:#546e7a!important;font-style:italic}
+.cm-s-default .cm-string{color:#c3e88d!important}
+.cm-s-default .cm-string-2{color:#f07178!important}
+.cm-s-default .cm-meta{color:#ffcb6b!important}
+.cm-s-default .cm-qualifier{color:#decb6b!important}
+.cm-s-default .cm-builtin{color:#ffcb6b!important}
+.cm-s-default .cm-bracket{color:var(--text3)!important}
+.cm-s-default .cm-tag{color:#f07178!important}
+.cm-s-default .cm-attribute{color:#c792ea!important}
+.cm-s-default .cm-hr{color:var(--text3)!important}
+.cm-s-default .cm-link{color:#82aaff!important}
+.cm-s-default .cm-error{color:var(--red)!important}
 html,body{height:100%;overflow:hidden}
 body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column}
 .topbar{display:flex;align-items:center;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:8px}
@@ -95,6 +119,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .terminal-panel{height:100px}
 }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css">
 </head>
 <body>
 <div class="topbar">
@@ -143,7 +169,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
           </div>
         </div>
         <div class="code-editor">
-          <textarea id="codeEditor" spellcheck="false" wrap="off" placeholder="Kod yozing...&#10;Ctrl+Enter = generatsiya, Tab = 2 space"></textarea>
+          <div id="codeEditor"></div>
         </div>
       </div>
       <div class="panel preview-panel" id="panelPreview">
@@ -166,9 +192,35 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
     <div class="right-content" id="analysisContent"><div class="right-empty">Kod generatsiya qilinganda bu yerda<br>AIDA fikrlash jarayoni ko'rinadi</div></div>
   </div>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/go/go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/rust/rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/ruby/ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/yaml/yaml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/yaml-frontmatter/yaml-frontmatter.min.js"></script>
 <script>
 (function(){
 var codeEditor = document.getElementById('codeEditor');
+var editor = CodeMirror(codeEditor, {
+  value: '',
+  mode: 'python',
+  theme: 'material-darker',
+  indentUnit: 2,
+  tabSize: 2,
+  lineNumbers: true,
+  lineWrapping: false,
+  matchBrackets: true,
+  autoCloseBrackets: true,
+  extraKeys: {'Tab': function(cm){cm.replaceSelection('  ','end')}},
+  viewportMargin: Infinity
+});
 var previewFrame = document.getElementById('previewFrame');
 var termOut = document.getElementById('termOut');
 var fileList = document.getElementById('fileList');
@@ -202,11 +254,11 @@ function detectLang(fn){
 
 function newFile(){
   var name=prompt('Yangi fayl nomi:','fayl.py');
-  if(name){currentFile=name;fileName.textContent=name;codeEditor.value='';langLabel.textContent=detectLang(name);term('📄 Yangi fayl: '+name);refreshFiles()}
+  if(name){currentFile=name;fileName.textContent=name;editor.setValue('');setEditorMode(name);langLabel.textContent=detectLang(name);term('📄 Yangi fayl: '+name);refreshFiles()}
 }window.newFile=newFile;
 
 function openFile(path){
-  currentFile=path;fileName.textContent=path;langLabel.textContent=detectLang(path);
+  currentFile=path;fileName.textContent=path;setEditorMode(path);langLabel.textContent=detectLang(path);
   document.querySelectorAll('.file-item').forEach(function(f){f.classList.toggle('active',f.dataset.path===path)});
   var xhr=new XMLHttpRequest();
   xhr.open('POST','/api/runtime/read/',true);
@@ -214,7 +266,7 @@ function openFile(path){
   xhr.timeout=5000;
   xhr.onload=function(){
     if(xhr.status===200){
-      try{var d=JSON.parse(xhr.responseText);if(d.content){codeEditor.value=d.content;term('📂 '+path+' ochildi')}}catch(e){}
+      try{var d=JSON.parse(xhr.responseText);if(d.content){editor.setValue(d.content);term('📂 '+path+' ochildi')}}catch(e){}
     }else{term('❌ Fayl ochilmadi','err')}
   };
   xhr.send(JSON.stringify({path:path}));
@@ -240,7 +292,7 @@ function renderFiles(files){
 }
 
 function saveFile(){
-  var c=codeEditor.value.trim();
+  var c=editor.getValue().trim();
   if(!c){term('⚠️ Kod bo\'sh','err');return}
   var xhr=new XMLHttpRequest();
   xhr.open('POST','/api/runtime/save/',true);
@@ -447,8 +499,8 @@ function generateCode(){
       try{
         var d=JSON.parse(xhr.responseText);
         var ext={python:'py',javascript:'js',html:'html',css:'css',sql:'sql',go:'go',rust:'rs',java:'java',cpp:'cpp',bash:'sh'}[d.language]||'txt';
-        currentFile='generated.'+ext;fileName.textContent=currentFile;langLabel.textContent=detectLang(currentFile);
-        codeEditor.value=d.code;
+        currentFile='generated.'+ext;fileName.textContent=currentFile;setEditorMode(currentFile);langLabel.textContent=detectLang(currentFile);
+        editor.setValue(d.code);
         term('✅ Kod tayyor: '+currentFile);
         if(d.trace){
           var lines=d.trace.split('\n').filter(function(l){return l.trim()});
@@ -475,9 +527,12 @@ function generateCode(){
 
 function clearAnalysis(){analysisContent.innerHTML='<div class="right-empty">Kod generatsiya qilinganda bu yerda<br>AIDA fikrlash jarayoni ko\'rinadi</div>'}window.clearAnalysis=clearAnalysis;
 
-codeEditor.addEventListener('keydown',function(e){
-  if(e.key==='Tab'){e.preventDefault();var s=codeEditor.selectionStart;codeEditor.value=codeEditor.value.slice(0,s)+'  '+codeEditor.value.slice(codeEditor.selectionEnd);codeEditor.selectionStart=codeEditor.selectionEnd=s+2}
-});
+function setEditorMode(fn){
+  var ext=fn.split('.').pop().toLowerCase();
+  var modes={py:'python',js:'javascript',ts:'javascript',jsx:'jsx',tsx:'jsx',html:'htmlmixed',htm:'htmlmixed',css:'css',sql:'sql',go:'go',rs:'rust',java:'text/x-java',cpp:'text/x-c++src',cs:'text/x-csharp',php:'php',rb:'ruby',yaml:'yaml',yml:'yaml',json:'javascript',xml:'xml',md:'markdown',kt:'text/x-kotlin',swift:'swift',sh:'shell',bash:'shell'};
+  var mode=modes[ext]||'python';
+  try{editor.setOption('mode',mode)}catch(e){}
+}
 
 promptInput.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();generateCode()}
