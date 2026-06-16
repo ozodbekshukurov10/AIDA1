@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIDA Code — Sun'iy Ong Kod Muhiti</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0b0d12;--surface:#13161e;--surface2:#1a1f2b;--surface3:#202638;--border:#252b3a;--text:#e4e7ed;--text2:#8a91a5;--text3:#5c6378;--accent:#5b7aff;--accent-hover:#6f8aff;--accent-glow:rgba(91,122,255,0.15);--green:#3ccf7e;--green-dim:rgba(60,207,126,0.12);--red:#f05a5a;--orange:#f39c12;--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:'SF Mono','Fira Code','Cascadia Code',Consolas,monospace;--radius:6px}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;gap:8px}
+.topbar .brand{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700;text-decoration:none;color:var(--text);flex-shrink:0}
+.topbar .brand svg{width:14px;height:14px;color:var(--accent)}
+.topbar .brand span{background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar .nav{display:flex;gap:2px;font-size:11px;flex-shrink:0}
+.topbar .nav a{color:var(--text2);text-decoration:none;padding:4px 8px;border-radius:var(--radius);transition:all 0.15s}
+.topbar .nav a:hover,.topbar .nav a.active{color:var(--text);background:var(--surface2)}
+.topbar .project-area{display:flex;align-items:center;gap:5px;flex:1;min-width:0;margin:0 8px}
+.topbar .project-area .project-name{font-size:11px;color:var(--accent);font-weight:500;padding:3px 8px;background:var(--accent-glow);border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;cursor:pointer}
+.topbar .project-area select{font-size:10px;padding:3px 5px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-family:var(--font);cursor:pointer;outline:none;max-width:150px}
+.topbar .project-area .proj-btn{padding:3px 8px;font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text2);cursor:pointer;font-family:var(--font);white-space:nowrap}
+.topbar .project-area .proj-btn:hover{background:var(--surface3);color:var(--text)}
+.main{display:flex;flex:1;overflow:hidden}
+.sidebar{width:190px;min-width:190px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sidebar-header{padding:8px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sidebar-header h4{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+.sidebar-header .actions{display:flex;gap:3px}
+.sidebar-header .actions button{padding:2px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:9px;cursor:pointer;font-family:var(--font)}
+.sidebar-header .actions button:hover{background:var(--surface3);color:var(--text)}
+.file-list{flex:1;overflow-y:auto;padding:3px}
+.file-list::-webkit-scrollbar{width:3px}
+.file-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.file-item{padding:4px 6px;border-radius:3px;cursor:pointer;font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px;transition:all 0.1s;font-family:var(--mono)}
+.file-item:hover{background:var(--surface2);color:var(--text)}
+.file-item.active{background:var(--accent-glow);color:var(--accent)}
+.file-empty{padding:16px;text-align:center;color:var(--text3);font-size:10px}
+.center{flex:1;display:flex;flex-direction:column;min-width:0}
+.center-tabs{display:flex;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;padding:0 8px}
+.center-tabs .tab{padding:6px 12px;font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s;font-family:var(--font);background:none;border-top:none;border-right:none;border-left:none}
+.center-tabs .tab:hover{color:var(--text2)}
+.center-tabs .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.center-content{flex:1;overflow:hidden;position:relative}
+.center-content .panel{display:none;width:100%;height:100%}
+.center-content .panel.active{display:flex;flex-direction:column}
+.editor-panel .code-toolbar{display:flex;align-items:center;justify-content:space-between;padding:4px 10px;background:var(--surface2);border-bottom:1px solid var(--border);flex-shrink:0;gap:5px}
+.editor-panel .code-toolbar .file-name{font-size:10px;color:var(--text3);font-family:var(--mono)}
+.editor-panel .code-toolbar .actions{display:flex;gap:3px}
+.editor-panel .code-toolbar .actions button{padding:3px 8px;border-radius:3px;border:1px solid var(--border);font-size:10px;cursor:pointer;font-family:var(--font);transition:all 0.15s}
+.editor-panel .code-toolbar .actions .save-btn{background:var(--accent);color:#fff;border-color:var(--accent)}
+.editor-panel .code-toolbar .actions .save-btn:hover{background:var(--accent-hover)}
+.editor-panel .code-toolbar .actions .run-btn{background:var(--green-dim);color:var(--green);border-color:var(--green)}
+.editor-panel .code-toolbar .actions .run-btn:hover{background:var(--green);color:#fff}
+.editor-panel .code-toolbar .actions .stop-btn{background:rgba(240,90,90,0.15);color:var(--red);border-color:var(--red)}
+.editor-panel .code-toolbar .actions .stop-btn:hover{background:var(--red);color:#fff}
+.code-editor{flex:1;background:var(--bg);position:relative}
+.code-editor textarea{width:100%;height:100%;padding:14px;font-family:var(--mono);font-size:12px;line-height:1.5;tab-size:4;color:var(--text);background:transparent;border:none;outline:none;resize:none;white-space:pre;overflow:auto}
+.code-editor textarea::placeholder{color:var(--text3);opacity:0.4}
+.code-editor textarea::-webkit-scrollbar{width:4px;height:4px}
+.code-editor textarea::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.preview-panel iframe{width:100%;height:100%;border:none;background:#fff}
+.terminal-panel{height:150px;min-height:80px;border-top:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column;flex-shrink:0}
+.terminal-header{display:flex;align-items:center;justify-content:space-between;padding:3px 10px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.terminal-header span{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px}
+.terminal-header button{padding:2px 6px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text2);font-size:9px;cursor:pointer;font-family:var(--font)}
+.terminal-header button:hover{background:var(--surface3)}
+.terminal-output{flex:1;overflow:auto;padding:6px 10px;font-family:var(--mono);font-size:10px;line-height:1.4;color:var(--text2);white-space:pre-wrap;word-break:break-all}
+.terminal-output::-webkit-scrollbar{width:3px}
+.terminal-output::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.terminal-output .ok{color:var(--green)}
+.terminal-output .err{color:var(--red)}
+.terminal-output .info{color:var(--text3)}
+.right-pane{width:30%;min-width:240px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.right-header{padding:6px 10px;border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between}
+.right-header h4{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+.right-content{flex:1;overflow-y:auto;padding:6px}
+.right-content::-webkit-scrollbar{width:3px}
+.right-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.trace-step{display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid rgba(37,43,58,0.25);font-size:10px}
+.trace-step .icon{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;flex-shrink:0;margin-top:1px}
+.trace-step.done .icon{background:var(--green-dim);color:var(--green)}
+.trace-step.active .icon{background:var(--accent-glow);color:var(--accent);animation:pulse 1.2s infinite}
+.trace-step .body{flex:1}
+.trace-step .body .label{font-size:10px;font-weight:500;color:var(--text)}
+.trace-step .body .detail{font-size:9px;color:var(--text3);margin-top:1px}
+.right-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--text3);font-size:10px;gap:4px}
+.analysis-block{padding:8px 10px;margin:6px 0;border-radius:4px;font-size:10px;line-height:1.4}
+.analysis-block.good{background:var(--green-dim);border:1px solid var(--green);color:var(--green)}
+.analysis-block.warn{background:rgba(243,156,18,0.12);border:1px solid var(--orange);color:var(--orange)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+@media(max-width:800px){
+.main{flex-direction:column}
+.sidebar{width:100%;min-width:0;max-height:100px}
+.right-pane{width:100%;min-width:0;max-height:35%}
+.terminal-panel{height:100px}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <a href="/login/" class="brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    <span>AIDA</span>
+  </a>
+  <div class="nav">
+    <a href="/login/">Chat</a>
+    <a href="/code/" class="active">Code</a>
+  </div>
+  <div class="project-area">
+    <span style="font-size:10px;color:var(--text3);flex-shrink:0">Project:</span>
+    <span class="project-name" id="projectName" onclick="openProjectDialog()" title="Project ochish uchun bosing">~ workspace</span>
+    <select id="projectSelect" onchange="switchProject(this.value)" style="display:none"></select>
+    <button class="proj-btn" onclick="openProjectDialog()">📂 Ochish</button>
+    <button class="proj-btn" onclick="showGitClone()">📥 Git Clone</button>
+    <span id="projectStatus" style="font-size:9px;color:var(--text3);margin-left:auto"></span>
+  </div>
+</div>
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h4 id="fileHeader">Fayllar</h4>
+      <div class="actions">
+        <button onclick="refreshFiles()">🔄</button>
+        <button onclick="newFile()">+</button>
+      </div>
+    </div>
+    <div class="file-list" id="fileList"><div class="file-empty">Fayl yo'q</div></div>
+  </div>
+  <div class="center">
+    <div class="center-tabs">
+      <button class="tab active" data-panel="editor" onclick="switchPanel('editor')">✏️ Muharrir</button>
+      <button class="tab" data-panel="preview" onclick="switchPanel('preview')">🌐 Preview</button>
+      <span style="margin-left:auto;font-size:10px;color:var(--text3)" id="langLabel">Python</span>
+    </div>
+    <div class="center-content">
+      <div class="panel active editor-panel" id="panelEditor">
+        <div class="code-toolbar">
+          <span class="file-name" id="fileName">yangi.py</span>
+          <div class="actions">
+            <button class="save-btn" onclick="saveFile()">💾 Saqlash</button>
+            <button class="run-btn" onclick="runFile()">▶ Run</button>
+            <button class="stop-btn" onclick="stopServer()" style="display:none" id="stopBtn">⏹ Stop</button>
+          </div>
+        </div>
+        <div class="code-editor">
+          <textarea id="codeEditor" spellcheck="false" wrap="off" placeholder="Kod yozing...&#10;Ctrl+Enter = generatsiya, Tab = 2 space"></textarea>
+        </div>
+      </div>
+      <div class="panel preview-panel" id="panelPreview">
+        <iframe id="previewFrame" srcdoc="<!DOCTYPE html><html><body style='display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f7fa;color:#999;font-family:sans-serif;font-size:12px;text-align:center;padding:20px'><div><p style='margin-bottom:6px'>Preview bu yerda ko'rinadi</p><p style='color:#bbb;font-size:10px'>HTML/CSS/JS fayllar uchun</p></div></body></html>"></iframe>
+      </div>
+    </div>
+    <div class="terminal-panel">
+      <div class="terminal-header">
+        <span>Terminal</span>
+        <button onclick="clearTerm()">Tozalash</button>
+      </div>
+      <div class="terminal-output" id="termOut"><span class="info">AIDA Code Runtime ishga tayyor. Fayl saqlang va Run tugmasini bosing.</span></div>
+    </div>
+  </div>
+  <div class="right-pane">
+    <div class="right-header">
+      <h4>AIDA tahlili</h4>
+      <button onclick="clearAnalysis()" style="background:none;border:none;color:var(--text3);font-size:9px;cursor:pointer">Tozalash</button>
+    </div>
+    <div class="right-content" id="analysisContent"><div class="right-empty">Kod generatsiya qilinganda bu yerda<br>AIDA fikrlash jarayoni ko'rinadi</div></div>
+  </div>
+</div>
+<script>
+(function(){
+var codeEditor = document.getElementById('codeEditor');
+var previewFrame = document.getElementById('previewFrame');
+var termOut = document.getElementById('termOut');
+var fileList = document.getElementById('fileList');
+var fileName = document.getElementById('fileName');
+var langLabel = document.getElementById('langLabel');
+var analysisContent = document.getElementById('analysisContent');
+var stopBtn = document.getElementById('stopBtn');
+var projectName = document.getElementById('projectName');
+var projectSelect = document.getElementById('projectSelect');
+var fileHeader = document.getElementById('fileHeader');
+
+var currentFile = 'yangi.py';
+var currentProjectPath = null;
+var isRunning = false;
+
+function switchPanel(n){
+  document.querySelectorAll('.center-tabs .tab').forEach(function(t){t.classList.toggle('active',t.dataset.panel===n)});
+  document.querySelectorAll('.center-content .panel').forEach(function(p){p.classList.toggle('active',p.id==='panel'+n.charAt(0).toUpperCase()+n.slice(1))});
+}window.switchPanel=switchPanel;
+
+function term(t,c){termOut.innerHTML+='<div class="'+(c||'info')+'">'+t+'</div>';termOut.scrollTop=termOut.scrollHeight}
+function clearTerm(){termOut.innerHTML=''}
+window.clearTerm=clearTerm;
+
+function e(t){var d=document.createElement('div');d.appendChild(document.createTextNode(t));return d.innerHTML}
+
+function detectLang(fn){
+  var m={py:'Python',js:'JavaScript',ts:'TypeScript',html:'HTML',css:'CSS',sql:'SQL',go:'Go',rs:'Rust',java:'Java',cpp:'C++',cs:'C#',php:'PHP',rb:'Ruby',sh:'Bash',yaml:'YAML',json:'JSON',xml:'XML',md:'Markdown',kt:'Kotlin',swift:'Swift',dockerfile:'Dockerfile'};
+  return m[(fn.split('.').pop())]||'Text';
+}
+
+function newFile(){
+  var name=prompt('Yangi fayl nomi:','fayl.py');
+  if(name){currentFile=name;fileName.textContent=name;codeEditor.value='';langLabel.textContent=detectLang(name);term('📄 Yangi fayl: '+name);refreshFiles()}
+}window.newFile=newFile;
+
+function openFile(path){
+  currentFile=path;fileName.textContent=path;langLabel.textContent=detectLang(path);
+  document.querySelectorAll('.file-item').forEach(function(f){f.classList.toggle('active',f.dataset.path===path)});
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/runtime/read/',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{var d=JSON.parse(xhr.responseText);if(d.content){codeEditor.value=d.content;term('📂 '+path+' ochildi')}}catch(e){}
+    }else{term('❌ Fayl ochilmadi','err')}
+  };
+  xhr.send(JSON.stringify({path:path}));
+}window.openFile=openFile;
+
+function refreshFiles(){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','/api/runtime/files/',true);
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{var d=JSON.parse(xhr.responseText);renderFiles(d.files||[])}catch(e){}
+    }
+  };
+  xhr.send();
+}window.refreshFiles=refreshFiles;
+
+function renderFiles(files){
+  if(!files||files.length===0){fileList.innerHTML='<div class="file-empty">Fayl yo\'q</div>';return}
+  var h='';var icons={py:'🐍',js:'🟨',ts:'🔵',html:'🌐',css:'🎨',sql:'🗃️',go:'🔷',rs:'🦀',java:'☕',sh:'⬛',yaml:'📋',json:'📦',md:'📝',kt:'🟣',swift:'🔶',cpp:'⚙️',cs:'💠',php:'🐘',rb:'💎',xml:'📄',dockerfile:'🐳'};
+  files.forEach(function(f){var ext=f.path.split('.').pop();h+='<div class="file-item'+(f.path===currentFile?' active':'')+'" data-path="'+f.path+'" onclick="openFile(\''+f.path+'\')"><span>'+(icons[ext]||'📄')+'</span>'+e(f.path)+'</div>'});
+  fileList.innerHTML=h;
+}
+
+function saveFile(){
+  var c=codeEditor.value.trim();
+  if(!c){term('⚠️ Kod bo\'sh','err');return}
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/runtime/save/',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=10000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{var d=JSON.parse(xhr.responseText);term('✅ Saqlandi: '+d.path);refreshFiles();updatePreview()}catch(e){term('❌ Xatolik','err')}
+    }else{try{var d=JSON.parse(xhr.responseText);term('❌ '+d.error,'err')}catch(e){term('❌ Server xatosi','err')}}
+  };
+  xhr.onerror=function(){term('❌ Ulanmadi','err')};
+  xhr.send(JSON.stringify({path:currentFile,content:c}));
+}window.saveFile=saveFile;
+
+function updatePreview(){
+  var ext=currentFile.split('.').pop();
+  if(ext!=='html'&&ext!=='htm')return;
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/runtime/read/',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===200){try{var d=JSON.parse(xhr.responseText);if(d.content){previewFrame.srcdoc=d.content}}catch(e){}}
+  };
+  xhr.send(JSON.stringify({path:currentFile}));
+}
+
+function runFile(){
+  saveFile();
+  setTimeout(function(){
+    if(isRunning){term('⚠️ Server allaqachon ishlayapti','err');return}
+    term('▶️ '+currentFile+' ishga tushirilmoqda...','ok');
+    var xhr=new XMLHttpRequest();
+    xhr.open('POST','/api/runtime/run/',true);
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.timeout=35000;
+    xhr.onload=function(){
+      if(xhr.status===200){
+        try{var d=JSON.parse(xhr.responseText);
+          if(d.error){term('❌ '+d.error,'err')}
+          else{
+            if(d.stdout)term(d.stdout,'ok');
+            if(d.stderr)term(d.stderr,'err');
+            term('🏁 Tugadi (kod:'+d.code+')');
+          }
+        }catch(e){term('❌ Xatolik','err')}
+      }else{term('❌ Server xatosi','err')}
+    };
+    xhr.onerror=function(){term('❌ Ulanmadi','err')};
+    xhr.send(JSON.stringify({path:currentFile}));
+  },200);
+}window.runFile=runFile;
+
+function stopServer(){
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/runtime/server/stop/',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=5000;
+  xhr.onload=function(){if(xhr.status===200){term('⏹ Server to\'xtatildi');stopBtn.style.display='none';isRunning=false}else{term('❌ Xatolik','err')}};
+  xhr.send(JSON.stringify({path:currentFile}));
+}window.stopServer=stopServer;
+
+// ── Project System ──────────────────────────────────────────
+
+function loadProjectState(){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','/api/project/current/',true);
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        if(d.is_open){
+          currentProjectPath=d.path;
+          projectName.textContent='📁 '+d.name;
+          fileHeader.textContent=d.name;
+          refreshFiles();
+        }else{
+          projectName.textContent='~ workspace';
+          fileHeader.textContent='Fayllar';
+        }
+      }catch(e){}
+    }
+  };
+  xhr.send();
+  loadProjectList();
+}
+
+function loadProjectList(){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','/api/project/list/',true);
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        var sel=projectSelect;
+        sel.innerHTML='<option value="">-- Projekt tanlang --</option>';
+        (d.projects||[]).forEach(function(p){
+          sel.innerHTML+='<option value="'+e(p.path)+'">'+e(p.name)+'</option>';
+        });
+      }catch(e){}
+    }
+  };
+  xhr.send();
+}
+
+function switchProject(path){
+  if(!path)return;
+  openProjectByPath(path);
+  projectSelect.value='';
+}window.switchProject=switchProject;
+
+function openProjectByPath(path){
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/project/open/',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        if(d.error){term('❌ '+d.error,'err')}
+        else{
+          currentProjectPath=d.path;
+          projectName.textContent='📁 '+d.name;
+          fileHeader.textContent=d.name;
+          term('📂 Projekt ochildi: '+d.name);
+          refreshFiles();loadProjectList();
+        }
+      }catch(e){}
+    }else{term('❌ Projekt ochilmadi','err')}
+  };
+  xhr.send(JSON.stringify({path:path}));
+}
+
+function openProjectDialog(){
+  var path=prompt('Projekt papka yo\'lini kiriting:','C:\\');
+  if(path){openProjectByPath(path)}
+}window.openProjectDialog=openProjectDialog;
+
+function showGitClone(){
+  var url=prompt('Git repository URL:','https://github.com/...');
+  if(!url)return;
+  var name=prompt('Papka nomi (ixtiyoriy):','');
+  term('📥 Git klonlanmoqda: '+url,'ok');
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/project/git-clone/',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=180000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        if(d.error){term('❌ '+d.error,'err')}
+        else{
+          term('✅ Klonlandi: '+d.name);
+          projectName.textContent='📁 '+d.name;
+          fileHeader.textContent=d.name;
+          currentProjectPath=d.path;
+          refreshFiles();loadProjectList();
+        }
+      }catch(e){term('❌ Xatolik','err')}
+    }else{term('❌ Server xatosi','err')}
+  };
+  xhr.onerror=function(){term('❌ Ulanmadi','err')};
+  xhr.send(JSON.stringify({url:url,name:name}));
+}window.showGitClone=showGitClone;
+
+// ── AI Code Generation ───────────────────────────────────────
+
+var promptInput=document.createElement('textarea');
+promptInput.placeholder='Kod so\'rovingizni yozing... Enter=generatsiya, Shift+Enter=enter';
+promptInput.style.cssText='width:100%;padding:6px 10px;background:var(--surface2);border:none;border-bottom:1px solid var(--border);color:var(--text);font-size:11px;font-family:var(--font);resize:none;outline:none;min-height:38px;max-height:60px';
+
+var langSelect=document.createElement('select');
+langSelect.innerHTML='<option value="python">Python</option><option value="javascript">JavaScript</option><option value="html">HTML</option><option value="css">CSS</option><option value="sql">SQL</option><option value="go">Go</option><option value="rust">Rust</option><option value="java">Java</option><option value="cpp">C++</option><option value="bash">Bash</option>';
+langSelect.style.cssText='padding:3px 5px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-size:10px;font-family:var(--font);cursor:pointer;outline:none';
+
+var genBtn=document.createElement('button');
+genBtn.textContent='Generatsiya';
+genBtn.style.cssText='padding:5px 12px;background:var(--accent);border:none;border-radius:3px;color:#fff;font-size:10px;font-weight:600;cursor:pointer;font-family:var(--font);white-space:nowrap;flex-shrink:0';
+genBtn.onclick=generateCode;
+
+var bar=document.createElement('div');
+bar.style.cssText='display:flex;gap:5px;padding:3px 10px;background:var(--surface);border-bottom:1px solid var(--border);align-items:center;flex-shrink:0';
+bar.appendChild(promptInput);bar.appendChild(langSelect);bar.appendChild(genBtn);
+document.querySelector('.center').insertBefore(bar,document.querySelector('.center').firstChild);
+
+function generateCode(){
+  var prompt=promptInput.value.trim();
+  if(!prompt){promptInput.focus();return}
+  var lang=langSelect.value;
+  genBtn.disabled=true;genBtn.textContent='⏳ ...';
+  term('🤖 AIDA kod yozmoqda: '+prompt.slice(0,60)+'...','ok');
+  analysisContent.innerHTML='<div class="trace-step active"><div class="icon">⚙️</div><div class="body"><div class="label">Talab tahlili</div><div class="detail">'+e(prompt.slice(0,80))+'</div></div></div>';
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/code/generate/',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=60000;
+  xhr.onload=function(){
+    genBtn.disabled=false;genBtn.textContent='Generatsiya';
+    if(xhr.status===200){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        var ext={python:'py',javascript:'js',html:'html',css:'css',sql:'sql',go:'go',rust:'rs',java:'java',cpp:'cpp',bash:'sh'}[d.language]||'txt';
+        currentFile='generated.'+ext;fileName.textContent=currentFile;langLabel.textContent=detectLang(currentFile);
+        codeEditor.value=d.code;
+        term('✅ Kod tayyor: '+currentFile);
+        if(d.trace){
+          var lines=d.trace.split('\n').filter(function(l){return l.trim()});
+          var html='';
+          lines.forEach(function(l){
+            var icon='⚙️';
+            if(l.includes('✅'))icon='✅';else if(l.includes('🔍'))icon='🔍';else if(l.includes('📐'))icon='📐';else if(l.includes('🎯'))icon='🎯';
+            html+='<div class="trace-step done"><div class="icon">'+icon+'</div><div class="body"><div class="label">'+e(l.replace(/^[✅🔍📐⚙️🎯📋]\s*/,''))+'</div></div></div>';
+          });
+          analysisContent.innerHTML=html;
+        }
+        if(d.analysis){
+          var good=d.analysis.includes('✅');
+          analysisContent.innerHTML+='<div class="analysis-block '+(good?'good':'warn')+'">'+e(d.analysis)+'</div>';
+        }
+        if(d.language==='html'&&d.code){previewFrame.srcdoc=d.code}
+        else{previewFrame.srcdoc='<!DOCTYPE html><html><body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f7fa;color:#666;font-family:sans-serif;font-size:11px;text-align:center;padding:20px"><p>'+d.language.toUpperCase()+'</p><p style="color:#999;font-size:10px;margin-top:4px">Preview HTML/JS/CSS uchun</p></body></html>'}
+      }catch(e){term('❌ Xatolik','err')}
+    }else{try{var d=JSON.parse(xhr.responseText);term('❌ '+(d.error||'Xatolik'),'err')}catch(e){term('❌ Server xatosi','err')}}
+  };
+  xhr.onerror=function(){genBtn.disabled=false;genBtn.textContent='Generatsiya';term('❌ Ulanmadi','err')};
+  xhr.send(JSON.stringify({prompt:prompt,language:lang}));
+}window.generateCode=generateCode;
+
+function clearAnalysis(){analysisContent.innerHTML='<div class="right-empty">Kod generatsiya qilinganda bu yerda<br>AIDA fikrlash jarayoni ko\'rinadi</div>'}window.clearAnalysis=clearAnalysis;
+
+codeEditor.addEventListener('keydown',function(e){
+  if(e.key==='Tab'){e.preventDefault();var s=codeEditor.selectionStart;codeEditor.value=codeEditor.value.slice(0,s)+'  '+codeEditor.value.slice(codeEditor.selectionEnd);codeEditor.selectionStart=codeEditor.selectionEnd=s+2}
+});
+
+promptInput.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();generateCode()}
+});
+
+// Init
+loadProjectState();
+clearTerm();
+})();
+</script>
+</body>
+</html>

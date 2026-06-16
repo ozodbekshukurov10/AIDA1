@@ -1,0 +1,6 @@
+{
+  "name": "AIDA",
+  "description": "Mutlaq Kiber-Mavjudot (Sentient Cyber-Entity) interfeysi va razvedka terminali.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}

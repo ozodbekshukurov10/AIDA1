@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AIDA Django Dev</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background:
+          radial-gradient(circle at top, rgba(0, 220, 255, 0.14), transparent 38%),
+          linear-gradient(180deg, #02070d 0%, #040b14 100%);
+        color: #d9f7ff;
+        font-family: "Segoe UI", Arial, sans-serif;
+      }
+
+      main {
+        width: min(720px, calc(100vw - 32px));
+        padding: 32px;
+        border: 1px solid rgba(0, 255, 255, 0.15);
+        background: rgba(5, 18, 28, 0.78);
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(32px, 6vw, 48px);
+      }
+
+      p {
+        margin: 0 0 14px;
+        line-height: 1.6;
+        color: rgba(217, 247, 255, 0.86);
+      }
+
+      code {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(0, 255, 255, 0.08);
+        color: #8df7ff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AIDA Django server ishlayapti</h1>
+      <p>Backend muvaffaqiyatli ko'tarildi. Frontend build hali yaratilmagan, shu sabab Django vaqtincha ushbu sahifani ko'rsatyapti.</p>
+      <p>Build tayyor bo'lgach, Django avtomatik ravishda <code>dist/index.html</code> va <code>dist/assets</code> ni serve qiladi.</p>
+      <p>Asosiy buyruqlar: <code>.venv\Scripts\python manage.py runserver</code> va frontend uchun <code>npm run build</code>.</p>
+    </main>
+  </body>
+  </html>
