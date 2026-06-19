@@ -65,6 +65,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hid
 .composer .rbtn:hover{background:var(--surface3);border-color:var(--border-light);color:var(--text2)}
 .composer .rbtn.on{background:var(--green-dim);border-color:var(--green);color:var(--green)}
 .composer .rbtn svg{width:14px;height:14px;flex-shrink:0}
+.composer select#modeSelect{padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:11px;font-family:var(--font);cursor:pointer;outline:none;flex-shrink:0}
+.composer select#modeSelect:hover{border-color:var(--border-light);color:var(--text)}
+.composer select#modeSelect option{background:var(--surface);color:var(--text)}
 .composer button{padding:12px 20px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s;font-family:var(--font);display:flex;align-items:center;gap:6px;flex-shrink:0}
 .composer button:hover{background:var(--accent-hover)}
 .composer button:disabled{opacity:0.4;cursor:not-allowed}
@@ -142,6 +145,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hid
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <span id="rbtnLabel">Internet</span>
         </button>
+        <select id="modeSelect" title="AIDA rejimi">
+          <option value="pro">AIDA PRO</option>
+          <option value="flash">AIDA FLASH</option>
+          <option value="low">AIDA LOW</option>
+        </select>
         <input type="text" id="input" placeholder="Xabar yozing..." autofocus>
         <button id="sendBtn">Yuborish</button>
       </div>
@@ -159,6 +167,7 @@ var chatList = document.getElementById('chatList');
 var chatTitle = document.getElementById('chatTitle');
 var researchBtn = document.getElementById('researchBtn');
 var rbtnLabel = document.getElementById('rbtnLabel');
+var modeSelect = document.getElementById('modeSelect');
 var sidebar = document.getElementById('sidebar');
 var overlay = document.getElementById('sidebarOverlay');
 var toggleBtn = document.getElementById('sidebarToggle');
@@ -327,7 +336,11 @@ function sendMsg(text){
           d.sources.forEach(function(s){sd.innerHTML+='<a href="'+s.url+'" target="_blank" rel="noopener">'+s.title+'</a>'});
           bubble.appendChild(sd)
         }
-        if(d.status)setStatus(true,d.status.provider||'local');
+        if(d.status){
+          var modeLabel = d.mode ? d.mode.toUpperCase() : '';
+          var providerLabel = d.status.provider||'local';
+          setStatus(true, providerLabel + (modeLabel ? ' | ' + modeLabel : ''));
+        }
         chatTitle.textContent=content.slice(0,40)+'...';
         loadSessions()
       }catch(e){bubble.innerHTML='Javobni oqishda xatolik.'}
@@ -344,7 +357,7 @@ function sendMsg(text){
     bubble.innerHTML='Serverga ulanishda xatolik yuz berdi.';
     feed.scrollTop=feed.scrollHeight
   };
-  xhr.send(JSON.stringify({prompt:content,research:researchOn,session_id:currentSessionId}))
+  xhr.send(JSON.stringify({prompt:content,research:researchOn,session_id:currentSessionId,mode:modeSelect.value}))
 }
 
 function handleSend(){sendMsg()}

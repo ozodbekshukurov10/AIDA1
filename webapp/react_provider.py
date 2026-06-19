@@ -96,12 +96,20 @@ class ReActProvider:
                 return "Hozircha eslab qolingan malumot yoq."
             return "\n".join(f"- {f}" for f in facts)
 
+        def control_desktop(input_str: str) -> str:
+            parts = [p.strip() for p in input_str.split(",", 2)]
+            action = parts[0] if len(parts) > 0 else ""
+            target = parts[1] if len(parts) > 1 else ""
+            message = parts[2] if len(parts) > 2 else ""
+            return controller.execute_desktop_command(action, target, message)
+
         self.tools = [
             Tool("search_web", "Internetdan malumot qidirish (query: qidiruv sorovi)", search_web),
             Tool("calculate", "Matematik hisob-kitob (expression: matematik ifoda)", calculate),
             Tool("get_datetime", "Hozirgi vaqtni olish (timezone: Asia/Tashkent)", get_datetime),
             Tool("remember_fact", "Malumotni eslab qolish (fact: eslab qolinadigan malumot)", remember_fact),
             Tool("get_learned_facts", "Eslab qolingan malumotlarni olish", lambda: get_learned_facts()),
+            Tool("control_desktop", "Kompyuterni boshqarish (input_str: 'action, target, message'). Action: open_app, send_telegram. Target: ilova nomi yoki telegram username. Message: xabar matni.", control_desktop),
         ]
 
     def _call_llm(self, history: list[dict]) -> str:

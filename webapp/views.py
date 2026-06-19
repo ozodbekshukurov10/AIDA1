@@ -25,11 +25,15 @@ def safe_api_endpoint(view_func):
     def wrapper(request, *args, **kwargs):
         origin = request.headers.get("Origin", "")
         allowed = settings.CSRF_TRUSTED_ORIGINS
-        if origin and allowed:
+        if origin:
             from urllib.parse import urlparse
             o = urlparse(origin).netloc
-            if not any(o == urlparse(a).netloc for a in allowed if a):
-                return JsonResponse({"error": "Not allowed origin"}, status=403)
+            # Ruxsat etilgan host yoki joriy so'rov yuborilgan xost bo'lsa (same-origin), ruxsat berish
+            if o == request.get_host():
+                return view_func(request, *args, **kwargs)
+            if allowed:
+                if not any(o == urlparse(a).netloc for a in allowed if a):
+                    return JsonResponse({"error": "Not allowed origin"}, status=403)
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -156,6 +160,7 @@ def api_chat(request):
 
     research_enabled = bool(payload.get("research"))
     session_id = str(payload.get("session_id", "default")).strip() or "default"
+    mode = str(payload.get("mode", "")).strip().lower()
 
     runtime_context = {
         "page": str(payload.get("page", "")).strip(),
@@ -169,6 +174,7 @@ def api_chat(request):
             runtime_context=runtime_context,
             research_enabled=research_enabled,
             session_id=session_id,
+            mode=mode,
         )
     except ValueError as exc:
         logger.warning("Chat error: %s", exc)
@@ -280,6 +286,7 @@ def api_platform_chat(request):
         return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
     research_enabled = bool(payload.get("research"))
     session_id = str(payload.get("session_id", "default")).strip() or "default"
+    mode = str(payload.get("mode", "")).strip().lower()
 
     runtime_context = {
         "page": str(payload.get("page", "")).strip(),
@@ -302,6 +309,7 @@ def api_platform_chat(request):
             runtime_context=runtime_context,
             research_enabled=research_enabled,
             session_id=session_id,
+            mode=mode,
         )
     except ValueError as exc:
         return JsonResponse({"error": str(exc)}, status=400)

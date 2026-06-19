@@ -287,17 +287,55 @@ class ProviderConfig:
 
     @classmethod
     def from_env(cls) -> "ProviderConfig":
+        env_path = Path(__file__).resolve().parent.parent / ".env"
+        if env_path.exists():
+            for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
         provider = os.getenv("AIDA_PROVIDER", "local").lower()
         model = os.getenv("AIDA_MODEL", "AIDA Local Core")
         api_key = os.getenv("AIDA_API_KEY", "")
         api_url = os.getenv("AIDA_API_URL", "")
-        return cls(provider=provider, model=model, api_key=api_key, api_url=api_url)
+        mode = os.getenv("AIDA_MODE", "pro").lower()
+        return cls(provider=provider, model=model, api_key=api_key, api_url=api_url, mode=mode)
 
-    def __init__(self, provider: str, model: str, api_key: str = "", api_url: str = "") -> None:
+    def __init__(self, provider: str, model: str, api_key: str = "", api_url: str = "", mode: str = "pro") -> None:
         self.provider = provider
         self.model = model
         self.api_key = api_key
         self.api_url = api_url
+        self.mode = mode
+
+
+MODE_CONFIGS = {
+    "pro": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "num_ctx": 8192,
+        "num_predict": 2048,
+        "preferred_model_size": "large",
+        "research_default": True,
+    },
+    "flash": {
+        "temperature": 0.3,
+        "top_p": 0.8,
+        "num_ctx": 2048,
+        "num_predict": 512,
+        "preferred_model_size": "small",
+        "research_default": False,
+    },
+    "low": {
+        "temperature": 0.9,
+        "top_p": 0.95,
+        "num_ctx": 4096,
+        "num_predict": 1024,
+        "preferred_model_size": "medium",
+        "research_default": False,
+    },
+}
 
 
 class GeminiProvider:
@@ -320,7 +358,15 @@ class GeminiProvider:
             role = "user" if m["role"] == "user" else "model"
             history.append({"role": role, "parts": [{"text": m["content"]}]})
 
-        full_prompt = f"{system_prompt}\n\nUser request: {prompt}"
+        research = kwargs.get("research")
+        research_context = ""
+        if research:
+            research_context = "\n\nInternetdan olingan ma'lumotlar (Kontekst):\n"
+            for item in research:
+                research_context += f"- {item.title}: {item.summary} (Manba: {item.url})\n"
+            research_context += "\nUshbu ma'lumotlardan foydalanib savolga batafsil javob bering."
+
+        full_prompt = f"{system_prompt}{research_context}\n\nUser request: {prompt}"
         
         payload = {
             "contents": history + [{"role": "user", "parts": [{"text": full_prompt}]}],
@@ -364,9 +410,23 @@ class GeminiProvider:
 class OllamaProvider:
     name = "ollama"
 
-    def __init__(self, url: str = "http://localhost:11434", model: str = "llama3.2") -> None:
+    # Ollamaga maxsus O'zbek tili yo'riqnomasi
+    UZBEK_INSTRUCTION = (
+        "\n\nMUHIM: Siz O'zbek tilida so'zlashuvchi AIDA sun'iy intellektisiz. "
+        "DOIMO o'zbek tilida javob bering. Faqat texnik atamalar ingliz tilida bo'lishi mumkin. "
+        "Javoblaringiz aniq, batafsil va foydali bo'lsin. "
+        "Agar foydalanuvchi ingliz yoki rus tilida yozsa ham, o'zbek tilida javob bering.\n"
+    )
+
+    def __init__(self, url: str = "http://localhost:11434", model: str = "llama3.2", mode: str = "pro") -> None:
         self.url = url.rstrip("/")
         self.model = model
+        self.mode = mode
+        mc = MODE_CONFIGS.get(mode, MODE_CONFIGS["pro"])
+        self.temperature = mc["temperature"]
+        self.top_p = mc["top_p"]
+        self.num_ctx = mc["num_ctx"]
+        self.num_predict = mc["num_predict"]
 
     def respond(
         self,
@@ -375,13 +435,34 @@ class OllamaProvider:
         system_prompt: str,
         **kwargs
     ) -> str:
-        messages = [{"role": "system", "content": system_prompt}]
+        research = kwargs.get("research")
+        research_context = ""
+        if research:
+            research_context = "\n\nInternetdan olingan ma'lumotlar (Kontekst):\n"
+            for item in research:
+                research_context += f"- {item.title}: {item.summary} (Manba: {item.url})\n"
+            research_context += "\nUshbu ma'lumotlardan foydalanib savolga batafsil javob bering."
+
+        # System prompt + O'zbek ko'rsatmasi + research
+        sys_content = f"{system_prompt}{self.UZBEK_INSTRUCTION}{research_context}"
+        messages = [{"role": "system", "content": sys_content}]
         for m in memory:
             role = "user" if m["role"] == "user" else "assistant"
             messages.append({"role": role, "content": m["content"]})
         messages.append({"role": "user", "content": prompt})
 
-        payload = {"model": self.model, "messages": messages, "stream": False, "options": {"temperature": 0.7}}
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": self.temperature,
+                "top_p": self.top_p,
+                "num_ctx": self.num_ctx,
+                "num_predict": self.num_predict,
+            }
+        }
+        timeout = 30 if self.mode == "flash" else 120
         try:
             req = urllib.request.Request(
                 f"{self.url}/api/chat",
@@ -389,9 +470,18 @@ class OllamaProvider:
                 headers={"Content-Type": "application/json"},
                 method="POST"
             )
-            with urllib.request.urlopen(req, timeout=30) as response:
+            with urllib.request.urlopen(req, timeout=timeout) as response:
                 result = json.loads(response.read().decode("utf-8"))
-                return result["message"]["content"]
+                content = result.get("message", {}).get("content", "")
+                if not content:
+                    return "Ollama javob bermadi. Model yuklanayotgan bo'lishi mumkin, bir oz kuting."
+                return content
+        except urllib.error.URLError:
+            return (
+                f"⚠️ Ollama server ({self.url}) ga ulanib bo'lmadi. "
+                "Ollama dasturi ishga tushirilmagan bo'lishi mumkin. "
+                "Buyruq satriga: 'ollama serve' yozing va qayta urinib ko'ring."
+            )
         except Exception as e:
             return f"Ollama xatosi: {str(e)}"
 
@@ -410,7 +500,16 @@ class LMStudioProvider:
         system_prompt: str,
         **kwargs
     ) -> str:
-        messages = [{"role": "system", "content": system_prompt}]
+        research = kwargs.get("research")
+        research_context = ""
+        if research:
+            research_context = "\n\nInternetdan olingan ma'lumotlar (Kontekst):\n"
+            for item in research:
+                research_context += f"- {item.title}: {item.summary} (Manba: {item.url})\n"
+            research_context += "\nUshbu ma'lumotlardan foydalanib savolga batafsil javob bering."
+
+        sys_content = f"{system_prompt}{research_context}"
+        messages = [{"role": "system", "content": sys_content}]
         for m in memory:
             role = "user" if m["role"] == "user" else "assistant"
             messages.append({"role": role, "content": m["content"]})
@@ -1919,7 +2018,216 @@ class LocalProvider:
                 "**Reja:**\n" +
                 "\n".join(f"{i+1}. {s}" for i, s in enumerate(steps)))
 
+    def _get_predefined_explanation(self, prompt: str, intent: str) -> str | None:
+        norm = prompt.lower()
+        # If the user is explicitly asking to write code, do not return predefined explanation
+        code_request_keywords = ["yoz", "tuz", "create", "kodini", "dastur", "generate", "write", "qur", "kod yozib", "kod ber"]
+        if any(cw in norm for cw in code_request_keywords):
+            return None
+        
+        # Word boundaries or specific substrings
+        if re.search(r"\bhtml\b", norm):
+            return (
+                "### HTML (HyperText Markup Language) nima?\n"
+                "HTML — bu web-sahifalarni yaratish uchun ishlatiladigan standart hujjat belgilash tili. "
+                "U sahifaning tarkibi va strukturasi (skeleti)ni belgilaydi. HTML dasturlash tili emas, "
+                "balki belgilash (markup) tilidir.\n\n"
+                "#### Asosiy elementlari:\n"
+                "1. **Teglar (Tags):** Hujjat tarkibini belgilash uchun `<tagname>` ko'rinishida yoziladi. "
+                "Ko'pchilik teglar ochiluvchi va yopiluvchi juftlikdan iborat (masalan: `<h1>Salom</h1>`, `<p>Matn</p>`).\n"
+                "2. **Atributlar (Attributes):** Teglar haqida qo'shimcha ma'lumot beradi (masalan: `<a href=\"https://google.com\">Google</a>` dagi `href`).\n\n"
+                "#### Minimal HTML5 hujjati namunasi:\n"
+                "```html\n"
+                "<!DOCTYPE html>\n"
+                "<html lang=\"uz\">\n"
+                "<head>\n"
+                "    <meta charset=\"UTF-8\">\n"
+                "    <title>Mening Sahifam</title>\n"
+                "</head>\n"
+                "<body>\n"
+                "    <h1>Salom, Dunyo!</h1>\n"
+                "    <p>Bu AIDA tomonidan tushuntirilgan birinchi HTML sahifa.</p>\n"
+                "</body>\n"
+                "</html>\n"
+                "```"
+            )
+        
+        if re.search(r"\bcss\b", norm):
+            return (
+                "### CSS (Cascading Style Sheets) nima?\n"
+                "CSS — bu HTML elementlarining ekranda, qog'ozda yoki boshqa mediada qanday ko'rinishini belgilaydigan uslublar tili. "
+                "U web-sahifalarning vizual dizayni, ranglari, shriftlari va turli ekranlarga moslashuvchanligini (responsive design) boshqaradi.\n\n"
+                "#### CSS imkoniyatlari:\n"
+                "1. **Selektorlar (Selectors):** Qaysi HTML elementga uslub berilishini aniqlaydi (masalan: `p { color: red; }` barcha xatboshilarni qizil qiladi).\n"
+                "2. **Kaskadlanish:** Bir elementga bir nechta uslub qo'llanilganda, qaysi biri ustuvor bo'lishini tartibga soladi.\n"
+                "3. **Joylashuv tizimlari (Layouts):** Flexbox va CSS Grid yordamida elementlarni sahifada juda oson joylashtirish mumkin.\n\n"
+                "#### Namunaviy uslublar to'plami:\n"
+                "```css\n"
+                "body {\n"
+                "    background-color: #f0f2f5;\n"
+                "    color: #333;\n"
+                "    font-family: Arial, sans-serif;\n"
+                "}\n"
+                ".header {\n"
+                "    background: linear-gradient(135deg, #1a1a2e, #16161d);\n"
+                "    color: white;\n"
+                "    padding: 20px;\n"
+                "    text-align: center;\n"
+                "}\n"
+                "```"
+            )
+
+        if re.search(r"\bjavascript\b|\bjs\b", norm):
+            return (
+                "### JavaScript nima?\n"
+                "JavaScript — bu web-sahifalarga dinamiklik va interaktivlik qo'shish uchun ishlatiladigan dasturlash tili. "
+                "HTML sahifa strukturasini, CSS dizaynini yaratsa, JavaScript uni jonlantiradi (masalan: tugma bosilganda oyna ochilishi, ma'lumot yuklanishi, animatsiyalar).\n\n"
+                "#### Asosiy xususiyatlari:\n"
+                "1. **DOM Manipulyatsiyasi:** Sahifadagi HTML elementlarni o'chirish, qo'shish yoki o'zgartirish.\n"
+                "2. **Asinxronlik (AJAX/Fetch):** Sahifani yangilamasdan serverdan yangi ma'lumotlarni yuklab olish.\n"
+                "3. **Keng qo'llanilishi:** Hozirda nafaqat brauzerda (Frontend), balki Node.js yordamida serverda (Backend) ham ishlatiladi.\n\n"
+                "#### Oddiy kod namunasi:\n"
+                "```javascript\n"
+                "// Tugmani bosganda matnni o'zgartirish\n"
+                "const button = document.querySelector('button');\n"
+                "const text = document.querySelector('.text');\n\n"
+                "button.addEventListener('click', () => {\n"
+                "    text.textContent = 'Muvaffaqiyatli bajarildi!';\n"
+                "    text.style.color = '#2ecc71';\n"
+                "});\n"
+                "```"
+            )
+
+        if re.search(r"\breact\b", norm):
+            return (
+                "### React nima?\n"
+                "React — bu foydalanuvchi interfeyslarini (UI) yaratish uchun Facebook (Meta) tomonidan ishlab chiqilgan ochiq kodli JavaScript kutubxonasidir. "
+                "U asosan bir sahifali ilovalarni (SPA) yaratishda qo'llaniladi.\n\n"
+                "#### Asosiy tamoyillari:\n"
+                "1. **Komponentlar (Components):** UI'ni kichik, mustaqil va qayta ishlatiladigan bo'laklarga bo'lish (masalan: Navbar, Button, Card).\n"
+                "2. **Virtual DOM:** Haqiqiy DOM bilan ishlash sekin bo'lgani uchun, React xotiradagi virtual nusxa yordamida faqat o'zgargan qismlarni tezkor yangilaydi.\n"
+                "3. **State va Props:** Komponent ichidagi ma'lumotlarni (state) va tashqaridan uzatiladigan parametrlarni (props) boshqarish.\n\n"
+                "#### Namunaviy React komponenti:\n"
+                "```jsx\n"
+                "import React, { useState } from 'react';\n\n"
+                "export default function Counter() {\n"
+                "  const [count, setCount] = useState(0);\n\n"
+                "  return (\n"
+                "    <div style={{ padding: '20px', textAlign: 'center' }}>\n"
+                "      <h2>Hisoblagich: {count}</h2>\n"
+                "      <button onClick={() => setCount(count + 1)}>Oshirish</button>\n"
+                "    </div>\n"
+                "  );\n"
+                "}\n"
+                "```"
+            )
+
+        if re.search(r"\bpython\b", norm):
+            return (
+                "### Python nima?\n"
+                "Python — bu yuqori darajali, talqin qilinadigan (interpreted), o'qilishi juda oson va sodda bo'lgan universal dasturlash tilidir. "
+                "U dasturchilar orasida eng ommabop tillardan biri hisoblanadi.\n\n"
+                "#### Python ishlatiladigan sohalar:\n"
+                "1. **Sun'iy Intellekt va Mashinali O'rganish (AI/ML):** TensorFlow, PyTorch va scikit-learn kutubxonalari.\n"
+                "2. **Backend dasturlash:** Django va FastAPI freymvorklari.\n"
+                "3. **Ma'lumotlar tahlili va vizualizatsiya:** Pandas, NumPy, Matplotlib.\n"
+                "4. **Avtomatlashtirish (Scripts):** Kundalik takrorlanadigan vazifalarni bajaruvchi skriptlar.\n\n"
+                "#### Oddiy kod namunasi:\n"
+                "```python\n"
+                "# Ro'yxatdagi juft sonlarni ajratib olish\n"
+                "sonlar = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\n"
+                "juft_sonlar = [son for son in sonlar if son % 2 == 0]\n\n"
+                "print(f\"Juft sonlar: {juft_sonlar}\")  # Natija: [2, 4, 6, 8, 10]\n"
+                "```"
+            )
+
+        if re.search(r"\bdjango\b", norm):
+            return (
+                "### Django nima?\n"
+                "Django — bu Python tilida yozilgan, mukammal xavfsizlik va tezkorlikka yo'naltirilgan ochiq kodli backend web freymvorkidir. "
+                "U \"Batteries included\" (hamma narsa ichida) falsafasiga amal qiladi.\n\n"
+                "#### Django tarkibidagi tayyor komponentlar:\n"
+                "1. **Django ORM:** Ma'lumotlar bazasi (SQLite, PostgreSQL, MySQL) bilan SQL yozmasdan, Python klasslari orqali ishlash.\n"
+                "2. **Admin Panel:** Ma'lumotlarni boshqarish (CRUD) uchun tayyor va xavfsiz ma'murlash paneli.\n"
+                "3. **Autentifikatsiya:** Foydalanuvchilarni ro'yxatdan o'tkazish, tizimga kirish/chiqish va ruxsatlarni tekshirish tizimi.\n\n"
+                "#### Django Model namunasi:\n"
+                "```python\n"
+                "from django.db import models\n\n"
+                "class Mahsulot(models.Model):\n"
+                "    nomi = models.CharField(max_length=100)\n"
+                "    narxi = models.DecimalField(max_digits=10, decimal_places=2)\n"
+                "    tavsif = models.TextField(blank=True)\n"
+                "    yaratilgan_sana = models.DateTimeField(auto_now_add=True)\n\n"
+                "    def __str__(self):\n"
+                "        return self.nomi\n"
+                "```"
+            )
+
+        if re.search(r"\bgit\b", norm):
+            return (
+                "### Git nima?\n"
+                "Git — bu loyihalarning versiyalarini boshqarish tizimidir (Version Control System). "
+                "U kodlar ustida ishlash tarixini saqlaydi va bir vaqtning o'zida bir nechta dasturchining bitta loyiha ustida birgalikda ishlashiga yordam beradi.\n\n"
+                "#### Asosiy komandalar:\n"
+                "1. `git init` – Yangi lokal repozitoriy yaratish.\n"
+                "2. `git add .` – O'zgarishlarni saqlashga tayyorlash (staging area).\n"
+                "3. `git commit -m \"izoh\"` – O'zgarishlarni tarixda saqlash.\n"
+                "4. `git push` – O'zgarishlarni masofaviy serverga (masalan, GitHub) yuborish.\n"
+                "5. `git checkout -b yangi-branch` – Yangi ishchi tarmoq (branch) ochish."
+            )
+
+        if re.search(r"\bsql\b", norm):
+            return (
+                "### SQL nima?\n"
+                "SQL (Structured Query Language) — bu relyatsion (jadvalli) ma'lumotlar bazalarini boshqarish va ular bilan muloqot qilish uchun ishlatiladigan standart tildir. "
+                "U ma'lumotlarni saqlash, qidirish, o'zgartirish va o'chirish imkonini beradi.\n\n"
+                "#### Asosiy so'rovlar (CRUD):\n"
+                "1. **C (Create) / INSERT:** Yangi qator qo'shish.\n"
+                "2. **R (Read) / SELECT:** Ma'lumotlarni o'qish/qidirish.\n"
+                "3. **U (Update) / UPDATE:** Mavjud ma'lumotni yangilash.\n"
+                "4. **D (Delete) / DELETE:** Ma'lumotni o'chirish.\n\n"
+                "#### Namunaviy so'rov:\n"
+                "```sql\n"
+                "-- Foydalanuvchilarni email bo'yicha saralab olish\n"
+                "SELECT id, ism, email \n"
+                "FROM users \n"
+                "WHERE status = 'active' \n"
+                "ORDER BY yaratilgan_sana DESC;\n"
+                "```"
+            )
+
+        if re.search(r"\bapi\b", norm):
+            return (
+                "### API nima?\n"
+                "API (Application Programming Interface — Ilovalarning Dasturiy Interfeysi) — bu turli xil dasturiy ta'minotlar yoki xizmatlarning o'zaro muloqot qilishi va ma'lumot almashishi uchun ishlatiladigan kelishilgan qoidalar va protokollar to'plamidir.\n\n"
+                "#### API turlari va ishlatilishi:\n"
+                "1. **REST API:** HTTP so'rovlar (GET, POST, PUT, DELETE) orqali ma'lumot almashuvchi eng keng tarqalgan standart.\n"
+                "2. **JSON format:** Ma'lumotlarni uzatishda eng ko'p ishlatiladigan yengil va tushunarli format.\n"
+                "3. **Orkestratsiya:** Masalan, AIDA boshqaruv paneli frontend qismi backend bilan API endpointlar (masalan, `/api/chat/`) orqali bog'lanadi."
+            )
+
+        if re.search(r"\bollama\b", norm):
+            return (
+                "### Ollama nima?\n"
+                "Ollama — bu shaxsiy kompyuterda (lokal ravishda) Llama 3, Mistral, Gemma kabi katta til modellarini (LLM) "
+                "juda oson o'rnatish, ishga tushirish va boshqarish imkonini beruvchi ochiq kodli dasturiy vositadir.\n\n"
+                "#### Ollama nima qilib beradi?\n"
+                "1. **Lokal ishga tushirish:** Modellar sizning shaxsiy videokartangiz (GPU) yoki protsessoringizda (CPU) ishlaydi. Ma'lumotlaringiz tashqi serverlarga yuborilmaydi (xavfsiz va maxfiy).\n"
+                "2. **Tayyor API taqdim etish:** Ollama avtomatik ravishda `http://localhost:11434` manzilida lokal API serverni yoqadi. AIDA kabi dasturlar shu API orqali modelga ulanadi.\n"
+                "3. **Tezkor yuklash:** Bitta buyruq orqali modellarni yuklab oladi va ishga tushiradi (masalan: `ollama run llama3.2`).\n\n"
+                "#### AIDA bilan bog'liqligi:\n"
+                "Agar kompyuteringizda Ollama o'rnatilgan va ishlayotgan bo'lsa, AIDA uni avtomatik aniqlaydi va siz yuborgan har qanday murakkab savollarga Ollama yordamida to'liq va aqlli javoblar qaytara boshlaydi."
+            )
+        
+        return None
+
     def _result_block(self, prompt: str, intent: str, keywords: list[str], mem_list: list, ctx: str) -> str:
+        predef = self._get_predefined_explanation(prompt, intent)
+        if predef:
+            if ctx:
+                return f"{predef}\n\n_{ctx}_"
+            return predef
+
         if intent == "plan":
             return self._plan_response_dynamic(prompt, mem_list, ctx)
         if intent == "code":
@@ -2760,6 +3068,7 @@ class AIDAController:
         self.local_provider = LocalProvider()
         self.research_service = WebResearchService()
         self.provider = self._build_provider()
+        self.providers = self._build_all_providers()
         self.react_provider = self._build_react_provider()
         self.system_prompt = textwrap.dedent(
             """
@@ -2802,28 +3111,97 @@ class AIDAController:
         model = self.config.model if self.config.model != "AIDA Local Core" else "gemini-1.5-flash"
         url = self.config.api_url
 
-        # Auto-detect Ollama if provider is local (default)
-        if p == "local":
-            try:
-                import urllib.request
-                req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
-                with urllib.request.urlopen(req, timeout=2) as resp:
-                    if resp.status == 200:
-                        data = json.loads(resp.read().decode("utf-8"))
-                        models = data.get("models", [])
-                        if models:
-                            model_name = models[0].get("name", "llama3.2")
-                            return OllamaProvider(url="http://localhost:11434", model=model_name)
-            except Exception:
-                pass
+        # Ollama'ni tekshirish va ulash (local yoki ollama rejimi)
+        if p in ("local", "ollama"):
+            ollama_provider = self._try_connect_ollama(
+                url=url or "http://localhost:11434",
+                preferred_model=model if p == "ollama" else None
+            )
+            if ollama_provider:
+                return ollama_provider
+            # Agar ollama rejimi belgilangan bo'lsa, lekin server yo'q bo'lsa
+            if p == "ollama":
+                return self.local_provider  # fallback
 
-        if p == "ollama":
-            return OllamaProvider(url=url or "http://localhost:11434", model=model)
         if p == "lmstudio":
             return LMStudioProvider(url=url or "http://localhost:1234", model=model)
         if self.config.api_key and p == "remote":
             return GeminiProvider(self.config.api_key, model=model)
         return self.local_provider
+
+    def _try_connect_ollama(self, url: str = "http://localhost:11434", preferred_model: str = None, model_size: str = "medium"):
+        """Ollama serverga ulanishga harakat qiladi va OllamaProvider qaytaradi."""
+        ollama_paths = [
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\Ollama\ollama.exe"),
+            r"C:\Program Files\Ollama\ollama.exe",
+        ]
+        ollama_exe = None
+        for path in ollama_paths:
+            if os.path.exists(path):
+                ollama_exe = path
+                break
+
+        if ollama_exe:
+            try:
+                import subprocess
+                subprocess.Popen(
+                    [ollama_exe, "serve"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                )
+                import time; time.sleep(1.5)
+            except Exception:
+                pass
+
+        try:
+            req = urllib.request.Request(f"{url}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    models = data.get("models", [])
+                    if not models:
+                        return None
+
+                    model_names = [m.get("name", "") for m in models]
+
+                    if preferred_model and any(preferred_model in mn for mn in model_names):
+                        chosen = next(mn for mn in model_names if preferred_model in mn)
+                    else:
+                        size_priority = {
+                            "small": ["qwen2.5:0.5b", "phi3:mini", "tinyllama", "qwen2.5:1.5b"],
+                            "medium": ["qwen2.5:3b", "qwen2.5", "llama3.2:3b", "phi3"],
+                            "large": ["qwen2.5:7b", "qwen2.5:14b", "llama3.2", "llama3", "mistral"],
+                        }
+                        priorities = size_priority.get(model_size, size_priority["medium"])
+                        chosen = model_names[0]
+                        for priority in priorities:
+                            match = next((mn for mn in model_names if priority in mn), None)
+                            if match:
+                                chosen = match
+                                break
+
+                    return OllamaProvider(url=url, model=chosen, mode=self.config.mode)
+        except Exception:
+            pass
+        return None
+
+    def _build_all_providers(self):
+        """Har bir mode uchun alohida OllamaProvider yaratadi."""
+        url = self.config.api_url or "http://localhost:11434"
+        ollama_providers = {}
+        for mode_name, size in [("pro", "large"), ("flash", "small"), ("low", "medium")]:
+            old_mode = self.config.mode
+            self.config.mode = mode_name
+            prov = self._try_connect_ollama(url=url, model_size=size)
+            if prov:
+                ollama_providers[mode_name] = prov
+        self.config.mode = old_mode
+
+        pro = ollama_providers.get("pro") or ollama_providers.get("low") or self.local_provider
+        flash = ollama_providers.get("flash") or pro
+        low = ollama_providers.get("low") or pro
+        return {"pro": pro, "flash": flash, "low": low}
 
     def _build_react_provider(self):
         if self.config.api_key:
@@ -2945,6 +3323,7 @@ class AIDAController:
             "name": "AIDA Master Controller",
             "provider": self.config.provider,
             "model": self.config.model,
+            "mode": self.config.mode,
             "platform": _platform_name(),
             "memory_entries": self.memory.count(),
             "learned_facts": self.memory.learned_count(),
@@ -2964,6 +3343,299 @@ class AIDAController:
             "updated_at": _utc_now(),
         }
 
+    def execute_desktop_command(self, action: str, target: str = "", message: str = "") -> str:
+        import os
+        import subprocess
+        import webbrowser
+        import urllib.parse
+
+        action = action.lower().strip()
+        target = target.strip()
+        message = message.strip()
+
+        if action == "open_app":
+            app = target.lower()
+            if "telegram" in app or "tg" in app:
+                webbrowser.open("tg://")
+                return "Telegram ilovasi ishga tushirildi."
+            elif "notepad" in app or "bloknot" in app:
+                subprocess.Popen(["notepad.exe"])
+                return "Notepad (Bloknot) ishga tushirildi."
+            elif "calc" in app or "kalkulyator" in app:
+                subprocess.Popen(["calc.exe"])
+                return "Kalkulyator ishga tushirildi."
+            elif "chrome" in app or "brauzer" in app or "browser" in app:
+                webbrowser.open("https://google.com")
+                return "Veb brauzer ishga tushirildi."
+            else:
+                try:
+                    subprocess.Popen([app])
+                    return f"'{target}' dasturi ishga tushirildi."
+                except Exception:
+                    try:
+                        os.system(f"start {target}")
+                        return f"'{target}' buyrug'i tizim orqali ishga tushirildi."
+                    except Exception as e:
+                        return f"Dasturni ochib bo'lmadi: {str(e)}"
+
+        elif action == "send_telegram":
+            if not target:
+                return "Xatolik: Telegram kontakt nomi yoki foydalanuvchi nomi (username) ko'rsatilmadi."
+            
+            username = target.lstrip("@")
+            encoded_msg = urllib.parse.quote(message) if message else ""
+            
+            # Try tg:// deep link first (opens Telegram desktop app directly)
+            if encoded_msg:
+                # Open chat with pre-filled message
+                tg_url = f"https://t.me/{username}?text={encoded_msg}"
+                tg_deep = f"tg://msg?to={username}&text={encoded_msg}"
+            else:
+                tg_url = f"https://t.me/{username}"
+                tg_deep = f"tg://resolve?domain={username}"
+            
+            # Try deep link first (opens desktop app), fallback to web
+            try:
+                os.startfile(tg_deep)
+            except Exception:
+                webbrowser.open(tg_url)
+            
+            msg_desc = f" va '{message}' xabari tayyorlandi" if message else ""
+            return f"✅ Telegramda @{username} bilan chat ochildi{msg_desc}. Agar Telegram dasturi o'rnatilmagan bo'lsa, brauzerda ochiladi."
+
+        elif action == "open_telegram":
+            # Open Telegram directly
+            try:
+                os.startfile("telegram")
+            except Exception:
+                webbrowser.open("https://web.telegram.org")
+            return "✅ Telegram ilovasi ishga tushirildi."
+
+        elif action == "run_shell":
+            try:
+                result = subprocess.run(target, shell=True, capture_output=True, text=True, timeout=15)
+                out = (result.stdout or result.stderr or "Chiqish yo'q").strip()
+                status = "✅ Muvaffaqiyatli" if result.returncode == 0 else "⚠️ Xato"
+                return f"{status}. Buyruq bajarildi:\n{out[:2000]}"
+            except subprocess.TimeoutExpired:
+                return "⚠️ Buyruq 15 soniyada tugamadi (timeout)."
+            except Exception as e:
+                return f"Buyruqni bajarishda xatolik: {str(e)}"
+
+        return "Noma'lum harakat. Ruxsat etilganlar: open_app, send_telegram, open_telegram, run_shell"
+
+    def _handle_direct_desktop_commands(self, prompt: str) -> str | None:
+        norm = prompt.lower().strip()
+        
+        # =============================================
+        # 1. TELEGRAM XABAR YUBORISH
+        # =============================================
+        
+        # "telegramda <username>ga <message> deb yoz"
+        m = re.search(r"telegramda\s+@?([a-zA-Z0-9_\-]+)ga\s+(.+?)\s+deb\s+yoz", norm)
+        if m:
+            username = m.group(1)
+            orig = re.search(r"telegramda\s+@?[a-zA-Z0-9_\-]+ga\s+(.+?)\s+deb\s+yoz", prompt, re.IGNORECASE)
+            message = orig.group(1) if orig else m.group(2)
+            return self.execute_desktop_command("send_telegram", username, message)
+
+        # "telegramda <username>ga yoz: <message>"
+        m = re.search(r"telegramda\s+@?([a-zA-Z0-9_\-]+)ga\s+yoz\s*:\s*(.+)", norm)
+        if m:
+            username = m.group(1)
+            orig = re.search(r"telegramda\s+@?[a-zA-Z0-9_\-]+ga\s+yoz\s*:\s*(.+)", prompt, re.IGNORECASE)
+            message = orig.group(1) if orig else m.group(2)
+            return self.execute_desktop_command("send_telegram", username, message)
+
+        # "<username> nomli odamga telegramda <message> deb yoz"
+        m = re.search(r"([a-zA-Z0-9_\-]+)\s+nomli\s+odamga\s+telegramda?\s+(.+?)\s+deb\s+yoz", norm)
+        if m:
+            username = m.group(1)
+            orig = re.search(r"[a-zA-Z0-9_\-]+\s+nomli\s+odamga\s+telegramda?\s+(.+?)\s+deb\s+yoz", prompt, re.IGNORECASE)
+            message = orig.group(1) if orig else m.group(2)
+            return self.execute_desktop_command("send_telegram", username, message)
+
+        # "telegramda <username> ga xabar yubor: <message>"
+        m = re.search(r"telegramda\s+@?([a-zA-Z0-9_\-]+)\s+ga\s+xabar\s+yubor\s*:\s*(.+)", norm)
+        if m:
+            username = m.group(1)
+            orig = re.search(r"telegramda\s+@?[a-zA-Z0-9_\-]+\s+ga\s+xabar\s+yubor\s*:\s*(.+)", prompt, re.IGNORECASE)
+            message = orig.group(1) if orig else m.group(2)
+            return self.execute_desktop_command("send_telegram", username, message)
+
+        # "telegramda @<username> ga yoz: <message>" (space before 'ga')
+        m = re.search(r"telegramda\s+@?([a-zA-Z0-9_\-]+)\s+ga\s+yoz\s*:\s*(.+)", norm)
+        if m:
+            username = m.group(1)
+            orig = re.search(r"telegramda\s+@?[a-zA-Z0-9_\-]+\s+ga\s+yoz\s*:\s*(.+)", prompt, re.IGNORECASE)
+            message = orig.group(1) if orig else m.group(2)
+            return self.execute_desktop_command("send_telegram", username, message)
+
+        # "@<username> ga <message> yoz" (e.g. "@ali ga salom yoz")
+        m = re.search(r"@([a-zA-Z0-9_\-]+)\s+ga\s+(.+?)\s+yoz", norm)
+        if m:
+            username = m.group(1)
+            orig = re.search(r"@[a-zA-Z0-9_\-]+\s+ga\s+(.+?)\s+yoz", prompt, re.IGNORECASE)
+            message = orig.group(1) if orig else m.group(2)
+            return self.execute_desktop_command("send_telegram", username, message)
+
+        # "telegram orqali <username>ga <message> yubor"
+        m = re.search(r"telegram\s+orqali\s+@?([a-zA-Z0-9_\-]+)ga?\s+(.+?)\s+yubor", norm)
+        if m:
+            username = m.group(1)
+            orig = re.search(r"telegram\s+orqali\s+@?[a-zA-Z0-9_\-]+ga?\s+(.+?)\s+yubor", prompt, re.IGNORECASE)
+            message = orig.group(1) if orig else m.group(2)
+            return self.execute_desktop_command("send_telegram", username, message)
+
+        # =============================================
+        # 2. TELEGRAM OCHISH
+        # =============================================
+        telegram_open_patterns = [
+            "telegramga kir", "telegramni och", "telegram ishga tushir",
+            "telegramni ishga tushir", "telegram och", "telegram oyna",
+            "telegram app och", "telegramga o'tish", "telegramni yoq"
+        ]
+        if any(p in norm for p in telegram_open_patterns):
+            return self.execute_desktop_command("open_app", "telegram")
+
+        # =============================================
+        # 3. BOSHQA ILOVALAR OCHISH
+        # =============================================
+        
+        # Notepad
+        if any(p in norm for p in ["notepadni och", "bloknotni och", "notepadga kir", "notepad ochish"]):
+            return self.execute_desktop_command("open_app", "notepad")
+
+        # Calculator
+        if any(p in norm for p in ["kalkulyatorni och", "kalkulyatorga kir", "calculatorni och", "hisoblash mashinasi"]):
+            return self.execute_desktop_command("open_app", "calc")
+
+        # =============================================
+        # VEBSAYTLAR OCHISH
+        # =============================================
+
+        # YouTube
+        if any(p in norm for p in ["youtube och", "youtubeni och", "youtubeга кir", "youtube кir",
+                                    "youtube oyna", "youtube ishga tushir", "youtubega o'tish",
+                                    "youtube open", "videolar och"]):
+            import webbrowser
+            webbrowser.open("https://www.youtube.com")
+            return "✅ YouTube brauzerda ochildi!"
+
+        # YouTube qidirish: "youtubeda <nima> qidir / qidirish"
+        m = re.search(r"youtube(?:da|dan)?\s+(.+?)\s+(?:qidir|qidirish|izla|ko'rsat|top)", norm)
+        if m:
+            query = m.group(1).strip()
+            import webbrowser, urllib.parse
+            webbrowser.open(f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}")
+            return f"✅ YouTube'da '{query}' bo'yicha qidiruv ochildi!"
+
+        # Instagram
+        if any(p in norm for p in ["instagram och", "instagramni och", "instagramga kir", "instagramga o'tish"]):
+            import webbrowser
+            webbrowser.open("https://www.instagram.com")
+            return "✅ Instagram brauzerda ochildi!"
+
+        # Google
+        if any(p in norm for p in ["googleni och", "google och", "googlega kir", "google open"]):
+            import webbrowser
+            webbrowser.open("https://www.google.com")
+            return "✅ Google brauzerda ochildi!"
+
+        # Google qidirish: "googleda <nima> qidir"
+        m = re.search(r"google(?:da|dan)?\s+(.+?)\s+(?:qidir|qidirish|izla|top)", norm)
+        if m:
+            query = m.group(1).strip()
+            import webbrowser, urllib.parse
+            webbrowser.open(f"https://www.google.com/search?q={urllib.parse.quote(query)}")
+            return f"✅ Google'da '{query}' bo'yicha qidiruv ochildi!"
+
+        # Facebook
+        if any(p in norm for p in ["facebook och", "facebookni och", "facebookga kir"]):
+            import webbrowser
+            webbrowser.open("https://www.facebook.com")
+            return "✅ Facebook brauzerda ochildi!"
+
+        # GitHub
+        if any(p in norm for p in ["github och", "githubni och", "githubga kir"]):
+            import webbrowser
+            webbrowser.open("https://www.github.com")
+            return "✅ GitHub brauzerda ochildi!"
+
+        # ChatGPT
+        if any(p in norm for p in ["chatgpt och", "chatgptni och", "chatgptga kir", "chatgpt oyna"]):
+            import webbrowser
+            webbrowser.open("https://chat.openai.com")
+            return "✅ ChatGPT brauzerda ochildi!"
+
+        # Gmail
+        if any(p in norm for p in ["gmail och", "gmailni och", "gmailga kir", "emailni och", "pochtani och"]):
+            import webbrowser
+            webbrowser.open("https://mail.google.com")
+            return "✅ Gmail brauzerda ochildi!"
+
+        # Browser (oddiy brauzer)
+        if any(p in norm for p in ["brauzerni och", "chrome och", "brauzerga kir", "internet brauzer",
+                                    "internetni och", "brauzer ishga tushir"]):
+            return self.execute_desktop_command("open_app", "chrome")
+
+        # Umumiy URL ochish: "... saytni och" yoki "... ga o't"
+        m = re.search(r"(https?://[^\s]+)\s+(?:och|oyna|kir|ko'rsat)", norm)
+        if m:
+            url = m.group(1)
+            import webbrowser
+            webbrowser.open(url)
+            return f"✅ {url} brauzerda ochildi!"
+
+        # Umumiy web qidirish: "qidir: <nima>" yoki "izla: <nima>"
+        m = re.search(r"(?:internetda\s+)?(?:qidir|izla|search)\s*:\s*(.+)", norm)
+        if m:
+            orig = re.search(r"(?:internetda\s+)?(?:qidir|izla|search)\s*:\s*(.+)", prompt, re.IGNORECASE)
+            query = (orig.group(1) if orig else m.group(1)).strip()
+            import webbrowser, urllib.parse
+            webbrowser.open(f"https://www.google.com/search?q={urllib.parse.quote(query)}")
+            return f"✅ Google'da '{query}' qidirildi!"
+
+        # =============================================
+        # 4. KOMPYUTER BUYRUQLARI (shell)
+        # =============================================
+        m = re.search(r"(?:buyruq\s+bajar|shell\s+bajar|cmd\s+bajar)\s*:\s*(.+)", norm)
+        if m:
+            orig = re.search(r"(?:buyruq\s+bajar|shell\s+bajar|cmd\s+bajar)\s*:\s*(.+)", prompt, re.IGNORECASE)
+            cmd = orig.group(1) if orig else m.group(1)
+            return self.execute_desktop_command("run_shell", cmd)
+
+        return None
+
+    def _fetch_url_content(self, url: str) -> str:
+        try:
+            import urllib.request
+            from bs4 import BeautifulSoup
+            
+            req = urllib.request.Request(
+                url, 
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+            )
+            with urllib.request.urlopen(req, timeout=10) as response:
+                html = response.read().decode("utf-8", errors="replace")
+            
+            soup = BeautifulSoup(html, "html.parser")
+            
+            # Remove scripts, styles, forms, and headers/footers to clean up content
+            for s in soup(["script", "style", "nav", "footer", "header", "form"]):
+                s.decompose()
+                
+            text = soup.get_text(separator="\n")
+            # Clean up whitespace
+            lines = (line.strip() for line in text.splitlines())
+            chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+            text_content = "\n".join(chunk for chunk in chunks if chunk)
+            
+            # Truncate to avoid token limits (e.g. 8000 characters)
+            return text_content[:8000]
+        except Exception as e:
+            return f"Xatolik: URL dan ma'lumot yuklab bo'lmadi ({str(e)})"
+
     def chat(
         self,
         prompt: str,
@@ -2971,10 +3643,32 @@ class AIDAController:
         runtime_context: dict[str, str] | None = None,
         research_enabled: bool = False,
         session_id: str = "default",
+        mode: str = "",
     ) -> dict[str, object]:
         clean_prompt = prompt.strip()
         if not clean_prompt:
             raise ValueError("Prompt bo'sh bo'lmasligi kerak.")
+
+        # === DESKTOP / KOMPYUTER BUYRUQLARINI BIRINCHI TEKSHIR ===
+        desktop_result = self._handle_direct_desktop_commands(clean_prompt)
+        if desktop_result is not None:
+            self.memory.save("user", clean_prompt, session_id=session_id)
+            self.memory.save("assistant", desktop_result, session_id=session_id)
+            return {
+                "message": desktop_result,
+                "status": self.status(),
+                "session_id": session_id,
+                "mode": mode,
+                "recent_memory": self.memory.recent(limit=6, session_id=session_id),
+                "sources": [],
+            }
+        # === ODATIY CHAT DAVOM ETADI ===
+
+        mode = mode or self.config.mode
+        if mode not in ("pro", "flash", "low"):
+            mode = "pro"
+        mc = MODE_CONFIGS.get(mode, MODE_CONFIGS["pro"])
+        effective_provider = self.providers.get(mode) or self.provider
 
         self.memory.save("user", clean_prompt, session_id=session_id)
         learned_fact = ""
@@ -2991,21 +3685,38 @@ class AIDAController:
         status = self.status()
         intent = self.local_provider._detect_intent(clean_prompt)
         complexity = self._assess_complexity(clean_prompt, research_enabled, intent)
-        should_research = self._should_research(clean_prompt, research_enabled, intent)
+        # PRO mode always researches by default; FLASH and LOW don't
+        mode_research = research_enabled if research_enabled else mc["research_default"]
+        should_research = self._should_research(clean_prompt, mode_research, intent)
         research = self._run_research(clean_prompt) if should_research else []
+
+        # Extract and fetch URL contents if any
+        url_context = ""
+        urls = re.findall(r"https?://[^\s/$.?#].[^\s]*", clean_prompt)
+        if urls:
+            downloaded = []
+            for url in urls[:2]: # limit to first 2 URLs
+                content = self._fetch_url_content(url)
+                downloaded.append(f"--- Manba URL: {url} ---\n{content}\n")
+            if downloaded:
+                url_context = "\n\nFoydalanuvchi yuborgan URL manzillar tarkibi:\n" + "\n".join(downloaded)
+
+        system_prompt = self.system_prompt
+        if url_context:
+            system_prompt = system_prompt + url_context
 
         try:
             if complexity == "complex" and self.react_provider:
                 message = self.react_provider.respond(
                     prompt=clean_prompt,
                     memory=memory,
-                    system_prompt=self.system_prompt,
+                    system_prompt=system_prompt,
                 )
             else:
-                message = self.provider.respond(
+                message = effective_provider.respond(
                     prompt=clean_prompt,
                     memory=memory,
-                    system_prompt=self.system_prompt,
+                    system_prompt=system_prompt,
                     status=status,
                     platform_profile=platform_profile,
                     runtime_context=runtime_context,
@@ -3017,7 +3728,7 @@ class AIDAController:
             message = self.local_provider.respond(
                 prompt=clean_prompt,
                 memory=memory,
-                system_prompt=self.system_prompt,
+                system_prompt=system_prompt,
                 status=fallback_status,
                 platform_profile=platform_profile,
                 runtime_context=runtime_context,
@@ -3029,6 +3740,7 @@ class AIDAController:
             "message": message,
             "status": self.status(),
             "session_id": session_id,
+            "mode": mode,
             "recent_memory": self.memory.recent(limit=6, session_id=session_id),
             "sources": [
                 {"title": item.title, "url": item.url}
