@@ -1,11 +1,6 @@
 {
-<<<<<<< HEAD
   "name": "AIDA",
   "description": "Mutlaq Kiber-Mavjudot (Sentient Cyber-Entity) interfeysi va razvedka terminali.",
-=======
-  "name": "Agent OS Terminal",
-  "description": "A sci-fi/hacker style agent terminal interface.",
->>>>>>> b051280dea8d539a47236a4d85212f3580c11b5a
   "requestFramePermissions": ["camera"],
   "majorCapabilities": []
 }

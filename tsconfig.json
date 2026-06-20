@@ -15,10 +15,6 @@
     "moduleDetection": "force",
     "allowJs": true,
     "jsx": "react-jsx",
-<<<<<<< HEAD
-=======
-    "types": ["node"],
->>>>>>> b051280dea8d539a47236a4d85212f3580c11b5a
     "paths": {
       "@/*": [
         "./*"
