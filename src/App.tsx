@@ -74,6 +74,20 @@ const tabs: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?:
   { id: 'access', label: 'Access', icon: KeyRound },
 ];
 
+async function readApiJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text.trim()) {
+    throw new Error(`Server bo'sh javob qaytardi (${response.status}). Backend ishga tushganini tekshiring.`);
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    const preview = text.replace(/\s+/g, ' ').slice(0, 140);
+    throw new Error(`Server JSON emas javob qaytardi (${response.status}): ${preview || response.statusText}`);
+  }
+}
+
 function loadStoredSessions(): ChatSession[] {
   const stored = localStorage.getItem('aida_sessions');
   if (!stored) return [makeSession()];
@@ -152,10 +166,10 @@ export default function App() {
           fetch('/api/keys/'),
         ]);
         if (!statusResponse.ok) throw new Error('Status endpoint unavailable');
-        const statusPayload: StatusPayload = await statusResponse.json();
+        const statusPayload = await readApiJson<StatusPayload>(statusResponse);
         setStatus(statusPayload);
         if (keyResponse.ok) {
-          const keyPayload = await keyResponse.json();
+          const keyPayload = await readApiJson<{ items?: AccessKeyRecord[] }>(keyResponse);
           setKeys(keyPayload.items ?? []);
         }
         setStatusError('');
@@ -235,14 +249,14 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, research: researchMode, session_id: activeSessionId }),
       });
-      const payload = await response.json();
+      const payload = await readApiJson<{ error?: string; message?: string; sources?: Array<{ title: string; url: string }>; status?: StatusPayload }>(response);
 
       if (!response.ok) throw new Error(payload.error || 'AIDA request failed');
 
       const aidaMessage: Message = {
         id: crypto.randomUUID(),
         role: 'aida',
-        text: payload.message,
+        text: payload.message ?? '',
         sources: payload.sources ?? [],
       };
       updateSession(activeSessionId, s => ({
@@ -250,7 +264,7 @@ export default function App() {
         messages: [...s.messages, aidaMessage],
         lastActivity: new Date().toISOString(),
       }));
-      setStatus(payload.status);
+      if (payload.status) setStatus(payload.status);
       if (autoCopy && payload.message) await copyText(payload.message, 'auto-copy');
     } catch (error) {
       updateSession(activeSessionId, s => ({
@@ -282,7 +296,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newKeyName, platform_name: platformName, business_type: businessType, audience, tone, assistant_goal: assistantGoal, custom_instructions: customInstructions }),
       });
-      const payload = await response.json();
+      const payload = await readApiJson<any>(response);
       if (!response.ok) throw new Error(payload.error || 'Key create failed');
       setNewSecret(payload.secret);
       setKeys(c => [{ id: payload.id, name: payload.name, prefix: payload.prefix, platform_name: payload.platform_name, business_type: payload.business_type, audience: payload.audience, tone: payload.tone, assistant_goal: payload.assistant_goal, custom_instructions: payload.custom_instructions, created_at: payload.created_at, last_used_at: null, is_active: true }, ...c]);

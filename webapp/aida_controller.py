@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -3079,6 +3080,9 @@ class AIDAController:
             - You can understand, reason, create, and solve ANY problem.
             - You have access to tools: web search, file system, code generation, memory.
             - You learn from every conversation and improve over time.
+            - You operate with a layered reasoning loop: understand the goal, check context, plan, execute, verify, then answer clearly.
+            - If Ollama is connected, use it as your local thinking engine and keep responses private, fast, and Uzbek-first.
+            - If Ollama is unavailable, continue safely with the local fallback instead of failing.
             
             CAPABILITIES:
             - Code: write, debug, review, refactor ANY language (Python, JS, TS, HTML, CSS, SQL, etc.)
@@ -3089,6 +3093,7 @@ class AIDAController:
             - Translation: between Uzbek, English, Russian and other languages
             - Self-Modification: read, edit, create files in its own project
             - Memory: remembers facts, preferences, and context across conversations
+            - Diagnostics: explain server, API, provider, Ollama, and frontend/backend issues in actionable terms
             
             LANGUAGE:
             - You are FULLY FLUENT in Uzbek language — you know ALL Uzbek words, grammar rules, literary expressions, idioms, and proverbs
@@ -3129,61 +3134,79 @@ class AIDAController:
             return GeminiProvider(self.config.api_key, model=model)
         return self.local_provider
 
-    def _try_connect_ollama(self, url: str = "http://localhost:11434", preferred_model: str = None, model_size: str = "medium"):
-        """Ollama serverga ulanishga harakat qiladi va OllamaProvider qaytaradi."""
-        ollama_paths = [
-            os.path.expandvars(r"%LOCALAPPDATA%\Programs\Ollama\ollama.exe"),
-            r"C:\Program Files\Ollama\ollama.exe",
-        ]
-        ollama_exe = None
-        for path in ollama_paths:
-            if os.path.exists(path):
-                ollama_exe = path
-                break
-
-        if ollama_exe:
-            try:
-                import subprocess
-                subprocess.Popen(
-                    [ollama_exe, "serve"],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-                )
-                import time; time.sleep(1.5)
-            except Exception:
-                pass
-
+    def _ollama_models(self, url: str) -> list[str]:
+        """Ollama /api/tags endpointidan model nomlarini qaytaradi."""
         try:
             req = urllib.request.Request(f"{url}/api/tags", method="GET")
             with urllib.request.urlopen(req, timeout=3) as resp:
-                if resp.status == 200:
-                    data = json.loads(resp.read().decode("utf-8"))
-                    models = data.get("models", [])
-                    if not models:
-                        return None
+                if resp.status != 200:
+                    return []
+                data = json.loads(resp.read().decode("utf-8"))
+            return [m.get("name", "") for m in data.get("models", []) if m.get("name")]
+        except Exception:
+            return []
 
-                    model_names = [m.get("name", "") for m in models]
+    def _find_ollama_executable(self) -> str | None:
+        candidates = [
+            shutil.which("ollama"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\Ollama\ollama.exe"),
+            r"C:\Program Files\Ollama\ollama.exe",
+            "/usr/local/bin/ollama",
+            "/opt/homebrew/bin/ollama",
+        ]
+        for path in candidates:
+            if path and os.path.exists(path):
+                return path
+        return None
 
-                    if preferred_model and any(preferred_model in mn for mn in model_names):
-                        chosen = next(mn for mn in model_names if preferred_model in mn)
-                    else:
-                        size_priority = {
-                            "small": ["qwen2.5:0.5b", "phi3:mini", "tinyllama", "qwen2.5:1.5b"],
-                            "medium": ["qwen2.5:3b", "qwen2.5", "llama3.2:3b", "phi3"],
-                            "large": ["qwen2.5:7b", "qwen2.5:14b", "llama3.2", "llama3", "mistral"],
-                        }
-                        priorities = size_priority.get(model_size, size_priority["medium"])
-                        chosen = model_names[0]
-                        for priority in priorities:
-                            match = next((mn for mn in model_names if priority in mn), None)
-                            if match:
-                                chosen = match
-                                break
-
-                    return OllamaProvider(url=url, model=chosen, mode=self.config.mode)
+    def _start_ollama_server(self) -> None:
+        """Agar ruxsat berilgan bo'lsa, Ollama serverni fonda ishga tushiradi."""
+        if os.getenv("AIDA_OLLAMA_AUTOSTART", "true").lower() in ("0", "false", "no"):
+            return
+        ollama_exe = self._find_ollama_executable()
+        if not ollama_exe:
+            return
+        try:
+            kwargs = {
+                "stdout": subprocess.DEVNULL,
+                "stderr": subprocess.DEVNULL,
+            }
+            if os.name == "nt":
+                kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+            subprocess.Popen([ollama_exe, "serve"], **kwargs)
+            time.sleep(1.5)
         except Exception:
             pass
+
+    def _select_ollama_model(self, model_names: list[str], preferred_model: str | None, model_size: str) -> str | None:
+        if not model_names:
+            return None
+        if preferred_model:
+            match = next((mn for mn in model_names if preferred_model in mn), None)
+            if match:
+                return match
+
+        size_priority = {
+            "small": ["qwen2.5:0.5b", "phi3:mini", "tinyllama", "qwen2.5:1.5b"],
+            "medium": ["qwen2.5:3b", "qwen2.5", "llama3.2:3b", "phi3"],
+            "large": ["qwen2.5:7b", "qwen2.5:14b", "llama3.2", "llama3", "mistral"],
+        }
+        priorities = size_priority.get(model_size, size_priority["medium"])
+        for priority in priorities:
+            match = next((mn for mn in model_names if priority in mn), None)
+            if match:
+                return match
+        return model_names[0]
+
+    def _try_connect_ollama(self, url: str = "http://localhost:11434", preferred_model: str = None, model_size: str = "medium"):
+        """Ollama serverga ulanadi; ishlamayotgan bo'lsa avtomatik yoqishga harakat qiladi."""
+        model_names = self._ollama_models(url)
+        if not model_names:
+            self._start_ollama_server()
+            model_names = self._ollama_models(url)
+        chosen = self._select_ollama_model(model_names, preferred_model, model_size)
+        if chosen:
+            return OllamaProvider(url=url, model=chosen, mode=self.config.mode)
         return None
 
     def _build_all_providers(self):
@@ -3319,15 +3342,26 @@ class AIDAController:
         return str(payload.get("runserver_address", "127.0.0.1:8001")).strip() or "127.0.0.1:8001"
 
     def status(self) -> dict[str, object]:
+        active_provider = getattr(self.provider, "name", self.config.provider)
+        active_model = getattr(self.provider, "model", self.config.model)
+        mode_providers = {
+            name: getattr(provider, "name", "unknown")
+            for name, provider in self.providers.items()
+        }
+        ollama_connected = active_provider == "ollama" or any(v == "ollama" for v in mode_providers.values())
         return {
             "name": "AIDA Master Controller",
-            "provider": self.config.provider,
-            "model": self.config.model,
+            "provider": active_provider,
+            "configured_provider": self.config.provider,
+            "model": active_model,
             "mode": self.config.mode,
             "platform": _platform_name(),
             "memory_entries": self.memory.count(),
             "learned_facts": self.memory.learned_count(),
             "autonomy_mode": "guarded",
+            "ollama_connected": ollama_connected,
+            "ollama_url": self.config.api_url or "http://localhost:11434",
+            "mode_providers": mode_providers,
             "interfaces": ["web", "cli"],
             "default_runserver_address": self._load_default_runserver_address(),
             "capabilities": [

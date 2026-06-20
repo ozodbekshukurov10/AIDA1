@@ -8,6 +8,8 @@ load_dotenv(BASE_DIR / ".env")
 DIST_DIR = BASE_DIR / "dist"
 DIST_ASSETS_DIR = DIST_DIR / "assets"
 TEMPLATES_DIR = BASE_DIR / "templates"
+LOGS_DIR = BASE_DIR / "logs"
+LOGS_DIR.mkdir(exist_ok=True)
 
 
 import secrets
@@ -114,7 +116,7 @@ LOGGING = {
         'console': {'class': 'logging.StreamHandler', 'formatter': 'verbose'},
         'file': {
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'aida.log',
+            'filename': LOGS_DIR / 'aida.log',
             'formatter': 'verbose',
         },
     },

@@ -82,26 +82,34 @@ def dist_asset(request, asset_path: str):
 
 @require_GET
 def api_status(request):
-    return JsonResponse(controller.status())
+    try:
+        return JsonResponse(controller.status())
+    except Exception as exc:
+        logger.exception("Status error: %s", exc)
+        return JsonResponse({"error": "Statusni olishda xatolik yuz berdi."}, status=500)
 
 
 @require_GET
 def api_keys_list(request):
-    keys = AccessKey.objects.all().values(
-        "id",
-        "name",
-        "prefix",
-        "platform_name",
-        "business_type",
-        "audience",
-        "tone",
-        "assistant_goal",
-        "custom_instructions",
-        "created_at",
-        "last_used_at",
-        "is_active",
-    )
-    return JsonResponse({"items": list(keys)})
+    try:
+        keys = AccessKey.objects.all().values(
+            "id",
+            "name",
+            "prefix",
+            "platform_name",
+            "business_type",
+            "audience",
+            "tone",
+            "assistant_goal",
+            "custom_instructions",
+            "created_at",
+            "last_used_at",
+            "is_active",
+        )
+        return JsonResponse({"items": list(keys)})
+    except Exception as exc:
+        logger.exception("Keys list error: %s", exc)
+        return JsonResponse({"items": [], "warning": "Access key jadvali hali tayyor emas. Migration ishga tushiring."})
 
 
 @safe_api_endpoint
@@ -179,6 +187,9 @@ def api_chat(request):
     except ValueError as exc:
         logger.warning("Chat error: %s", exc)
         return JsonResponse({"error": str(exc)}, status=400)
+    except Exception as exc:
+        logger.exception("Chat fatal error: %s", exc)
+        return JsonResponse({"error": "AIDA ichki xatosi. Backend loglarini tekshiring."}, status=500)
 
     logger.info("Chat success: session=%s len=%d", session_id, len(prompt))
     return JsonResponse(response)
