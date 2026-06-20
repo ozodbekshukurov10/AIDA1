@@ -203,6 +203,7 @@ class ProviderConfig:
         ollama_url = os.getenv("AIDA_OLLAMA_URL", "http://localhost:11434")
         ollama_model = os.getenv("AIDA_OLLAMA_MODEL", "qwen2.5-coder:7b")
         timeout_ms = int(os.getenv("AIDA_LLM_TIMEOUT_MS", "120000") or "120000")
+        max_tokens = int(os.getenv("AIDA_LLM_MAX_TOKENS", "1024") or "1024")
         return cls(
             provider=provider,
             model=model,
@@ -213,6 +214,7 @@ class ProviderConfig:
             ollama_url=ollama_url,
             ollama_model=ollama_model,
             timeout_ms=timeout_ms,
+            max_tokens=max_tokens,
         )
 
     def __init__(
@@ -226,6 +228,7 @@ class ProviderConfig:
         ollama_url: str = "http://localhost:11434",
         ollama_model: str = "qwen2.5-coder:7b",
         timeout_ms: int = 120000,
+        max_tokens: int = 1024,
     ) -> None:
         self.provider = provider
         self.model = model
@@ -236,6 +239,7 @@ class ProviderConfig:
         self.ollama_url = ollama_url
         self.ollama_model = ollama_model
         self.timeout_ms = timeout_ms
+        self.max_tokens = max_tokens
 
 
 def build_llm_system_prompt(
@@ -344,11 +348,13 @@ class LMStudioProvider:
         model: str = "local-model",
         api_key: str = "lm-studio",
         timeout_ms: int = 120000,
+        max_tokens: int = 1024,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.api_key = api_key
         self.timeout = max(timeout_ms, 1000) / 1000
+        self.max_tokens = max_tokens
 
     def is_available(self) -> bool:
         try:
@@ -378,7 +384,7 @@ class LMStudioProvider:
             "model": self.model,
             "messages": messages,
             "temperature": 0.7,
-            "max_tokens": 2048,
+            "max_tokens": self.max_tokens,
             "stream": False,
         }
         request = urllib.request.Request(
@@ -403,10 +409,12 @@ class OllamaProvider:
         base_url: str = "http://localhost:11434",
         model: str = "qwen2.5-coder:7b",
         timeout_ms: int = 120000,
+        max_tokens: int = 1024,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.model = model
         self.timeout = max(timeout_ms, 1000) / 1000
+        self.max_tokens = max_tokens
 
     def is_available(self) -> bool:
         try:
@@ -432,7 +440,7 @@ class OllamaProvider:
             "model": self.model,
             "messages": messages,
             "stream": False,
-            "options": {"temperature": 0.7, "num_predict": 2048},
+            "options": {"temperature": 0.7, "num_predict": self.max_tokens},
         }
         request = urllib.request.Request(
             f"{self.base_url}/api/chat",
@@ -1126,6 +1134,7 @@ class AIDAController:
             model=self.config.lmstudio_model,
             api_key=self.config.lmstudio_api_key,
             timeout_ms=self.config.timeout_ms,
+            max_tokens=self.config.max_tokens,
         )
 
     def _make_ollama(self) -> OllamaProvider:
@@ -1133,6 +1142,7 @@ class AIDAController:
             base_url=self.config.ollama_url,
             model=self.config.ollama_model,
             timeout_ms=self.config.timeout_ms,
+            max_tokens=self.config.max_tokens,
         )
 
     def _build_provider(self):
