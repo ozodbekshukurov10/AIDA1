@@ -200,6 +200,8 @@ class ProviderConfig:
         lmstudio_url = os.getenv("AIDA_LMSTUDIO_URL", "http://localhost:1234/v1")
         lmstudio_model = os.getenv("AIDA_LMSTUDIO_MODEL", "local-model")
         lmstudio_api_key = os.getenv("AIDA_LMSTUDIO_API_KEY", "lm-studio")
+        ollama_url = os.getenv("AIDA_OLLAMA_URL", "http://localhost:11434")
+        ollama_model = os.getenv("AIDA_OLLAMA_MODEL", "qwen2.5-coder:7b")
         timeout_ms = int(os.getenv("AIDA_LLM_TIMEOUT_MS", "120000") or "120000")
         return cls(
             provider=provider,
@@ -208,6 +210,8 @@ class ProviderConfig:
             lmstudio_url=lmstudio_url,
             lmstudio_model=lmstudio_model,
             lmstudio_api_key=lmstudio_api_key,
+            ollama_url=ollama_url,
+            ollama_model=ollama_model,
             timeout_ms=timeout_ms,
         )
 
@@ -219,6 +223,8 @@ class ProviderConfig:
         lmstudio_url: str = "http://localhost:1234/v1",
         lmstudio_model: str = "local-model",
         lmstudio_api_key: str = "lm-studio",
+        ollama_url: str = "http://localhost:11434",
+        ollama_model: str = "qwen2.5-coder:7b",
         timeout_ms: int = 120000,
     ) -> None:
         self.provider = provider
@@ -227,7 +233,60 @@ class ProviderConfig:
         self.lmstudio_url = lmstudio_url
         self.lmstudio_model = lmstudio_model
         self.lmstudio_api_key = lmstudio_api_key
+        self.ollama_url = ollama_url
+        self.ollama_model = ollama_model
         self.timeout_ms = timeout_ms
+
+
+def build_llm_system_prompt(
+    system_prompt: str,
+    platform_profile: dict[str, str] | None,
+    runtime_context: dict[str, str] | None,
+    research: list[ResearchSnippet] | None,
+) -> str:
+    parts = [system_prompt]
+
+    context_lines: list[str] = []
+    for source in (platform_profile, runtime_context):
+        if not source:
+            continue
+        for key, value in source.items():
+            value = str(value).strip()
+            if value:
+                context_lines.append(f"- {key}: {value}")
+    if context_lines:
+        parts.append("Kontekst:\n" + "\n".join(context_lines))
+
+    if research:
+        research_lines = ["Internet qidiruv natijalari (manba sifatida foydalaning):"]
+        for index, item in enumerate(research[:4], start=1):
+            research_lines.append(f"{index}. {item.title} — {item.summary} ({item.url})")
+        parts.append("\n".join(research_lines))
+
+    return "\n\n".join(parts)
+
+
+def build_chat_messages(
+    prompt: str,
+    memory: Iterable[dict[str, str]],
+    system_prompt: str,
+    platform_profile: dict[str, str] | None,
+    runtime_context: dict[str, str] | None,
+    research: list[ResearchSnippet] | None,
+) -> list[dict[str, str]]:
+    messages = [
+        {
+            "role": "system",
+            "content": build_llm_system_prompt(
+                system_prompt, platform_profile, runtime_context, research
+            ),
+        }
+    ]
+    for item in memory:
+        role = "user" if item["role"] == "user" else "assistant"
+        messages.append({"role": role, "content": item["content"]})
+    messages.append({"role": "user", "content": prompt})
+    return messages
 
 
 class GeminiProvider:
@@ -291,33 +350,16 @@ class LMStudioProvider:
         self.api_key = api_key
         self.timeout = max(timeout_ms, 1000) / 1000
 
-    def _build_system_prompt(
-        self,
-        system_prompt: str,
-        platform_profile: dict[str, str] | None,
-        runtime_context: dict[str, str] | None,
-        research: list[ResearchSnippet] | None,
-    ) -> str:
-        parts = [system_prompt]
-
-        context_lines: list[str] = []
-        for source in (platform_profile, runtime_context):
-            if not source:
-                continue
-            for key, value in source.items():
-                value = str(value).strip()
-                if value:
-                    context_lines.append(f"- {key}: {value}")
-        if context_lines:
-            parts.append("Kontekst:\n" + "\n".join(context_lines))
-
-        if research:
-            research_lines = ["Internet qidiruv natijalari (manba sifatida foydalaning):"]
-            for index, item in enumerate(research[:4], start=1):
-                research_lines.append(f"{index}. {item.title} — {item.summary} ({item.url})")
-            parts.append("\n".join(research_lines))
-
-        return "\n\n".join(parts)
+    def is_available(self) -> bool:
+        try:
+            request = urllib.request.Request(
+                f"{self.base_url}/models",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+            )
+            with urllib.request.urlopen(request, timeout=3) as response:
+                return response.status == 200
+        except Exception:
+            return False
 
     def respond(
         self,
@@ -329,19 +371,9 @@ class LMStudioProvider:
         research: list[ResearchSnippet] | None = None,
         **kwargs,
     ) -> str:
-        messages = [
-            {
-                "role": "system",
-                "content": self._build_system_prompt(
-                    system_prompt, platform_profile, runtime_context, research
-                ),
-            }
-        ]
-        for item in memory:
-            role = "user" if item["role"] == "user" else "assistant"
-            messages.append({"role": role, "content": item["content"]})
-        messages.append({"role": "user", "content": prompt})
-
+        messages = build_chat_messages(
+            prompt, memory, system_prompt, platform_profile, runtime_context, research
+        )
         payload = {
             "model": self.model,
             "messages": messages,
@@ -349,7 +381,6 @@ class LMStudioProvider:
             "max_tokens": 2048,
             "stream": False,
         }
-
         request = urllib.request.Request(
             f"{self.base_url}/chat/completions",
             data=json.dumps(payload).encode("utf-8"),
@@ -362,6 +393,56 @@ class LMStudioProvider:
         with urllib.request.urlopen(request, timeout=self.timeout) as response:
             result = json.loads(response.read().decode("utf-8"))
         return result["choices"][0]["message"]["content"].strip()
+
+
+class OllamaProvider:
+    name = "ollama"
+
+    def __init__(
+        self,
+        base_url: str = "http://localhost:11434",
+        model: str = "qwen2.5-coder:7b",
+        timeout_ms: int = 120000,
+    ) -> None:
+        self.base_url = base_url.rstrip("/")
+        self.model = model
+        self.timeout = max(timeout_ms, 1000) / 1000
+
+    def is_available(self) -> bool:
+        try:
+            with urllib.request.urlopen(f"{self.base_url}/api/tags", timeout=3) as response:
+                return response.status == 200
+        except Exception:
+            return False
+
+    def respond(
+        self,
+        prompt: str,
+        memory: Iterable[dict[str, str]],
+        system_prompt: str,
+        platform_profile: dict[str, str] | None = None,
+        runtime_context: dict[str, str] | None = None,
+        research: list[ResearchSnippet] | None = None,
+        **kwargs,
+    ) -> str:
+        messages = build_chat_messages(
+            prompt, memory, system_prompt, platform_profile, runtime_context, research
+        )
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "options": {"temperature": 0.7, "num_predict": 2048},
+        }
+        request = urllib.request.Request(
+            f"{self.base_url}/api/chat",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            result = json.loads(response.read().decode("utf-8"))
+        return result["message"]["content"].strip()
 
 
 class LocalProvider:
@@ -1039,16 +1120,39 @@ class AIDAController:
             """
         ).strip()
 
-    def _build_provider(self) -> LocalProvider | GeminiProvider | LMStudioProvider:
-        if self.config.provider == "lmstudio":
-            return LMStudioProvider(
-                base_url=self.config.lmstudio_url,
-                model=self.config.lmstudio_model,
-                api_key=self.config.lmstudio_api_key,
-                timeout_ms=self.config.timeout_ms,
-            )
-        if self.config.api_key and self.config.provider == "remote":
+    def _make_lmstudio(self) -> LMStudioProvider:
+        return LMStudioProvider(
+            base_url=self.config.lmstudio_url,
+            model=self.config.lmstudio_model,
+            api_key=self.config.lmstudio_api_key,
+            timeout_ms=self.config.timeout_ms,
+        )
+
+    def _make_ollama(self) -> OllamaProvider:
+        return OllamaProvider(
+            base_url=self.config.ollama_url,
+            model=self.config.ollama_model,
+            timeout_ms=self.config.timeout_ms,
+        )
+
+    def _build_provider(self):
+        provider = self.config.provider
+        if provider == "ollama":
+            return self._make_ollama()
+        if provider == "lmstudio":
+            return self._make_lmstudio()
+        if provider == "remote" and self.config.api_key:
             return GeminiProvider(self.config.api_key)
+        if provider == "auto":
+            # Prefer a reachable local LLM, then remote, else offline core.
+            ollama = self._make_ollama()
+            if ollama.is_available():
+                return ollama
+            lmstudio = self._make_lmstudio()
+            if lmstudio.is_available():
+                return lmstudio
+            if self.config.api_key:
+                return GeminiProvider(self.config.api_key)
         return self.local_provider
 
     def _should_research(self, prompt: str, research_enabled: bool) -> bool:
@@ -1145,16 +1249,19 @@ class AIDAController:
             return "127.0.0.1:8001"
         return str(payload.get("runserver_address", "127.0.0.1:8001")).strip() or "127.0.0.1:8001"
 
+    def _active_model(self) -> str:
+        active = self.provider.name
+        if active == "ollama":
+            return self.config.ollama_model
+        if active == "lmstudio":
+            return self.config.lmstudio_model
+        return self.config.model
+
     def status(self) -> dict[str, object]:
-        active_model = (
-            self.config.lmstudio_model
-            if self.config.provider == "lmstudio"
-            else self.config.model
-        )
         return {
             "name": "AIDA Master Controller",
-            "provider": self.config.provider,
-            "model": active_model,
+            "provider": self.provider.name,
+            "model": self._active_model(),
             "platform": platform.system(),
             "memory_entries": self.memory.count(),
             "autonomy_mode": "guarded",
