@@ -5,10 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-<<<<<<< HEAD
-=======
-    "server": "tsx server/index.ts",
->>>>>>> b051280dea8d539a47236a4d85212f3580c11b5a
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",

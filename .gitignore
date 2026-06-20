@@ -4,7 +4,6 @@ dist/
 coverage/
 .DS_Store
 *.log
-<<<<<<< HEAD
 .venv/
 __pycache__/
 *.pyc
@@ -12,10 +11,4 @@ db.sqlite3
 staticfiles/
 .env*
 !.env.example
-=======
-.env*
-!.env.example
 data/*.json
-*.db
-*.sqlite
->>>>>>> b051280dea8d539a47236a4d85212f3580c11b5a
