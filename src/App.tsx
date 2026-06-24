@@ -324,25 +324,38 @@ export default function App() {
           >
             {/* SIDEBAR */}
             <aside className="sidebar">
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
                 <div className="eyebrow">AIDA System</div>
                 <h1 className="brand">AIDA</h1>
                 <p className="sidebar-copy">
                   Kuchli kirish, toza boshqaruv va tezkor fikrlash uchun yig'ilgan markaziy ish paneli.
                 </p>
-              </div>
+              </motion.div>
 
               <nav className="nav-stack" aria-label="Sections">
-                {tabs.map((item) => (
-                  <button
+                {tabs.map((item, i) => (
+                  <motion.button
                     key={item.id}
                     type="button"
                     onClick={() => setTab(item.id)}
                     className={`nav-button ${tab === item.id ? 'nav-button-active' : ''}`}
+                    initial={{ opacity: 0, scale: 0.3, y: 30 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 130,
+                      damping: 13,
+                      mass: 0.9,
+                      delay: 0.15 + i * 0.08,
+                    }}
                   >
                     <item.icon size={18} />
                     <span>{item.label}</span>
-                  </button>
+                  </motion.button>
                 ))}
               </nav>
 
@@ -360,11 +373,19 @@ export default function App() {
                   </button>
                 </div>
                 <div className="sessions-list">
-                  {sessions.map(s => (
-                    <div
+                  {sessions.map((s, i) => (
+                    <motion.div
                       key={s.id}
                       className={`session-item ${s.id === activeSessionId ? 'session-item-active' : ''}`}
                       onClick={() => { setActiveSessionId(s.id); setTab('chat'); }}
+                      initial={{ opacity: 0, scale: 0.5, y: 15 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 140,
+                        damping: 14,
+                        delay: 0.3 + Math.min(i, 8) * 0.06,
+                      }}
                     >
                       <span className="session-title">{s.title}</span>
                       <button
@@ -375,7 +396,7 @@ export default function App() {
                       >
                         <Trash2 size={12} />
                       </button>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -391,13 +412,41 @@ export default function App() {
             {/* MAIN */}
             <main className="main-panel">
               <header className="topbar">
-                <div>
+                <motion.div
+                  initial={{ opacity: 0, x: -25 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                >
                   <div className="eyebrow">Operational View</div>
                   <div className="topbar-title">{status?.name ?? 'AIDA booting'}</div>
-                </div>
+                </motion.div>
                 <div className="topbar-meta">
-                  <span className="status-pill"><Cpu size={14} />{status?.provider ?? 'local-core'}</span>
-                  <span className="status-pill"><TerminalSquare size={14} />{status?.default_runserver_address ?? '127.0.0.1:8001'}</span>
+                  <motion.span 
+                    className="status-pill"
+                    initial={{ opacity: 0, scale: 0.3, y: 15 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 140,
+                      damping: 12,
+                      delay: 0.2
+                    }}
+                  >
+                    <Cpu size={14} />{status?.provider ?? 'local-core'}
+                  </motion.span>
+                  <motion.span 
+                    className="status-pill"
+                    initial={{ opacity: 0, scale: 0.3, y: 15 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 140,
+                      damping: 12,
+                      delay: 0.28
+                    }}
+                  >
+                    <TerminalSquare size={14} />{status?.default_runserver_address ?? '127.0.0.1:8001'}
+                  </motion.span>
                 </div>
               </header>
 
@@ -429,7 +478,19 @@ export default function App() {
                             <div className="visual-plaque-copy">Tizim markazi ishga tayyor.</div>
                           </div>
                         </div>
-                        <div className="visual-core"><Command size={46} /></div>
+                        <motion.div 
+                          className="visual-core"
+                          initial={{ opacity: 0, scale: 0.2 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 120,
+                            damping: 11,
+                            delay: 0.55
+                          }}
+                        >
+                          <Command size={46} />
+                        </motion.div>
                         <div className="visual-ring visual-ring-a" />
                         <div className="visual-ring visual-ring-b" />
                       </motion.div>
@@ -437,7 +498,19 @@ export default function App() {
 
                     <section className="stats-grid">
                       {stats.map((item, i) => (
-                        <motion.article key={item.label} className={`stat-card tone-${item.tone}`} initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.6, delay: 0.4 + i * 0.1 }}>
+                        <motion.article 
+                          key={item.label} 
+                          className={`stat-card tone-${item.tone}`} 
+                          initial={{ opacity: 0, scale: 0.4, y: 35 }} 
+                          animate={{ opacity: 1, scale: 1, y: 0 }} 
+                          transition={{ 
+                            type: "spring",
+                            stiffness: 130,
+                            damping: 13,
+                            mass: 0.9,
+                            delay: 0.35 + i * 0.08
+                          }}
+                        >
                           <item.icon size={18} />
                           <div className="stat-label">{item.label}</div>
                           <div className="stat-value">{item.value}</div>
@@ -446,22 +519,52 @@ export default function App() {
                     </section>
 
                     <section className="detail-grid">
-                      <article className="detail-panel">
+                      <motion.article 
+                        className="detail-panel"
+                        initial={{ opacity: 0, y: 25 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.65 }}
+                      >
                         <div className="panel-kicker">Capabilities</div>
                         <div className="cap-list">
-                          {(status?.capabilities ?? []).map(c => <span key={c} className="cap-chip">{c}</span>)}
+                          {(status?.capabilities ?? []).map((c, i) => (
+                            <motion.span 
+                              key={c} 
+                              className="cap-chip"
+                              initial={{ opacity: 0, scale: 0.4, y: 15 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 140,
+                                damping: 12,
+                                delay: 0.75 + Math.min(i, 8) * 0.05
+                              }}
+                            >
+                              {c}
+                            </motion.span>
+                          ))}
                         </div>
-                      </article>
-                      <article className="detail-panel">
+                      </motion.article>
+                      <motion.article 
+                        className="detail-panel"
+                        initial={{ opacity: 0, y: 25 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.72 }}
+                      >
                         <div className="panel-kicker">Focus mode</div>
                         <p className="panel-copy">Javoblar foydali, aniq va operatsion usulda beriladi. Ortiqcha ichki texnik tafsilotlar foydalanuvchi ekraniga chiqarilmaydi.</p>
-                      </article>
-                      <article className="detail-panel">
+                      </motion.article>
+                      <motion.article 
+                        className="detail-panel"
+                        initial={{ opacity: 0, y: 25 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.8 }}
+                      >
                         <div className="panel-kicker">Runserver memory</div>
                         <p className="panel-copy">
                           {statusError ? `Status xatosi: ${statusError}` : `Default manzil: ${status?.default_runserver_address ?? '127.0.0.1:8001'}`}
                         </p>
-                      </article>
+                      </motion.article>
                     </section>
                   </motion.section>
                 )}

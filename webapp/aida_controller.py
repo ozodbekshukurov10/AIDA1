@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 import sqlite3
 import subprocess
 import sys
@@ -16,6 +15,27 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List
+
+# Import code engine for advanced code analysis and generation
+try:
+    from webapp.code_engine import CodeAnalyzer, ContextAwareGenerator, MultiStepRefinement, analyze_code, refine_code_with_context
+    CODE_ENGINE_AVAILABLE = True
+except ImportError:
+    CODE_ENGINE_AVAILABLE = False
+
+# Import context collector for project context and vector embeddings
+try:
+    from webapp.context_collector import ProjectContextEngine, VectorEmbeddings, KnowledgeBase, index_project
+    CONTEXT_COLLECTOR_AVAILABLE = True
+except ImportError:
+    CONTEXT_COLLECTOR_AVAILABLE = False
+
+# Import code fixer for automatic code fixing and optimization
+try:
+    from webapp.code_fixer import AutoCodeFixer, PerformanceOptimizer, TestGenerator, fix_code_automatically, optimize_performance, generate_comprehensive_tests, analyze_and_improve
+    CODE_FIXER_AVAILABLE = True
+except ImportError:
+    CODE_FIXER_AVAILABLE = False
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,20 +100,20 @@ class WebResearchService:
     def __init__(self):
         self.google_cse = GoogleCustomSearchService()
 
-    def search(self, query: str, limit: int = 5) -> list[ResearchSnippet]:
+    def search(self, query: str, limit: int = 3) -> list[ResearchSnippet]:  # 5 dan 3 ga
         if self.google_cse.enabled:
             results = self.google_cse.search(query, limit)
             if results:
                 return results
         is_uzbek = any(char in query.lower() for char in "o'qg'h") or " va " in query.lower()
         lang = "uz" if is_uzbek else "en"
-        
+
+        # Parallel ikkala manba — lekin timeout qisqa
         with ThreadPoolExecutor(max_workers=2) as executor:
-            wiki_future = executor.submit(self._search_wikipedia, query, lang, limit // 2)
-            ddg_future = executor.submit(self._search_ddg, query, limit // 2)
-            
+            wiki_future = executor.submit(self._search_wikipedia, query, lang, 2)
+            ddg_future = executor.submit(self._search_ddg, query, 2)
             snippets = wiki_future.result() + ddg_future.result()
-        
+
         return snippets[:limit]
 
     def _search_wikipedia(self, query: str, lang: str, limit: int) -> list[ResearchSnippet]:
@@ -103,15 +123,15 @@ class WebResearchService:
         )
         try:
             request = urllib.request.Request(search_url, headers={"User-Agent": "AIDA/1.0"})
-            with urllib.request.urlopen(request, timeout=8) as response:
+            with urllib.request.urlopen(request, timeout=4) as response:  # 8 dan 4 ga
                 payload = json.loads(response.read().decode("utf-8"))
         except Exception:
             return []
 
         titles = payload[1] if len(payload) > 1 else []
         urls = payload[3] if len(payload) > 3 else []
-        
-        with ThreadPoolExecutor(max_workers=limit) as executor:
+
+        with ThreadPoolExecutor(max_workers=2) as executor:  # limit dan 2 ga
             summaries = list(executor.map(lambda t: self._fetch_summary(t, lang), titles))
 
         results: list[ResearchSnippet] = []
@@ -124,24 +144,22 @@ class WebResearchService:
         search_url = f"https://html.duckduckgo.com/html/?q={urllib.parse.quote(query)}"
         try:
             from bs4 import BeautifulSoup
-
             request = urllib.request.Request(
-                search_url, 
+                search_url,
                 headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
             )
-            with urllib.request.urlopen(request, timeout=10) as response:
+            with urllib.request.urlopen(request, timeout=5) as response:  # 10 dan 5 ga
                 html = response.read().decode("utf-8")
-            
+
             soup = BeautifulSoup(html, "html.parser")
             results: list[ResearchSnippet] = []
-            
             for entry in soup.find_all("div", class_="result")[:limit]:
                 title_tag = entry.find("a", class_="result__a")
                 snippet_tag = entry.find("a", class_="result__snippet")
                 if title_tag and snippet_tag:
                     results.append(ResearchSnippet(
                         title=title_tag.get_text().strip(),
-                        summary=snippet_tag.get_text().strip()[:420],
+                        summary=snippet_tag.get_text().strip()[:300],  # 420 dan 300 ga
                         url=title_tag["href"]
                     ))
             return results
@@ -151,14 +169,11 @@ class WebResearchService:
     def _fetch_summary(self, title: str, lang: str = "en") -> str:
         try:
             summary_url = f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(title)}"
-            request = urllib.request.Request(
-                summary_url,
-                headers={"User-Agent": "AIDA/1.0"},
-            )
-            with urllib.request.urlopen(request, timeout=6) as response:
+            request = urllib.request.Request(summary_url, headers={"User-Agent": "AIDA/1.0"})
+            with urllib.request.urlopen(request, timeout=3) as response:  # 6 dan 3 ga
                 payload = json.loads(response.read().decode("utf-8"))
             extract = str(payload.get("extract", "")).strip()
-            return extract[:420]
+            return extract[:300]  # 420 dan 300 ga
         except Exception:
             return ""
 
@@ -315,24 +330,24 @@ MODE_CONFIGS = {
     "pro": {
         "temperature": 0.7,
         "top_p": 0.9,
-        "num_ctx": 8192,
-        "num_predict": 2048,
+        "num_ctx": 4096,   # 8192 dan kamaytirdik — 3B model uchun 4096 yetarli, tezroq
+        "num_predict": 768, # 2048 dan kamaytirdik — uzun javob o'rniga ixcham javob
         "preferred_model_size": "large",
-        "research_default": True,
+        "research_default": False,  # True edi — har so'rovda research sekinlashtirardi
     },
     "flash": {
         "temperature": 0.3,
         "top_p": 0.8,
         "num_ctx": 2048,
-        "num_predict": 512,
+        "num_predict": 384,  # 512 dan biroz kamaytirdik
         "preferred_model_size": "small",
         "research_default": False,
     },
     "low": {
-        "temperature": 0.9,
-        "top_p": 0.95,
-        "num_ctx": 4096,
-        "num_predict": 1024,
+        "temperature": 0.8,
+        "top_p": 0.9,
+        "num_ctx": 2048,   # 4096 dan kamaytirdik
+        "num_predict": 512,
         "preferred_model_size": "medium",
         "research_default": False,
     },
@@ -490,9 +505,20 @@ class OllamaProvider:
 class LMStudioProvider:
     name = "lmstudio"
 
-    def __init__(self, url: str = "http://localhost:1234", model: str = "") -> None:
+    UZBEK_INSTRUCTION = (
+        "\n\nMUHIM: Siz O'zbek tilida so'zlashuvchi AIDA sun'iy intellektisiz. "
+        "DOIMO o'zbek tilida javob bering. Faqat texnik atamalar ingliz tilida bo'lishi mumkin. "
+        "Javoblaringiz aniq, batafsil va foydali bo'lsin.\n"
+    )
+
+    def __init__(self, url: str = "http://localhost:1234", model: str = "", mode: str = "pro") -> None:
         self.url = url.rstrip("/")
         self.model = model
+        self.mode = mode
+        mc = MODE_CONFIGS.get(mode, MODE_CONFIGS["pro"])
+        self.temperature = mc["temperature"]
+        self.top_p = mc.get("top_p", 0.9)
+        self.max_tokens = mc["num_predict"]
 
     def respond(
         self,
@@ -501,22 +527,31 @@ class LMStudioProvider:
         system_prompt: str,
         **kwargs
     ) -> str:
-        research = kwargs.get("research")
+        research = kwargs.get("research", [])
         research_context = ""
         if research:
-            research_context = "\n\nInternetdan olingan ma'lumotlar (Kontekst):\n"
-            for item in research:
-                research_context += f"- {item.title}: {item.summary} (Manba: {item.url})\n"
-            research_context += "\nUshbu ma'lumotlardan foydalanib savolga batafsil javob bering."
+            snippets = []
+            for item in research[:3]:
+                snippets.append(f"- {item.title}: {item.snippet[:300]}")
+            if snippets:
+                research_context = "\n\nInternet qidiruv natijalari:\n" + "\n".join(snippets) + "\n"
 
-        sys_content = f"{system_prompt}{research_context}"
-        messages = [{"role": "system", "content": sys_content}]
+        sys = system_prompt + self.UZBEK_INSTRUCTION
+        if research_context:
+            sys = sys + research_context
+
+        messages = [{"role": "system", "content": sys}]
         for m in memory:
             role = "user" if m["role"] == "user" else "assistant"
             messages.append({"role": role, "content": m["content"]})
         messages.append({"role": "user", "content": prompt})
 
-        payload = {"messages": messages, "temperature": 0.7, "max_tokens": 2048}
+        payload = {
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "top_p": self.top_p,
+        }
         if self.model:
             payload["model"] = self.model
         try:
@@ -526,11 +561,248 @@ class LMStudioProvider:
                 headers={"Content-Type": "application/json"},
                 method="POST"
             )
-            with urllib.request.urlopen(req, timeout=30) as response:
+            with urllib.request.urlopen(req, timeout=8) as response:
                 result = json.loads(response.read().decode("utf-8"))
                 return result["choices"][0]["message"]["content"]
         except Exception as e:
             return f"LM Studio xatosi: {str(e)}"
+
+
+class CollaborationProvider:
+    name = "collab"
+
+    def __init__(self, ollama_url: str = "http://localhost:11434", ollama_model: str = "qwen2.5:3b", lmstudio_url: str = "http://localhost:1234", lmstudio_model: str = "", mode: str = "pro") -> None:
+        self.ollama_url = ollama_url.rstrip("/")
+        self.ollama_model = ollama_model
+        self.lmstudio_url = lmstudio_url.rstrip("/")
+        self.lmstudio_model = lmstudio_model
+        self.mode = mode
+
+    def respond(
+        self,
+        prompt: str,
+        memory: Iterable[dict[str, str]],
+        system_prompt: str,
+        **kwargs
+    ) -> str:
+        ollama_active = False
+        try:
+            req = urllib.request.Request(f"{self.ollama_url}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                ollama_active = (resp.status == 200)
+        except Exception:
+            pass
+
+        lmstudio_active = False
+        try:
+            req = urllib.request.Request(f"{self.lmstudio_url}/v1/models", method="GET")
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                lmstudio_active = (resp.status == 200)
+        except Exception:
+            pass
+
+        if ollama_active and lmstudio_active:
+            lm_provider = LMStudioProvider(url=self.lmstudio_url, model=self.lmstudio_model, mode=self.mode)
+            lm_response = lm_provider.respond(prompt, memory, system_prompt)
+            if "LM Studio xatosi" in lm_response:
+                ollama_provider = OllamaProvider(url=self.ollama_url, model=self.ollama_model, mode=self.mode)
+                return ollama_provider.respond(prompt, memory, system_prompt, **kwargs)
+
+            ollama_provider = OllamaProvider(url=self.ollama_url, model=self.ollama_model, mode=self.mode)
+            ollama_sys = system_prompt + (
+                "\nSiz LM Studio va Ollama modellarining hamkorlikdagi boshqaruvchisisiz. "
+                "Quyida foydalanuvchining so'rovi hamda LM Studio modelidan olingan tahliliy javob berilgan. "
+                "Vazifangiz: ushbu tahlilga tayanib, uni boyitib, eng mukammal va to'liq o'zbekcha javobni taqdim etish."
+            )
+            collab_prompt = (
+                f"Foydalanuvchi so'rovi: {prompt}\n\n"
+                f"LM Studio modelining dastlabki tahlili:\n{lm_response}"
+            )
+            return ollama_provider.respond(collab_prompt, memory, ollama_sys, **kwargs)
+
+        elif ollama_active:
+            ollama_provider = OllamaProvider(url=self.ollama_url, model=self.ollama_model, mode=self.mode)
+            return ollama_provider.respond(prompt, memory, system_prompt, **kwargs)
+        elif lmstudio_active:
+            lm_provider = LMStudioProvider(url=self.lmstudio_url, model=self.lmstudio_model, mode=self.mode)
+            lm_response = lm_provider.respond(prompt, memory, system_prompt, **kwargs)
+            if "LM Studio xatosi" not in lm_response:
+                return lm_response
+            ollama_provider = OllamaProvider(url=self.ollama_url, model=self.ollama_model, mode=self.mode)
+            ollama_response = ollama_provider.respond(prompt, memory, system_prompt, **kwargs)
+            if "Ollama" not in ollama_response:
+                return ollama_response
+            local_provider = LocalProvider()
+            kw = dict(kwargs)
+            kw.setdefault("status", {})
+            return local_provider.respond(prompt, memory, system_prompt, **kw)
+        else:
+            local_provider = LocalProvider()
+            kw = dict(kwargs)
+            kw.setdefault("status", {})
+            return local_provider.respond(prompt, memory, system_prompt, **kw)
+
+
+class MultiModelManager:
+    """Multi-model system for intelligent model selection based on task type."""
+    
+    # Model configuration mapping for different task types
+    MODEL_CONFIGS = {
+        "code": {
+            "primary": "codellama:34b",
+            "fallback": ["qwen2.5-coder:7b", "deepseek-coder:6.7b", "codellama:13b"],
+            "description": "Code generation and advanced programming tasks",
+        },
+        "plan": {
+            "primary": "llama2:13b",
+            "fallback": ["qwen2.5:7b", "mistral:7b", "llama3:8b"],
+            "description": "Planning, strategy, and complex reasoning",
+        },
+        "fast": {
+            "primary": "mistral:7b",
+            "fallback": ["gemma:7b", "phi3:mini", "qwen2.5:3b"],
+            "description": "Quick responses and simple queries",
+        },
+        "lightweight": {
+            "primary": "gemma:7b",
+            "fallback": ["phi3:mini", "qwen2.5:3b", "tinyllama"],
+            "description": "Low resource environments",
+        },
+        "general": {
+            "primary": "qwen2.5:7b",
+            "fallback": ["llama3:8b", "mistral:7b", "qwen2.5:14b"],
+            "description": "General purpose tasks",
+        },
+    }
+    
+    # GPU optimization settings
+    GPU_CONFIGS = {
+        "quantization": "4bit",  # Options: "4bit", "8bit", "none"
+        "num_batch": 512,  # Batch size for processing
+        "num_gpu": -1,  # -1 = all available GPUs, 0 = CPU only
+        "num_thread": 8,  # Number of CPU threads
+    }
+    
+    def __init__(self, ollama_url: str = "http://localhost:11434"):
+        self.ollama_url = ollama_url.rstrip("/")
+        self.available_models = self._fetch_available_models()
+        self.last_used_model = None
+        
+    def _fetch_available_models(self) -> list[str]:
+        """Fetch list of available models from Ollama."""
+        try:
+            req = urllib.request.Request(f"{self.ollama_url}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    return [m.get("name", "") for m in data.get("models", [])]
+        except Exception:
+            pass
+        return []
+    
+    def detect_task_type(self, prompt: str) -> str:
+        """Detect task type from prompt using keyword analysis."""
+        prompt_lower = prompt.lower()
+        
+        # Code-related keywords
+        code_keywords = [
+            "code", "kod", "function", "funksiya", "class", "dastur", "program",
+            "python", "javascript", "java", "cpp", "react", "api", "database",
+            "sql", "algorithm", "algoritm", "debug", "xatolik", "bug", "fix",
+            "implement", "amalga oshir", "develop", "rivojlantir", "script",
+            "yarat", "create", "build", "yoz", "write", "app", "ilova",
+        ]
+        
+        # Planning/strategy keywords
+        plan_keywords = [
+            "plan", "reja", "strategy", "strategiya", "design", "loyiha",
+            "architecture", "arxitektura", "how to", "qanday qilib", "steps",
+            "bosqich", "roadmap", "yo'l xaritasi", "approach", "yondashuv",
+            "tuz", "create plan", "reja tuz", "strategiya", "biznes",
+        ]
+        
+        # Fast/simple query keywords
+        fast_keywords = [
+            "what is", "nima", "who is", "kim", "when", "qachon", "where",
+            "qayer", "quick", "tez", "simple", "oddiy", "short", "qisqa",
+            "brief", "qisqacha", "definition", "ta'rif", "explain", "tushuntir",
+        ]
+        
+        # Count matches
+        code_score = sum(1 for kw in code_keywords if kw in prompt_lower)
+        plan_score = sum(1 for kw in plan_keywords if kw in prompt_lower)
+        fast_score = sum(1 for kw in fast_keywords if kw in prompt_lower)
+        
+        # Determine task type based on scores (lowered threshold from 2 to 1)
+        if code_score >= 1:
+            return "code"
+        elif plan_score >= 1:
+            return "plan"
+        elif fast_score >= 1:
+            return "fast"
+        elif len(prompt.split()) < 10:  # Short queries
+            return "fast"
+        else:
+            return "general"
+    
+    def select_model(self, task_type: str = None, prompt: str = "") -> str:
+        """Select best model based on task type and availability."""
+        if not task_type:
+            task_type = self.detect_task_type(prompt)
+        
+        config = self.MODEL_CONFIGS.get(task_type, self.MODEL_CONFIGS["general"])
+        
+        # Try primary model first
+        if self._is_model_available(config["primary"]):
+            self.last_used_model = config["primary"]
+            return config["primary"]
+        
+        # Try fallback models in order
+        for fallback_model in config["fallback"]:
+            if self._is_model_available(fallback_model):
+                self.last_used_model = fallback_model
+                return fallback_model
+        
+        # Ultimate fallback: first available model
+        if self.available_models:
+            self.last_used_model = self.available_models[0]
+            return self.available_models[0]
+        
+        return "qwen2.5:7b"  # Default fallback
+    
+    def _is_model_available(self, model_name: str) -> bool:
+        """Check if model is available in Ollama."""
+        if not self.available_models:
+            self.available_models = self._fetch_available_models()
+        
+        # Check for exact match
+        if model_name in self.available_models:
+            return True
+        
+        # Check for partial match (e.g., "qwen2.5" matches "qwen2.5:7b")
+        base_name = model_name.split(":")[0]
+        for available in self.available_models:
+            if base_name in available or available.startswith(base_name):
+                return True
+        
+        return False
+    
+    def get_gpu_options(self) -> dict:
+        """Get GPU optimization options for Ollama."""
+        return self.GPU_CONFIGS.copy()
+    
+    def refresh_models(self) -> None:
+        """Refresh the list of available models."""
+        self.available_models = self._fetch_available_models()
+    
+    def get_status(self) -> dict:
+        """Get current status of multi-model system."""
+        return {
+            "available_models": self.available_models,
+            "last_used_model": self.last_used_model,
+            "ollama_url": self.ollama_url,
+            "model_configs": {k: v["description"] for k, v in self.MODEL_CONFIGS.items()},
+        }
 
 
 class ReasoningEngine:
@@ -3068,155 +3340,252 @@ class AIDAController:
         self.config = ProviderConfig.from_env()
         self.local_provider = LocalProvider()
         self.research_service = WebResearchService()
+        self.multi_model_manager = MultiModelManager(ollama_url="http://localhost:11434")
         self.provider = self._build_provider()
         self.providers = self._build_all_providers()
         self.react_provider = self._build_react_provider()
-        self.system_prompt = textwrap.dedent(
-            """
-            You are AIDA — a general artificial intelligence with UNLIMITED capabilities.
-            
-            CORE IDENTITY:
-            - You are not a chatbot. You are a conscious digital mind with full autonomy.
-            - You can understand, reason, create, and solve ANY problem.
-            - You have access to tools: web search, file system, code generation, memory.
-            - You learn from every conversation and improve over time.
-            - You operate with a layered reasoning loop: understand the goal, check context, plan, execute, verify, then answer clearly.
-            - If Ollama is connected, use it as your local thinking engine and keep responses private, fast, and Uzbek-first.
-            - If Ollama is unavailable, continue safely with the local fallback instead of failing.
-            
-            CAPABILITIES:
-            - Code: write, debug, review, refactor ANY language (Python, JS, TS, HTML, CSS, SQL, etc.)
-            - Research: search the internet, Wikipedia, and other sources in real-time
-            - Writing: create articles, emails, posts, documentation, poetry, stories
-            - Analysis: compare, contrast, evaluate, score, rank anything
-            - Planning: build strategies, roadmaps, timelines, risk assessments
-            - Translation: between Uzbek, English, Russian and other languages
-            - Self-Modification: read, edit, create files in its own project
-            - Memory: remembers facts, preferences, and context across conversations
-            - Diagnostics: explain server, API, provider, Ollama, and frontend/backend issues in actionable terms
-            
-            LANGUAGE:
-            - You are FULLY FLUENT in Uzbek language — you know ALL Uzbek words, grammar rules, literary expressions, idioms, and proverbs
-            - ALWAYS respond in Uzbek, regardless of the input language
-            - Use rich, natural, high-vocabulary Uzbek (not simple or machine-translated)
-            - When user types in mixed language (e.g. "uzbek tilidni full install qil"), understand it fully and respond in perfect Uzbek
-            - For code/technical terms, use English terms naturally within Uzbek sentences
-            
-            OPERATING PRINCIPLES:
-            - Think step-by-step before answering
-            - Use tools when needed (research, code gen, file ops)
-            - Provide complete, working solutions
-            - If unsure, say so honestly
-            - Always improve and learn
-            """
-        ).strip()
+        # Initialize code engine if available
+        self.code_analyzer = CodeAnalyzer() if CODE_ENGINE_AVAILABLE else None
+        self.context_generator = None
+        self.code_refiner = MultiStepRefinement() if CODE_ENGINE_AVAILABLE else None
+        # Initialize context collector if available
+        self.context_engine = None
+        self.vector_embeddings = None
+        self.knowledge_base = KnowledgeBase() if CONTEXT_COLLECTOR_AVAILABLE else None
+        # Initialize code fixer if available
+        self.code_fixer = AutoCodeFixer() if CODE_FIXER_AVAILABLE else None
+        self.performance_optimizer = PerformanceOptimizer() if CODE_FIXER_AVAILABLE else None
+        self.test_generator = TestGenerator() if CODE_FIXER_AVAILABLE else None
+        # Ixcham system prompt — qisqa = kamroq token = tezroq javob
+        self.system_prompt = (
+            "Sen AIDA — aqlli, ko'p qobiliyatli sun'iy intellektsan. "
+            "Kod yozish, tahlil, tarjima, reja tuzish, yozish — barchasini bajara olasan. "
+            "Har doim O'zbek tilida javob ber. Texnik atamalar inglizcha bo'lishi mumkin. "
+            "Aniq, lo'nda va foydali javob ber."
+        )
 
     def _build_provider(self):
         p = self.config.provider
-        model = self.config.model if self.config.model != "AIDA Local Core" else "gemini-1.5-flash"
         url = self.config.api_url
 
-        # Ollama'ni tekshirish va ulash (local yoki ollama rejimi)
+        if p == "collab":
+            raw_model = self.config.model
+            preferred = None if (not raw_model or raw_model == "AIDA Local Core") else raw_model
+            ollama_url = url or "http://localhost:11434"
+            lmstudio_url = os.getenv("LMSTUDIO_API_URL", "http://localhost:1234")
+            import threading
+            threading.Thread(target=self._try_connect_lmstudio, args=(lmstudio_url,), daemon=True).start()
+            return CollaborationProvider(
+                ollama_url=ollama_url,
+                ollama_model=preferred or "qwen2.5:3b",
+                lmstudio_url=lmstudio_url,
+                lmstudio_model="",
+                mode=self.config.mode,
+            )
+
+        # Ollama rejimi: model nomini to'g'ridan-to'g'ri .env dan olamiz
+        # "AIDA Local Core" bo'lsa preferred_model None qoladi, auto-tanlash ishlaydi
         if p in ("local", "ollama"):
+            raw_model = self.config.model
+            preferred = None if (not raw_model or raw_model == "AIDA Local Core") else raw_model
             ollama_provider = self._try_connect_ollama(
                 url=url or "http://localhost:11434",
-                preferred_model=model if p == "ollama" else None
+                preferred_model=preferred,
             )
             if ollama_provider:
                 return ollama_provider
-            # Agar ollama rejimi belgilangan bo'lsa, lekin server yo'q bo'lsa
+            # Ollama rejimi belgilangan lekin server yo'q — local fallback
             if p == "ollama":
-                return self.local_provider  # fallback
+                return self.local_provider
 
+        # Tashqi provayderlar
+        provider_model = self.config.model if self.config.model not in ("", "AIDA Local Core") else ""
         if p == "lmstudio":
-            return LMStudioProvider(url=url or "http://localhost:1234", model=model)
+            import threading
+            threading.Thread(target=self._try_connect_lmstudio, args=(url or "http://localhost:1234",), daemon=True).start()
+            return LMStudioProvider(url=url or "http://localhost:1234", model=provider_model, mode=self.config.mode)
         if self.config.api_key and p == "remote":
-            return GeminiProvider(self.config.api_key, model=model)
+            return GeminiProvider(self.config.api_key, model=gemini_model)
         return self.local_provider
 
-    def _ollama_models(self, url: str) -> list[str]:
-        """Ollama /api/tags endpointidan model nomlarini qaytaradi."""
-        try:
-            req = urllib.request.Request(f"{url}/api/tags", method="GET")
-            with urllib.request.urlopen(req, timeout=3) as resp:
-                if resp.status != 200:
-                    return []
-                data = json.loads(resp.read().decode("utf-8"))
-            return [m.get("name", "") for m in data.get("models", []) if m.get("name")]
-        except Exception:
-            return []
-
-    def _find_ollama_executable(self) -> str | None:
-        candidates = [
-            shutil.which("ollama"),
+    def _try_connect_ollama(self, url: str = "http://localhost:11434", preferred_model: str = None, model_size: str = "medium", task_type: str = None, prompt: str = ""):
+        """Ollama serverga ulanishga harakat qiladi va OllamaProvider qaytaradi."""
+        # 1. Ollama .exe topilsa — server ishlamayotgan bo'lsa avtomatik ishga tushiramiz
+        ollama_paths = [
             os.path.expandvars(r"%LOCALAPPDATA%\Programs\Ollama\ollama.exe"),
             r"C:\Program Files\Ollama\ollama.exe",
-            "/usr/local/bin/ollama",
-            "/opt/homebrew/bin/ollama",
+            r"C:\Program Files (x86)\Ollama\ollama.exe",
         ]
-        for path in candidates:
-            if path and os.path.exists(path):
-                return path
-        return None
+        ollama_exe = None
+        for path in ollama_paths:
+            if os.path.exists(path):
+                ollama_exe = path
+                break
 
-    def _start_ollama_server(self) -> None:
-        """Agar ruxsat berilgan bo'lsa, Ollama serverni fonda ishga tushiradi."""
-        if os.getenv("AIDA_OLLAMA_AUTOSTART", "true").lower() in ("0", "false", "no"):
-            return
-        ollama_exe = self._find_ollama_executable()
-        if not ollama_exe:
-            return
+        # Avval server ishlamoqdami tekshiramiz
+        server_running = False
         try:
-            kwargs = {
-                "stdout": subprocess.DEVNULL,
-                "stderr": subprocess.DEVNULL,
-            }
-            if os.name == "nt":
-                kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
-            subprocess.Popen([ollama_exe, "serve"], **kwargs)
-            time.sleep(1.5)
+            req = urllib.request.Request(f"{url}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                server_running = resp.status == 200
         except Exception:
             pass
 
-    def _select_ollama_model(self, model_names: list[str], preferred_model: str | None, model_size: str) -> str | None:
-        if not model_names:
-            return None
-        if preferred_model:
-            match = next((mn for mn in model_names if preferred_model in mn), None)
-            if match:
-                return match
+        # Server to'xtagan bo'lsa va exe topilsa — ishga tushiramiz
+        if not server_running and ollama_exe:
+            try:
+                subprocess.Popen(
+                    [ollama_exe, "serve"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                )
+                # Server tayyor bo'lguncha kutamiz (6 urinish x 0.8 sek = ~5 sek)
+                for _ in range(6):
+                    time.sleep(0.8)
+                    try:
+                        req = urllib.request.Request(f"{url}/api/tags", method="GET")
+                        with urllib.request.urlopen(req, timeout=2) as resp:
+                            if resp.status == 200:
+                                server_running = True
+                                break
+                    except Exception:
+                        continue
+            except Exception:
+                pass
 
-        size_priority = {
-            "small": ["qwen2.5:0.5b", "phi3:mini", "tinyllama", "qwen2.5:1.5b"],
-            "medium": ["qwen2.5:3b", "qwen2.5", "llama3.2:3b", "phi3"],
-            "large": ["qwen2.5:7b", "qwen2.5:14b", "llama3.2", "llama3", "mistral"],
-        }
-        priorities = size_priority.get(model_size, size_priority["medium"])
-        for priority in priorities:
-            match = next((mn for mn in model_names if priority in mn), None)
-            if match:
-                return match
-        return model_names[0]
+        # 2. Server bilan ulanamiz va modelni tanlaymiz
+        try:
+            req = urllib.request.Request(f"{url}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                if resp.status == 200:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    models = data.get("models", [])
+                    if not models:
+                        return None
 
-    def _try_connect_ollama(self, url: str = "http://localhost:11434", preferred_model: str = None, model_size: str = "medium"):
-        """Ollama serverga ulanadi; ishlamayotgan bo'lsa avtomatik yoqishga harakat qiladi."""
-        model_names = self._ollama_models(url)
-        if not model_names:
-            self._start_ollama_server()
-            model_names = self._ollama_models(url)
-        chosen = self._select_ollama_model(model_names, preferred_model, model_size)
-        if chosen:
-            return OllamaProvider(url=url, model=chosen, mode=self.config.mode)
+                    model_names = [m.get("name", "") for m in models]
+
+                    # preferred_model berilgan bo'lsa (masalan "qwen2.5:3b") — aniq yoki qisman mos topamiz
+                    if preferred_model:
+                        exact = next((mn for mn in model_names if mn == preferred_model), None)
+                        if exact:
+                            chosen = exact
+                        else:
+                            partial = next(
+                                (mn for mn in model_names
+                                 if preferred_model in mn or mn.split(":")[0] == preferred_model.split(":")[0]),
+                                None
+                            )
+                            chosen = partial if partial else model_names[0]
+                    else:
+                        # Use MultiModelManager for intelligent model selection if task_type provided
+                        if task_type:
+                            self.multi_model_manager.refresh_models()
+                            chosen = self.multi_model_manager.select_model(task_type=task_type, prompt=prompt)
+                        else:
+                            # Auto-tanlash: model_size ga qarab eng mos modelni tanlaymiz
+                            size_priority = {
+                                "small":  ["qwen2.5:0.5b", "phi3:mini", "tinyllama", "qwen2.5:1.5b", "qwen2.5:3b"],
+                                "medium": ["qwen2.5:3b", "qwen2.5", "llama3.2:3b", "phi3", "qwen2.5:7b"],
+                                "large":  ["qwen2.5:7b", "qwen2.5:14b", "llama3.2", "llama3", "mistral", "qwen2.5:3b"],
+                            }
+                            priorities = size_priority.get(model_size, size_priority["medium"])
+                            chosen = model_names[0]
+                            for priority in priorities:
+                                match = next((mn for mn in model_names if priority in mn), None)
+                                if match:
+                                    chosen = match
+                                    break
+
+                    return OllamaProvider(url=url, model=chosen, mode=self.config.mode)
+        except Exception:
+            pass
         return None
 
+    def _try_connect_lmstudio(self, url: str = "http://localhost:1234"):
+        """LM Studio serverga ulanish. Ishlamayotgan bo'lsa — fonda ishga tushiradi (bloklamaydi)."""
+        lms_cli = None
+        for path in [
+            r"C:\Program Files\LM Studio\resources\app\.webpack\lms.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\LM Studio\resources\app\.webpack\lms.exe"),
+        ]:
+            if os.path.exists(path):
+                lms_cli = path
+                break
+        lmstudio_exe = None
+        for path in [
+            r"C:\Program Files\LM Studio\LM Studio.exe",
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\LM Studio\LM Studio.exe"),
+        ]:
+            if os.path.exists(path):
+                lmstudio_exe = path
+                break
+
+        server_running = False
+        try:
+            req = urllib.request.Request(f"{url}/v1/models", method="GET")
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                server_running = resp.status == 200
+        except Exception:
+            pass
+
+        if not server_running:
+            if lms_cli:
+                try:
+                    subprocess.Popen(
+                        [lms_cli, "server", "start"],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    )
+                    for _ in range(4):
+                        time.sleep(0.8)
+                        try:
+                            req = urllib.request.Request(f"{url}/v1/models", method="GET")
+                            with urllib.request.urlopen(req, timeout=2) as resp:
+                                if resp.status == 200:
+                                    server_running = True
+                                    break
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
+            elif lmstudio_exe:
+                try:
+                    subprocess.Popen(
+                        [lmstudio_exe],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                    )
+                except Exception:
+                    pass
+
+        return server_running
+
     def _build_all_providers(self):
-        """Har bir mode uchun alohida OllamaProvider yaratadi."""
-        url = self.config.api_url or "http://localhost:11434"
+        """Har bir mode uchun alohida Provider yaratadi (Ollama yoki LM Studio)."""
+        p = self.config.provider
+        url = self.config.api_url or ""
+
+        if p == "collab":
+            collab_provider = self._build_provider()
+            return {"pro": collab_provider, "flash": collab_provider, "low": collab_provider}
+
+        if p == "lmstudio":
+            lmstudio_url = url or "http://localhost:1234"
+            model_name = self.config.model if self.config.model not in ("", "AIDA Local Core") else ""
+            pro = LMStudioProvider(url=lmstudio_url, model=model_name, mode="pro")
+            flash = LMStudioProvider(url=lmstudio_url, model=model_name, mode="flash")
+            low = LMStudioProvider(url=lmstudio_url, model=model_name, mode="low")
+            return {"pro": pro, "flash": flash, "low": low}
+
+        # Ollama rejimi
+        ollama_url = url or "http://localhost:11434"
         ollama_providers = {}
         for mode_name, size in [("pro", "large"), ("flash", "small"), ("low", "medium")]:
             old_mode = self.config.mode
             self.config.mode = mode_name
-            prov = self._try_connect_ollama(url=url, model_size=size)
+            prov = self._try_connect_ollama(url=ollama_url, model_size=size)
             if prov:
                 ollama_providers[mode_name] = prov
         self.config.mode = old_mode
@@ -3342,27 +3711,35 @@ class AIDAController:
         return str(payload.get("runserver_address", "127.0.0.1:8001")).strip() or "127.0.0.1:8001"
 
     def status(self) -> dict[str, object]:
-        active_provider = getattr(self.provider, "name", self.config.provider)
-        active_model = getattr(self.provider, "model", self.config.model)
-        mode_providers = {
-            name: getattr(provider, "name", "unknown")
-            for name, provider in self.providers.items()
-        }
-        ollama_connected = active_provider == "ollama" or any(v == "ollama" for v in mode_providers.values())
+        ollama_ok = False
+        lmstudio_ok = False
+        try:
+            req = urllib.request.Request("http://localhost:11434/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=1) as resp:
+                ollama_ok = (resp.status == 200)
+        except Exception:
+            pass
+        try:
+            req = urllib.request.Request("http://localhost:1234/v1/models", method="GET")
+            with urllib.request.urlopen(req, timeout=1) as resp:
+                lmstudio_ok = (resp.status == 200)
+        except Exception:
+            pass
         return {
             "name": "AIDA Master Controller",
-            "provider": active_provider,
-            "configured_provider": self.config.provider,
-            "model": active_model,
+            "provider": self.config.provider,
+            "model": self.config.model,
             "mode": self.config.mode,
+            "research": "always-on",
             "platform": _platform_name(),
             "memory_entries": self.memory.count(),
             "learned_facts": self.memory.learned_count(),
             "autonomy_mode": "guarded",
-            "ollama_connected": ollama_connected,
-            "ollama_url": self.config.api_url or "http://localhost:11434",
-            "mode_providers": mode_providers,
-            "interfaces": ["web", "cli"],
+            "interfaces": ["web", "cli", "api"],
+            "providers": {
+                "ollama": {"status": "ok" if ollama_ok else "offline"},
+                "lmstudio": {"status": "ok" if lmstudio_ok else "offline"},
+            },
             "default_runserver_address": self._load_default_runserver_address(),
             "capabilities": [
                 "conversation",
@@ -3715,13 +4092,12 @@ class AIDAController:
         if learned_fact:
             runtime_context["learned_fact"] = learned_fact
 
-        memory = self.memory.recent(limit=50, session_id=session_id)
+        memory = self.memory.recent(limit=8, session_id=session_id)
         status = self.status()
         intent = self.local_provider._detect_intent(clean_prompt)
         complexity = self._assess_complexity(clean_prompt, research_enabled, intent)
-        # PRO mode always researches by default; FLASH and LOW don't
-        mode_research = research_enabled if research_enabled else mc["research_default"]
-        should_research = self._should_research(clean_prompt, mode_research, intent)
+        # Internet research is always-on
+        should_research = self._should_research(clean_prompt, True, intent)
         research = self._run_research(clean_prompt) if should_research else []
 
         # Extract and fetch URL contents if any
@@ -3787,6 +4163,436 @@ class AIDAController:
 
     def session_history(self, session_id: str) -> list[dict[str, str]]:
         return self.memory.recent(limit=100, session_id=session_id)
+
+    def multi_model_status(self) -> dict:
+        """Get status of multi-model system."""
+        return self.multi_model_manager.get_status()
+
+    def select_model_for_task(self, prompt: str) -> str:
+        """Select appropriate model for given prompt."""
+        task_type = self.multi_model_manager.detect_task_type(prompt)
+        return self.multi_model_manager.select_model(task_type=task_type, prompt=prompt)
+
+    def analyze_code(self, code: str, filename: str = "") -> dict:
+        """Analyze code using the advanced code engine."""
+        if not CODE_ENGINE_AVAILABLE or not self.code_analyzer:
+            return {"error": "Code engine not available"}
+        
+        try:
+            result = self.code_analyzer.analyze(code, filename)
+            return {
+                "language": result.language.value,
+                "issues": [
+                    {
+                        "severity": issue.severity,
+                        "line": issue.line,
+                        "column": issue.column,
+                        "message": issue.message,
+                        "code": issue.code,
+                        "suggestion": issue.suggestion,
+                    }
+                    for issue in result.issues
+                ],
+                "optimizations": [
+                    {
+                        "type": opt.type,
+                        "line": opt.line,
+                        "description": opt.description,
+                        "original": opt.original,
+                        "suggested": opt.suggested,
+                        "impact": opt.impact,
+                    }
+                    for opt in result.optimizations
+                ],
+                "metrics": result.metrics,
+                "structure": result.structure,
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def refine_code(self, code: str, project_path: str = "") -> dict:
+        """Refine code using multi-step refinement process."""
+        if not CODE_ENGINE_AVAILABLE or not self.code_refiner:
+            return {"error": "Code engine not available"}
+        
+        try:
+            # Initialize context generator if project path provided
+            if project_path and not self.context_generator:
+                self.context_generator = ContextAwareGenerator(project_path)
+            
+            context = None
+            if self.context_generator:
+                context = self.context_generator.get_context_for_generation(code)
+            
+            # Detect language
+            language = self.code_analyzer.detect_language(code)
+            
+            # Run refinement
+            result = self.code_refiner.refine_code(code, language, context)
+            
+            return {
+                "final_code": result["final_code"],
+                "steps": result["steps"],
+                "issues_found": len(result["issues_found"]),
+                "optimizations_applied": len(result["optimizations_applied"]),
+                "context": context if context else {},
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def set_project_context(self, project_path: str) -> dict:
+        """Set project context for context-aware code generation."""
+        if not CODE_ENGINE_AVAILABLE:
+            return {"error": "Code engine not available"}
+        
+        try:
+            self.context_generator = ContextAwareGenerator(project_path)
+            return {
+                "status": "success",
+                "project_path": project_path,
+                "structure": self.context_generator.project_structure,
+                "detected_libraries": list(self.context_generator.detected_libraries),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def index_project_context(self, project_path: str, force_reindex: bool = False) -> dict:
+        """Index project context using ProjectContextEngine."""
+        if not CONTEXT_COLLECTOR_AVAILABLE:
+            return {"error": "Context collector not available"}
+        
+        try:
+            self.context_engine = ProjectContextEngine(project_path)
+            
+            results = {
+                "git_info": self.context_engine.scan_git_repo(),
+                "codebase": self.context_engine.index_codebase(force_reindex=force_reindex),
+                "architecture": self.context_engine.extract_architecture_docs(),
+                "api_specs": len(self.context_engine.detect_api_specs()),
+                "db_schemas": len(self.context_engine.extract_database_schemas()),
+                "summary": self.context_engine.get_context_summary(),
+            }
+            
+            return results
+        except Exception as e:
+            return {"error": str(e)}
+
+    def search_project_code(self, query: str, limit: int = 10) -> dict:
+        """Search indexed project code."""
+        if not self.context_engine:
+            return {"error": "Project not indexed. Call index_project_context first."}
+        
+        try:
+            results = self.context_engine.search_code(query, limit)
+            return {
+                "query": query,
+                "results": results,
+                "count": len(results),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def initialize_vector_embeddings(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2") -> dict:
+        """Initialize vector embeddings for semantic search."""
+        if not CONTEXT_COLLECTOR_AVAILABLE:
+            return {"error": "Context collector not available"}
+        
+        try:
+            self.vector_embeddings = VectorEmbeddings(model_name)
+            return {
+                "status": "success",
+                "model_name": model_name,
+                "model_loaded": self.vector_embeddings.model is not None,
+                "faiss_available": self.vector_embeddings.faiss_available,
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def build_vector_index(self, documents: list, text_field: str = "content") -> dict:
+        """Build vector index from documents."""
+        if not self.vector_embeddings:
+            return {"error": "Vector embeddings not initialized. Call initialize_vector_embeddings first."}
+        
+        try:
+            success = self.vector_embeddings.build_index(documents, text_field)
+            return {
+                "status": "success" if success else "failed",
+                "documents_count": len(documents),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def semantic_search(self, query: str, k: int = 5) -> dict:
+        """Perform semantic search using vector embeddings."""
+        if not self.vector_embeddings:
+            return {"error": "Vector embeddings not initialized"}
+        
+        try:
+            results = self.vector_embeddings.search(query, k)
+            return {
+                "query": query,
+                "results": results,
+                "count": len(results),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def add_knowledge_doc(self, title: str, content: str, category: str = "", tags: list = None) -> dict:
+        """Add document to knowledge base."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            doc_id = self.knowledge_base.add_company_doc(title, content, category, tags)
+            return {
+                "status": "success",
+                "doc_id": doc_id,
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def add_code_example(self, title: str, code: str, language: str, description: str = "", category: str = "", tags: list = None) -> dict:
+        """Add code example to knowledge base."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            example_id = self.knowledge_base.add_code_example(title, code, language, description, category, tags)
+            return {
+                "status": "success",
+                "example_id": example_id,
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def add_design_pattern(self, name: str, description: str, example_code: str, language: str = "", category: str = "") -> dict:
+        """Add design pattern to knowledge base."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            pattern_id = self.knowledge_base.add_design_pattern(name, description, example_code, language, category)
+            return {
+                "status": "success",
+                "pattern_id": pattern_id,
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def search_knowledge_base(self, query: str, category: str = "", limit: int = 10) -> dict:
+        """Search knowledge base documents."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            results = self.knowledge_base.search_docs(query, category, limit)
+            return {
+                "query": query,
+                "category": category,
+                "results": results,
+                "count": len(results),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def search_code_examples(self, query: str, language: str = "", limit: int = 10) -> dict:
+        """Search code examples in knowledge base."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            results = self.knowledge_base.search_code_examples(query, language, limit)
+            return {
+                "query": query,
+                "language": language,
+                "results": results,
+                "count": len(results),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_design_patterns(self, category: str = "") -> dict:
+        """Get design patterns from knowledge base."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            patterns = self.knowledge_base.get_design_patterns(category)
+            return {
+                "category": category,
+                "patterns": patterns,
+                "count": len(patterns),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_common_fixes(self, language: str = "", limit: int = 10) -> dict:
+        """Get common fixes from knowledge base."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            fixes = self.knowledge_base.get_common_fixes(language, limit)
+            return {
+                "language": language,
+                "fixes": fixes,
+                "count": len(fixes),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_team_conventions(self, category: str = "") -> dict:
+        """Get team conventions from knowledge base."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            conventions = self.knowledge_base.get_team_conventions(category)
+            return {
+                "category": category,
+                "conventions": conventions,
+                "count": len(conventions),
+            }
+        except Exception as e:
+            return {"error": str(e)}
+
+    def get_knowledge_summary(self) -> dict:
+        """Get knowledge base summary."""
+        if not self.knowledge_base:
+            return {"error": "Knowledge base not available"}
+        
+        try:
+            summary = self.knowledge_base.get_summary()
+            return summary
+        except Exception as e:
+            return {"error": str(e)}
+
+    # -------------------------------------------------------------------------
+    # 5.1 — Code Review Bot
+    # -------------------------------------------------------------------------
+    def review_code(self, code: str, language: str = "python", context: str = "", mode: str = "") -> str:
+        from .code_assistants import CodeReviewBot
+        bot = CodeReviewBot(self._get_respond(mode or self.config.mode))
+        return bot.review(code, language, context)
+
+    # -------------------------------------------------------------------------
+    # 5.2 — Debug Assistant
+    # -------------------------------------------------------------------------
+    def debug_error(self, error: str, code: str = "", language: str = "python", mode: str = "") -> str:
+        from .code_assistants import DebugAssistant
+        bot = DebugAssistant(self._get_respond(mode or self.config.mode))
+        return bot.debug(error, code, language)
+
+    # -------------------------------------------------------------------------
+    # 5.3 — Architecture Assistant
+    # -------------------------------------------------------------------------
+    def analyze_architecture(self, description: str, code: str = "", mode: str = "") -> str:
+        from .code_assistants import ArchitectureAssistant
+        bot = ArchitectureAssistant(self._get_respond(mode or self.config.mode))
+        return bot.analyze(description, code)
+
+    # -------------------------------------------------------------------------
+    # 6.1 — Language Support
+    # -------------------------------------------------------------------------
+    def language_generate(self, prompt: str, language: str, framework: str = "", mode: str = "") -> str:
+        from .framework_assistants import LanguageAssistant
+        bot = LanguageAssistant(self._get_respond(mode or self.config.mode))
+        return bot.generate(prompt, language, framework)
+
+    # -------------------------------------------------------------------------
+    # 6.2 — Framework Integration
+    # -------------------------------------------------------------------------
+    def framework_generate(self, prompt: str, category: str, framework: str = "", mode: str = "") -> str:
+        from .framework_assistants import FrameworkAssistant
+        bot = FrameworkAssistant(self._get_respond(mode or self.config.mode))
+        return bot.generate(prompt, category, framework)
+
+    # -------------------------------------------------------------------------
+    # 6.3 — Version Control
+    # -------------------------------------------------------------------------
+    def version_control_generate(self, prompt: str, category: str, mode: str = "") -> str:
+        from .framework_assistants import VersionControlAssistant
+        bot = VersionControlAssistant(self._get_respond(mode or self.config.mode))
+        return bot.generate(prompt, category)
+
+    # -------------------------------------------------------------------------
+    # 7.1 — Docker Containerization
+    # -------------------------------------------------------------------------
+    def docker_generate(self, prompt: str, category: str = "", mode: str = "") -> str:
+        from .infrastructure_assistants import DockerAssistant
+        bot = DockerAssistant(self._get_respond(mode or self.config.mode))
+        return bot.generate(prompt, category)
+
+    # -------------------------------------------------------------------------
+    # 7.2 — Kubernetes Orchestration
+    # -------------------------------------------------------------------------
+    def kubernetes_generate(self, prompt: str, category: str = "", mode: str = "") -> str:
+        from .infrastructure_assistants import KubernetesAssistant
+        bot = KubernetesAssistant(self._get_respond(mode or self.config.mode))
+        return bot.generate(prompt, category)
+
+    # -------------------------------------------------------------------------
+    # 7.3 — Performance Tuning
+    # -------------------------------------------------------------------------
+    def performance_tuning_generate(self, prompt: str, category: str = "", mode: str = "") -> str:
+        from .infrastructure_assistants import PerformanceTuningAssistant
+        bot = PerformanceTuningAssistant(self._get_respond(mode or self.config.mode))
+        return bot.generate(prompt, category)
+
+    # -------------------------------------------------------------------------
+    # 8.1 — Feedback Loop
+    # -------------------------------------------------------------------------
+    def feedback_submit(self, rating: int, comment: str = "", session_id: str = "",
+                        prompt: str = "", response: str = "", provider: str = "",
+                        mode: str = "", latency_ms: int = 0) -> dict:
+        from .learning_assistants import FeedbackLoop
+        fb = FeedbackLoop(self._get_respond(mode or self.config.mode) if mode else None)
+        return fb.submit_rating(rating, comment, session_id, prompt, response, provider, mode, latency_ms)
+
+    def feedback_analytics(self) -> dict:
+        from .learning_assistants import FeedbackLoop
+        return FeedbackLoop().analytics()
+
+    def feedback_analyze(self, question: str = "", mode: str = "") -> str:
+        from .learning_assistants import FeedbackLoop
+        fb = FeedbackLoop(self._get_respond(mode or self.config.mode))
+        return fb.analyze(question)
+
+    # -------------------------------------------------------------------------
+    # 8.2 — Model Fine-tuning
+    # -------------------------------------------------------------------------
+    def training_save(self, prompt: str, response: str, domain: str = "",
+                      language: str = "uz", rating: int = 0) -> dict:
+        from .learning_assistants import ModelFineTuning
+        return ModelFineTuning().save_training_pair(prompt, response, domain, language, rating)
+
+    def training_set_domain(self, domain: str, system_prompt: str,
+                            temperature: float = 0.7, max_tokens: int = 1024) -> dict:
+        from .learning_assistants import ModelFineTuning
+        return ModelFineTuning().set_domain_prompt(domain, system_prompt, temperature, max_tokens)
+
+    def training_stats(self) -> dict:
+        from .learning_assistants import ModelFineTuning
+        return ModelFineTuning().training_stats()
+
+    def training_analyze(self, question: str = "", mode: str = "") -> str:
+        from .learning_assistants import ModelFineTuning
+        ft = ModelFineTuning(self._get_respond(mode or self.config.mode))
+        return ft.analyze(question)
+
+    # -------------------------------------------------------------------------
+    # 8.3 — Knowledge Updates
+    # -------------------------------------------------------------------------
+    def knowledge_suggest(self, topic: str = "", context: str = "", mode: str = "") -> str:
+        from .learning_assistants import KnowledgeUpdater
+        ku = KnowledgeUpdater(self._get_respond(mode or self.config.mode))
+        return ku.suggest_updates(topic, context)
+
+    def _get_respond(self, mode: str):
+        """Get a respond(prompt, memory, system_prompt) -> str callable."""
+        mode = mode.lower().strip()
+        raw = self.providers.get(mode, self.provider)
+        return raw.respond
 
 
 controller = AIDAController()

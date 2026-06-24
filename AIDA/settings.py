@@ -24,6 +24,9 @@ CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
     if origin.strip()
+] if os.environ.get("DJANGO_CSRF_TRUSTED_ORIGINS") else [
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
 ]
 if os.environ.get("DJANGO_SECURE_PROXY_SSL_HEADER", "false").lower() == "true":
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

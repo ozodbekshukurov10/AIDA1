@@ -7,86 +7,106 @@
 <title>AIDA - Sun'iy Ong</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0b0d12;--surface:#13161e;--surface2:#1a1f2b;--surface3:#202638;--border:#252b3a;--border-light:#2e3548;--text:#e4e7ed;--text2:#8a91a5;--text3:#5c6378;--accent:#5b7aff;--accent-hover:#6f8aff;--accent-glow:rgba(91,122,255,0.15);--green:#3ccf7e;--green-dim:rgba(60,207,126,0.12);--red:#f05a5a;--radius:10px;--radius-sm:6px;--sidebar-w:280px;--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:'SF Mono','Fira Code',monospace}
+:root{--bg:#0b0d12;--surface:#13161e;--surface2:#1a1f2b;--surface3:#202638;--border:#252b3a;--border-light:#2e3548;--text:#e4e7ed;--text2:#8a91a5;--text3:#5c6378;--accent:#5b7aff;--accent-hover:#6f8aff;--accent-glow:rgba(91,122,255,0.15);--green:#3ccf7e;--green-dim:rgba(60,207,126,0.12);--red:#f05a5a;--radius:12px;--radius-sm:8px;--sidebar-w:280px;--font:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;--mono:'SF Mono','Fira Code','Cascadia Code',monospace}
 html,body{height:100%}
 body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;line-height:1.6}
 .layout{display:flex;height:100dvh}
-.sidebar{width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:50}
-.sidebar-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
-.sidebar-header .brand{font-size:16px;font-weight:700;display:flex;align-items:center;gap:6px}
-.sidebar-header .brand svg{width:18px;height:18px;color:var(--accent);flex-shrink:0}
+.sidebar{width:var(--sidebar-w);background:linear-gradient(180deg,var(--surface) 0%,#0f121a 100%);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;z-index:50}
+.sidebar-header{padding:16px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sidebar-header .brand{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sidebar-header .brand svg{width:20px;height:20px;color:var(--accent);flex-shrink:0;filter:drop-shadow(0 0 8px rgba(91,122,255,0.3))}
 .sidebar-header .brand span{background:linear-gradient(135deg,var(--accent),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.new-chat-btn{padding:6px 14px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background 0.2s;font-family:var(--font)}
-.new-chat-btn:hover{background:var(--accent-hover)}
+.new-chat-btn{padding:7px 16px;background:linear-gradient(135deg,var(--accent),#4a6ae8);border:none;border-radius:var(--radius-sm);color:#fff;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.25s ease,transform 0.15s;font-family:var(--font);box-shadow:0 2px 8px rgba(91,122,255,0.2)}
+.new-chat-btn:hover{background:linear-gradient(135deg,var(--accent-hover),#5b7aff);transform:translateY(-1px);box-shadow:0 4px 12px rgba(91,122,255,0.3)}
+.new-chat-btn:active{transform:translateY(0)}
 .chat-list{flex:1;overflow-y:auto;padding:8px}
 .chat-list::-webkit-scrollbar{width:3px}
 .chat-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.chat-item{padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:background 0.15s;margin-bottom:2px;font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chat-item:hover{background:var(--surface2);color:var(--text)}
-.chat-item.active{background:var(--accent-glow);color:var(--text);border:1px solid rgba(91,122,255,0.2)}
+.chat-item{padding:10px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s ease;margin-bottom:2px;font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:1px solid transparent}
+.chat-item:hover{background:var(--surface2);color:var(--text);border-color:var(--border)}
+.chat-item.active{background:var(--accent-glow);color:var(--text);border:1px solid rgba(91,122,255,0.25);box-shadow:inset 0 0 20px rgba(91,122,255,0.05)}
 .chat-item .date{font-size:10px;color:var(--text3);margin-top:2px}
-.main{flex:1;display:flex;flex-direction:column;min-width:0}
-.header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;gap:10px}
+.sidebar-footer{padding:10px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:4px}
+.sidebar-footer a{display:flex;align-items:center;gap:8px;padding:8px 8px;border-radius:var(--radius-sm);color:var(--text3);text-decoration:none;font-size:12px;transition:all 0.2s}
+.sidebar-footer a:hover{background:var(--surface2);color:var(--text)}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;background:radial-gradient(ellipse at 50% 0%, rgba(91,122,255,0.02) 0%, transparent 60%)}
+.header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0;gap:10px;background:rgba(11,13,18,0.6);backdrop-filter:blur(12px)}
 .header .title{font-size:14px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .header .status{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:6px;flex-shrink:0}
-.header .status .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0}
-.header .status .dot.off{background:var(--red)}
+.header .status .dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;animation:pulse 2s ease-in-out infinite}
+.header .status .dot.off{background:var(--red);animation:none}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 4px var(--green)}50%{opacity:0.6;box-shadow:0 0 8px var(--green)}}
+.header .status .providers{font-size:9px;color:var(--text3);display:flex;gap:4px;margin-left:4px}
+.header .status .providers span{padding:1px 5px;border-radius:3px;background:var(--surface2);border:1px solid var(--border)}
+.header .status .providers span.ok{color:var(--green);border-color:rgba(60,207,126,0.3)}
+.header .status .providers span.off{color:var(--text3)}
 .chat-feed{flex:1;overflow-y:auto;padding:20px;scroll-behavior:smooth}
 .chat-feed::-webkit-scrollbar{width:4px}
 .chat-feed::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.msg{display:flex;gap:12px;margin-bottom:24px;animation:fadeIn 0.3s ease}
+.msg{display:flex;gap:12px;margin-bottom:24px;animation:msgIn 0.35s ease-out}
 .msg.user{flex-direction:row-reverse}
-.msg .avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;font-weight:600}
-.msg.aida .avatar{background:var(--accent-glow);color:var(--accent)}
-.msg.user .avatar{background:var(--green-dim);color:var(--green)}
-.msg .bubble{max-width:78%;padding:14px 18px;border-radius:12px;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
-.msg.aida .bubble{background:var(--surface2);border:1px solid var(--border);color:var(--text)}
-.msg.user .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
-.msg .bubble pre{background:var(--surface3);padding:14px;border-radius:6px;overflow-x:auto;font-size:13px;margin:10px 0;font-family:var(--mono);line-height:1.4}
+@keyframes msgIn{from{opacity:0;transform:translateY(12px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.msg .avatar{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;font-weight:600;transition:transform 0.2s}
+.msg .avatar:hover{transform:scale(1.1)}
+.msg.aida .avatar{background:linear-gradient(135deg,var(--accent-glow),rgba(91,122,255,0.25));color:var(--accent);box-shadow:0 0 12px rgba(91,122,255,0.1)}
+.msg.user .avatar{background:linear-gradient(135deg,var(--green-dim),rgba(60,207,126,0.2));color:var(--green);box-shadow:0 0 12px rgba(60,207,126,0.08)}
+.msg .bubble{max-width:78%;padding:14px 18px;border-radius:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.msg.aida .bubble{background:var(--surface2);border:1px solid var(--border);color:var(--text);box-shadow:0 2px 12px rgba(0,0,0,0.15)}
+.msg.user .bubble{background:linear-gradient(135deg,var(--accent),#4a6ae8);color:#fff;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(91,122,255,0.2)}
+.msg .bubble pre{background:var(--surface3);padding:14px;border-radius:8px;overflow-x:auto;font-size:13px;margin:10px 0;font-family:var(--mono);line-height:1.4;border:1px solid var(--border)}
 .msg .bubble code{background:var(--surface3);padding:2px 6px;border-radius:4px;font-size:13px;font-family:var(--mono)}
-.msg .bubble pre code{background:none;padding:0}
-.msg .bubble .sources{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:12px}
-.msg .bubble .sources a{color:var(--accent);text-decoration:none;display:block;margin-top:3px}
-.msg .bubble .sources a:hover{text-decoration:underline}
-.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;padding:40px;text-align:center}
-.welcome .icon{width:56px;height:56px;background:var(--accent-glow);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--accent)}
-.welcome .icon svg{width:28px;height:28px}
-.welcome h1{font-size:22px;font-weight:700}
+.msg .bubble pre code{background:none;padding:0;border:none}
+.msg .bubble .sources{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:12px}
+.msg .bubble .sources a{color:var(--accent);text-decoration:none;display:block;margin-top:3px;transition:color 0.2s}
+.msg .bubble .sources a:hover{color:var(--accent-hover);text-decoration:underline}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--text3);display:inline-block;animation:typing 1.4s ease-in-out infinite}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
+@keyframes typing{0%,60%,100%{opacity:0.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:20px;padding:40px;text-align:center}
+.welcome .icon{width:64px;height:64px;background:linear-gradient(135deg,var(--accent-glow),rgba(91,122,255,0.2));border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--accent);box-shadow:0 0 30px rgba(91,122,255,0.08);animation:float 4s ease-in-out infinite}
+.welcome .icon svg{width:32px;height:32px}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.welcome h1{font-size:24px;font-weight:700;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .welcome p{color:var(--text2);max-width:450px;font-size:14px;line-height:1.7}
-.welcome .tips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
-.welcome .tips button{padding:8px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text2);font-size:13px;cursor:pointer;transition:all 0.2s;font-family:var(--font)}
-.welcome .tips button:hover{background:var(--surface3);border-color:var(--accent);color:var(--text)}
-.composer{display:flex;gap:8px;padding:16px 20px;border-top:1px solid var(--border);flex-shrink:0}
+.welcome .tips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+.welcome .tips button{padding:8px 18px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;color:var(--text2);font-size:13px;cursor:pointer;transition:all 0.25s ease,transform 0.15s;font-family:var(--font)}
+.welcome .tips button:hover{background:var(--surface3);border-color:var(--accent);color:var(--text);transform:translateY(-1px);box-shadow:0 4px 12px rgba(91,122,255,0.1)}
+.composer{display:flex;gap:8px;padding:16px 20px;border-top:1px solid var(--border);flex-shrink:0;background:rgba(11,13,18,0.6);backdrop-filter:blur(12px)}
 .composer .wrap{display:flex;gap:8px;flex:1;align-items:center}
-.composer input{flex:1;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:var(--font);outline:none;transition:border 0.2s;min-width:0}
-.composer input:focus{border-color:var(--accent)}
+.composer input{flex:1;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:var(--font);outline:none;transition:border 0.25s ease,box-shadow 0.25s;min-width:0}
+.composer input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,122,255,0.08)}
 .composer input::placeholder{color:var(--text2);opacity:0.5}
-.composer .rbtn{display:flex;align-items:center;gap:5px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text3);font-size:12px;cursor:pointer;transition:all 0.2s;font-family:var(--font);white-space:nowrap;flex-shrink:0}
-.composer .rbtn:hover{background:var(--surface3);border-color:var(--border-light);color:var(--text2)}
-.composer .rbtn.on{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-.composer .rbtn svg{width:14px;height:14px;flex-shrink:0}
-.composer select#modeSelect{padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:11px;font-family:var(--font);cursor:pointer;outline:none;flex-shrink:0}
-.composer select#modeSelect:hover{border-color:var(--border-light);color:var(--text)}
+.composer select#modeSelect{padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:11px;font-family:var(--font);cursor:pointer;outline:none;flex-shrink:0;transition:border 0.2s}
+.composer select#modeSelect:hover{border-color:var(--accent);color:var(--text)}
 .composer select#modeSelect option{background:var(--surface);color:var(--text)}
-.composer button{padding:12px 20px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.2s;font-family:var(--font);display:flex;align-items:center;gap:6px;flex-shrink:0}
-.composer button:hover{background:var(--accent-hover)}
-.composer button:disabled{opacity:0.4;cursor:not-allowed}
+.composer .internet-badge{display:flex;align-items:center;gap:4px;padding:6px 10px;background:rgba(60,207,126,0.08);border:1px solid rgba(60,207,126,0.2);border-radius:var(--radius-sm);color:var(--green);font-size:10px;font-weight:500;flex-shrink:0;cursor:default}
+.composer .internet-badge svg{width:12px;height:12px}
+.composer button{padding:12px 22px;background:linear-gradient(135deg,var(--accent),#4a6ae8);border:none;border-radius:var(--radius-sm);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.25s ease,transform 0.15s;font-family:var(--font);display:flex;align-items:center;gap:6px;flex-shrink:0;box-shadow:0 2px 8px rgba(91,122,255,0.2)}
+.composer button:hover{background:linear-gradient(135deg,var(--accent-hover),#5b7aff);transform:translateY(-1px);box-shadow:0 4px 14px rgba(91,122,255,0.3)}
+.composer button:active{transform:translateY(0)}
+.composer button:disabled{opacity:0.4;cursor:not-allowed;transform:none}
 .composer button .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-.welcome{animation:slideUp 0.5s ease}
+@keyframes glow{0%,100%{box-shadow:0 0 5px rgba(91,122,255,0.1)}50%{box-shadow:0 0 15px rgba(91,122,255,0.2)}}
+.welcome{animation:slideUp 0.6s ease}
 .sidebar-overlay{display:none}
 @media(max-width:768px){
 .sidebar{display:none;position:fixed;top:0;left:0;height:100dvh;width:260px;z-index:200}
 .sidebar.open{display:flex}
-.sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:199}
+.sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:199;backdrop-filter:blur(4px)}
 .sidebar-overlay.show{display:block}
 .sidebar-toggle{display:flex!important}
 .sidebar-header .brand{font-size:14px}
 .msg .bubble{max-width:90%;font-size:13px}
+.welcome h1{font-size:20px}
+.welcome .icon{width:56px;height:56px}
 }
-.sidebar-toggle{display:none;background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;flex-shrink:0}
+.sidebar-toggle{display:none;background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;flex-shrink:0;transition:color 0.2s}
+.sidebar-toggle:hover{color:var(--text)}
 </style>
 </head>
 <body>
@@ -106,6 +126,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hid
       </a>
     </div>
     <div class="chat-list" id="chatList"></div>
+    <div class="sidebar-footer">
+      <a href="#" onclick="showApiKeys();return false">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        API Keys
+      </a>
+    </div>
   </aside>
   <div id="sidebarOverlay" class="sidebar-overlay"></div>
   <div class="main">
@@ -121,7 +147,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hid
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
           Code
         </a>
-        <div class="status"><span class="dot" id="dot"></span><span id="statusLabel">yuklanmoqda</span></div>
+        <div class="status">
+          <span class="dot" id="dot"></span>
+          <span id="statusLabel">yuklanmoqda</span>
+          <span class="providers" id="providerStatus"></span>
+        </div>
       </div>
     </div>
     <div class="chat-feed" id="chatFeed">
@@ -141,10 +171,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hid
     </div>
     <div class="composer">
       <div class="wrap">
-        <button class="rbtn" id="researchBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <span id="rbtnLabel">Internet</span>
-        </button>
+        <div class="internet-badge" title="Internet qidiruv doimiy yoqilgan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          Internet
+        </div>
         <select id="modeSelect" title="AIDA rejimi">
           <option value="pro">AIDA PRO</option>
           <option value="flash">AIDA FLASH</option>
@@ -163,17 +193,15 @@ var input = document.getElementById('input');
 var btn = document.getElementById('sendBtn');
 var dot = document.getElementById('dot');
 var statusLabel = document.getElementById('statusLabel');
+var providerStatus = document.getElementById('providerStatus');
 var chatList = document.getElementById('chatList');
 var chatTitle = document.getElementById('chatTitle');
-var researchBtn = document.getElementById('researchBtn');
-var rbtnLabel = document.getElementById('rbtnLabel');
 var modeSelect = document.getElementById('modeSelect');
 var sidebar = document.getElementById('sidebar');
 var overlay = document.getElementById('sidebarOverlay');
 var toggleBtn = document.getElementById('sidebarToggle');
 
 var welcome;
-var researchOn = false;
 var currentSessionId = '';
 var sending = false;
 
@@ -191,7 +219,6 @@ function sidebarOpen(){sidebar.classList.add('open');overlay.classList.add('show
 function sidebarClose(){sidebar.classList.remove('open');overlay.classList.remove('show')}
 toggleBtn.onclick=sidebarOpen;
 overlay.onclick=sidebarClose;
-researchBtn.onclick=toggleResearch;
 
 function showWelcome(){
   var w='<div class="welcome" id="welcome"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><h1>AIDA \u2014 Sun\'iy Ong</h1><p>Men umumiy sun\'iy ongman. Istalgan vazifani bajara olaman: kod, reja, tarjima, tahlil, internet qidiruv, fayllar bilan ishlash va boshqalar.</p><div class="tips"><button onclick="sendMsg(\'Salom\')">Salom</button><button onclick="sendMsg(\'Menga html login formasi kodini yoz\')">Kod</button><button onclick="sendMsg(\'Python da yangi funksiya qosh\')">Self-Modify</button><button onclick="sendMsg(\'Internetdan AIDA haqida qidir\')">Internet</button><button onclick="sendMsg(\'Django vs FastAPI taqqosla\')">Taqqoslash</button><button onclick="window.open(\'/code/\',\'_self\')">AIDA Code</button></div></div>';
@@ -217,12 +244,15 @@ function addMsg(role,text,sources){
   return div
 }
 
-function setStatus(ok,label){dot.className='dot'+(ok?'':' off');statusLabel.textContent=label}
-
-function toggleResearch(){
-  researchOn=!researchOn;
-  researchBtn.className='rbtn'+(researchOn?' on':'');
-  rbtnLabel.textContent=researchOn?'On':'Internet'
+function setStatus(ok,label,providers){
+  dot.className='dot'+(ok?'':' off');
+  statusLabel.textContent=label;
+  if(providers){
+    var h='';
+    if(providers.ollama)h+='<span class="'+(providers.ollama.status==='ok'?'ok':'off')+'">O</span>';
+    if(providers.lmstudio)h+='<span class="'+(providers.lmstudio.status==='ok'?'ok':'off')+'">LM</span>';
+    providerStatus.innerHTML=h
+  }
 }
 
 function loadSessions(){
@@ -315,7 +345,7 @@ function sendMsg(text){
   sending=true;
   btn.disabled=true;
   btn.innerHTML='<span class="spinner"></span>';
-  var msgDiv=addMsg('aida','');
+  var msgDiv=addMsg('aida','<div class="typing"><span></span><span></span><span></span></div>');
   var bubble=msgDiv.querySelector('.bubble');
   var xhr=new XMLHttpRequest();
   xhr.open('POST','/api/chat/',true);
@@ -339,7 +369,7 @@ function sendMsg(text){
         if(d.status){
           var modeLabel = d.mode ? d.mode.toUpperCase() : '';
           var providerLabel = d.status.provider||'local';
-          setStatus(true, providerLabel + (modeLabel ? ' | ' + modeLabel : ''));
+          setStatus(true, providerLabel + (modeLabel ? ' | ' + modeLabel : ''), d.status.providers);
         }
         chatTitle.textContent=content.slice(0,40)+'...';
         loadSessions()
@@ -357,11 +387,85 @@ function sendMsg(text){
     bubble.innerHTML='Serverga ulanishda xatolik yuz berdi.';
     feed.scrollTop=feed.scrollHeight
   };
-  xhr.send(JSON.stringify({prompt:content,research:researchOn,session_id:currentSessionId,mode:modeSelect.value}))
+  xhr.send(JSON.stringify({prompt:content,research:true,session_id:currentSessionId,mode:modeSelect.value}))
 }
 
 function handleSend(){sendMsg()}
 input.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}});
+
+function showApiKeys(){
+  sidebarClose();
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn 0.2s ease';
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove()};
+  var modal=document.createElement('div');
+  modal.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:480px;width:90%;max-height:80vh;overflow-y:auto;animation:slideUp 0.3s ease';
+  modal.innerHTML='<h2 style="font-size:18px;font-weight:700;margin-bottom:16px">AIDA API Keys</h2>'+
+    '<p style="color:var(--text2);font-size:13px;margin-bottom:16px;line-height:1.6">'+
+    'API orqali AIDA ni boshqa platformalarga ulang. Quyidagi endpoint orqali so\'rov yuboring:</p>'+
+    '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px;font-family:var(--mono);font-size:12px;color:var(--text2)">'+
+    'POST /api/platform/chat/<br>Header: X-AIDA-Key: &lt;your_key&gt;<br>Body: {"prompt": "...", "mode": "pro"}</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:16px">'+
+    '<input type="text" id="keyNameInput" placeholder="Key nomi (masalan: Telegram Bot)" style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none">'+
+    '</div>'+
+    '<div style="display:flex;gap:8px">'+
+    '<button onclick="createApiKey()" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--accent),#4a6ae8);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:opacity 0.2s">Yangi key yaratish</button>'+
+    '<button onclick="this.closest(\'div\').parentElement.parentElement.remove()" style="padding:10px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:13px;cursor:pointer">Yopish</button>'+
+    '</div>'+
+    '<div id="keyList" style="margin-top:16px"></div>'
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+  loadApiKeyList()
+}
+
+function loadApiKeyList(){
+  var xhr=new XMLHttpRequest();
+  xhr.open('GET','/api/keys/',true);
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===200){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        var el=document.getElementById('keyList');
+        if(!el)return;
+        var items=d.items||[];
+        if(items.length===0){
+          el.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">Hozircha hech qanday key yo\'q</div>'
+        }else{
+          var h='<div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:500">Mavjud kalitlar:</div>';
+          items.forEach(function(k){
+            h+='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;margin-bottom:4px">'+
+              '<span style="font-size:12px;color:var(--text)">'+escapeHtml(k.name||k.prefix||'Key')+'</span>'+
+              '<span style="font-size:10px;color:var(--text3);font-family:var(--mono)">'+escapeHtml(k.prefix||'')+'... | '+new Date(k.created_at).toLocaleDateString('uz-UZ')+'</span></div>'
+          });
+          el.innerHTML=h
+        }
+      }catch(e){}
+    }
+  };
+  xhr.send()
+}
+
+function createApiKey(){
+  var name=document.getElementById('keyNameInput');
+  if(!name||!name.value.trim())return;
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','/api/keys/create/',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.timeout=5000;
+  xhr.onload=function(){
+    if(xhr.status===201){
+      try{
+        var d=JSON.parse(xhr.responseText);
+        alert('Yangi API Key yaratildi:\n\nKey: '+d.secret+'\n\nUni saqlab qo\'ying! Qayta ko\'rsatib bo\'lmaydi.');
+        loadApiKeyList()
+      }catch(e){}
+    }else{
+      try{alert(JSON.parse(xhr.responseText).error||'Xatolik')}catch(e){}
+    }
+  };
+  xhr.send(JSON.stringify({name:name.value.trim()}))
+}
 
 function checkStatus(){
   var xhr=new XMLHttpRequest();
@@ -369,7 +473,12 @@ function checkStatus(){
   xhr.timeout=5000;
   xhr.onload=function(){
     if(xhr.status===200){
-      try{var d=JSON.parse(xhr.responseText);setStatus(true,d.provider||'local')}catch(e){setStatus(true,'local')}
+      try{
+        var d=JSON.parse(xhr.responseText);
+        var m=d.mode?d.mode.toUpperCase():'';
+        var p=d.provider||'local';
+        setStatus(true, p+(m?' | '+m:''), d.providers)
+      }catch(e){setStatus(true,'local')}
     }else{setStatus(false,'offline')}
   };
   xhr.onerror=function(){setStatus(false,'offline')};
@@ -382,9 +491,10 @@ showWelcome();
 loadSessions();
 window.sendMsg=sendMsg;
 window.handleSend=handleSend;
-window.toggleResearch=toggleResearch;
 window.newChat=newChat;
 window.switchChat=switchChat;
+window.showApiKeys=showApiKeys;
+window.createApiKey=createApiKey;
 })();
 </script>
 </body>

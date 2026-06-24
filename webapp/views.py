@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from .aida_controller import CodeGenerator, controller, ReasoningEngine, runtime
+from .code_fixer import fix_code_automatically, optimize_performance, generate_comprehensive_tests, analyze_and_improve
 from .models import AccessKey
 from .security import authenticate_access_key, generate_access_key_with_profile
 
@@ -420,6 +421,364 @@ def api_code_preview(request):
         return JsonResponse({"html": wrapped, "type": "html"})
 
     return JsonResponse({"html": "<pre>" + code + "</pre>", "type": "text"})
+
+
+@safe_api_endpoint
+@require_POST
+def api_code_fix(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    code = str(payload.get("code", "")).strip()
+    language = str(payload.get("language", "python")).strip().lower()
+    if not code:
+        return JsonResponse({"error": "Kod yuborilmadi."}, status=400)
+    result = fix_code_automatically(code, language)
+    return JsonResponse(result)
+
+
+@safe_api_endpoint
+@require_POST
+def api_code_optimize(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    code = str(payload.get("code", "")).strip()
+    language = str(payload.get("language", "python")).strip().lower()
+    if not code:
+        return JsonResponse({"error": "Kod yuborilmadi."}, status=400)
+    result = optimize_performance(code, language)
+    return JsonResponse(result)
+
+
+@safe_api_endpoint
+@require_POST
+def api_code_tests(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    code = str(payload.get("code", "")).strip()
+    language = str(payload.get("language", "python")).strip().lower()
+    if not code:
+        return JsonResponse({"error": "Kod yuborilmadi."}, status=400)
+    result = generate_comprehensive_tests(code, language)
+    return JsonResponse(result)
+
+
+@safe_api_endpoint
+@require_POST
+def api_code_improve(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    code = str(payload.get("code", "")).strip()
+    language = str(payload.get("language", "python")).strip().lower()
+    if not code:
+        return JsonResponse({"error": "Kod yuborilmadi."}, status=400)
+    result = analyze_and_improve(code, language)
+    return JsonResponse(result)
+
+
+@safe_api_endpoint
+@require_POST
+def api_code_review(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    code = str(payload.get("code", "")).strip()
+    language = str(payload.get("language", "python")).strip().lower()
+    context = str(payload.get("context", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not code:
+        return JsonResponse({"error": "Kod yuborilmadi."}, status=400)
+    try:
+        message = controller.review_code(code, language, context, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_debug_assist(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    error = str(payload.get("error", "")).strip()
+    code = str(payload.get("code", "")).strip()
+    language = str(payload.get("language", "python")).strip().lower()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not error:
+        return JsonResponse({"error": "Xatolik tavsifi yuborilmadi."}, status=400)
+    try:
+        message = controller.debug_error(error, code, language, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_architecture_analyze(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    description = str(payload.get("description", "")).strip()
+    code = str(payload.get("code", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not description:
+        return JsonResponse({"error": "Tavsif yuborilmadi."}, status=400)
+    try:
+        message = controller.analyze_architecture(description, code, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_language_generate(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    prompt = str(payload.get("prompt", "")).strip()
+    language = str(payload.get("language", "python")).strip().lower()
+    framework = str(payload.get("framework", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not prompt:
+        return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
+    try:
+        message = controller.language_generate(prompt, language, framework, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_framework_generate(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    prompt = str(payload.get("prompt", "")).strip()
+    category = str(payload.get("category", "django")).strip().lower()
+    framework = str(payload.get("framework", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not prompt:
+        return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
+    try:
+        message = controller.framework_generate(prompt, category, framework, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_version_control(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    prompt = str(payload.get("prompt", "")).strip()
+    category = str(payload.get("category", "git-commands")).strip().lower()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not prompt:
+        return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
+    try:
+        message = controller.version_control_generate(prompt, category, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_docker_generate(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    prompt = str(payload.get("prompt", "")).strip()
+    category = str(payload.get("category", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not prompt:
+        return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
+    try:
+        message = controller.docker_generate(prompt, category, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_kubernetes_generate(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    prompt = str(payload.get("prompt", "")).strip()
+    category = str(payload.get("category", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not prompt:
+        return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
+    try:
+        message = controller.kubernetes_generate(prompt, category, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_performance_tuning(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    prompt = str(payload.get("prompt", "")).strip()
+    category = str(payload.get("category", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    if not prompt:
+        return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
+    try:
+        message = controller.performance_tuning_generate(prompt, category, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_feedback_submit(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    rating = int(payload.get("rating", 0))
+    if rating < 1 or rating > 5:
+        return JsonResponse({"error": "Rating 1-5 oralig'ida bo'lishi kerak."}, status=400)
+    result = controller.feedback_submit(
+        rating=rating,
+        comment=str(payload.get("comment", "")).strip(),
+        session_id=str(payload.get("session_id", "")).strip(),
+        prompt=str(payload.get("prompt", "")).strip(),
+        response=str(payload.get("response", "")).strip(),
+        provider=str(payload.get("provider", "")).strip(),
+        mode=str(payload.get("mode", "")).strip().lower(),
+        latency_ms=int(payload.get("latency_ms", 0)),
+    )
+    return JsonResponse(result)
+
+
+@require_GET
+def api_feedback_analytics(request):
+    return JsonResponse(controller.feedback_analytics())
+
+
+@safe_api_endpoint
+@require_POST
+def api_feedback_analyze(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    question = str(payload.get("question", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    try:
+        message = controller.feedback_analyze(question, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_training_save(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    prompt = str(payload.get("prompt", "")).strip()
+    response = str(payload.get("response", "")).strip()
+    if not prompt or not response:
+        return JsonResponse({"error": "prompt va response kerak."}, status=400)
+    result = controller.training_save(
+        prompt=prompt,
+        response=response,
+        domain=str(payload.get("domain", "")).strip(),
+        language=str(payload.get("language", "uz")).strip(),
+        rating=int(payload.get("rating", 0)),
+    )
+    return JsonResponse(result, status=201)
+
+
+@safe_api_endpoint
+@require_POST
+def api_training_domain(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    domain = str(payload.get("domain", "")).strip()
+    system_prompt = str(payload.get("system_prompt", "")).strip()
+    if not domain:
+        return JsonResponse({"error": "domain kerak."}, status=400)
+    result = controller.training_set_domain(
+        domain=domain,
+        system_prompt=system_prompt,
+        temperature=float(payload.get("temperature", 0.7)),
+        max_tokens=int(payload.get("max_tokens", 1024)),
+    )
+    return JsonResponse(result)
+
+
+@require_GET
+def api_training_stats(request):
+    return JsonResponse(controller.training_stats())
+
+
+@safe_api_endpoint
+@require_POST
+def api_training_analyze(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    question = str(payload.get("question", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    try:
+        message = controller.training_analyze(question, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_knowledge_suggest(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    topic = str(payload.get("topic", "")).strip()
+    context = str(payload.get("context", "")).strip()
+    mode = str(payload.get("mode", "")).strip().lower()
+    try:
+        message = controller.knowledge_suggest(topic, context, mode)
+        return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @require_GET
