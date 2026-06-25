@@ -2,6 +2,9 @@ from django.urls import path, re_path
 
 from .views import (
     api_architecture_analyze,
+    api_agent_stats,
+    api_agent_submit,
+    api_agent_queue,
     api_chat,
     api_chat_stream,
     api_code_analyze,
@@ -161,4 +164,8 @@ urlpatterns = [
     path("login/", login_page, name="login-page-alt"),
     path("app/", spa_index, name="spa-index"),
     path("", login_page, name="login-page"),
+    # Agent Layer endpoints
+    path("api/agent/stats/", api_agent_stats, name="api-agent-stats"),
+    path("api/agent/submit/", api_agent_submit, name="api-agent-submit"),
+    path("api/agent/queue/", api_agent_queue, name="api-agent-queue"),
 ]

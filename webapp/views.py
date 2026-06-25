@@ -1106,3 +1106,78 @@ def api_project_git_clone(request):
         return JsonResponse(result)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+# ── Agent Layer API endpoints ─────────────────────────────────────────────
+
+_AGENT_MODULE = None
+
+def _get_agent_module():
+    global _AGENT_MODULE
+    if _AGENT_MODULE is None:
+        try:
+            from .aida_controller import AGENTS_AVAILABLE
+            if AGENTS_AVAILABLE:
+                from . import agents as _agents
+                _AGENT_MODULE = _agents
+        except ImportError:
+            pass
+    return _AGENT_MODULE
+
+
+def _get_orch():
+    mod = _get_agent_module()
+    if mod:
+        return mod.get_orchestrator()
+    return None
+
+
+@safe_api_endpoint
+@require_GET
+def api_agent_stats(request):
+    mod = _get_agent_module()
+    orch = _get_orch()
+    if not orch or not mod:
+        return JsonResponse({"error": "Agent Layer mavjud emas"}, status=404)
+    return JsonResponse({
+        "agents": orch.get_agent_stats(),
+        "queue": orch.get_queue_stats(),
+        "task_model_map": {k.value: v for k, v in mod.TASK_MODEL_MAP.items()},
+    })
+
+
+@safe_api_endpoint
+@require_POST
+def api_agent_submit(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+
+    prompt = str(payload.get("prompt", "")).strip()
+    if not prompt:
+        return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
+
+    orch = _get_orch()
+    if not orch:
+        return JsonResponse({"error": "Agent Layer mavjud emas"}, status=404)
+
+    task = orch.submit(prompt)
+    return JsonResponse({
+        "task_id": task.id,
+        "task_type": task.task_type.value,
+        "priority": task.priority,
+        "status": task.status,
+        "queue_size": orch.queue.size,
+    })
+
+
+@safe_api_endpoint
+@require_GET
+def api_agent_queue(request):
+    orch = _get_orch()
+    if not orch:
+        return JsonResponse({"error": "Agent Layer mavjud emas"}, status=404)
+    return JsonResponse({
+        "queue_size": orch.queue.size,
+    })

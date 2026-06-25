@@ -51,6 +51,16 @@ try:
 except ImportError:
     CODELLAMA_PROVIDER_AVAILABLE = False
 
+# Import Agent Layer
+try:
+    from webapp.agents import (
+        AgentOrchestrator, TaskRouter, TaskType, Task,
+        get_orchestrator, TASK_MODEL_MAP,
+    )
+    AGENTS_AVAILABLE = True
+except ImportError as e:
+    AGENTS_AVAILABLE = False
+
 # Import context injection system
 try:
     from webapp.context_injection import ContextInjector, CodeSnippet, ContextQuery, ContextResult, create_context_injector, get_context_for_generation
@@ -3428,6 +3438,9 @@ class AIDAController:
         self.code_fixer = AutoCodeFixer() if CODE_FIXER_AVAILABLE else None
         self.performance_optimizer = PerformanceOptimizer() if CODE_FIXER_AVAILABLE else None
         self.test_generator = TestGenerator() if CODE_FIXER_AVAILABLE else None
+        # Initialize Agent Layer
+        self.agent_orchestrator = get_orchestrator(respond_func=_code_respond_func) if AGENTS_AVAILABLE else None
+        self.task_router = TaskRouter() if AGENTS_AVAILABLE else None
         # Ixcham system prompt — qisqa = kamroq token = tezroq javob
         self.system_prompt = (
             "Sen AIDA — aqlli, ko'p qobiliyatli sun'iy intellektsan. "
@@ -4188,22 +4201,32 @@ class AIDAController:
             system_prompt = system_prompt + url_context
 
         try:
-            if complexity == "complex" and self.react_provider:
+            if self.agent_orchestrator and complexity != "simple":
+                try:
+                    mem_list = [{"role": m["role"], "content": m["content"]} for m in memory]
+                    message = self.agent_orchestrator.process_sync(
+                        prompt=clean_prompt,
+                        memory=mem_list,
+                        system_prompt=system_prompt,
+                    )
+                except Exception as agent_err:
+                    logger.warning(f"Agent orchestrator xatosi, provider ga o'tish: {agent_err}")
+                    if complexity == "complex" and self.react_provider:
+                        message = self.react_provider.respond(
+                            prompt=clean_prompt, memory=memory, system_prompt=system_prompt)
+                    else:
+                        message = effective_provider.respond(
+                            prompt=clean_prompt, memory=memory, system_prompt=system_prompt,
+                            status=status, platform_profile=platform_profile,
+                            runtime_context=runtime_context, research=research)
+            elif complexity == "complex" and self.react_provider:
                 message = self.react_provider.respond(
-                    prompt=clean_prompt,
-                    memory=memory,
-                    system_prompt=system_prompt,
-                )
+                    prompt=clean_prompt, memory=memory, system_prompt=system_prompt)
             else:
                 message = effective_provider.respond(
-                    prompt=clean_prompt,
-                    memory=memory,
-                    system_prompt=system_prompt,
-                    status=status,
-                    platform_profile=platform_profile,
-                    runtime_context=runtime_context,
-                    research=research,
-                )
+                    prompt=clean_prompt, memory=memory, system_prompt=system_prompt,
+                    status=status, platform_profile=platform_profile,
+                    runtime_context=runtime_context, research=research)
         except Exception as exc:
             fallback_status = dict(status)
             fallback_status["provider"] = "local-fallback"
