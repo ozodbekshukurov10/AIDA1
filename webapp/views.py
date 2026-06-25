@@ -347,6 +347,16 @@ def code_workspace(request):
     return HttpResponse("AIDA Code yuklanmadi", status=404)
 
 
+def _make_code_responder():
+    """CodeGenerator uchun real LLM provayder chaqiruvchi respond_func yaratadi."""
+    def respond(p: str, mem: list, sys: str) -> str:
+        try:
+            return controller.provider.respond(prompt=p, memory=mem, system_prompt=sys)
+        except Exception:
+            return ""
+    return respond
+
+
 @safe_api_endpoint
 @require_POST
 def api_code_generate(request):
@@ -360,7 +370,7 @@ def api_code_generate(request):
     if not prompt:
         return JsonResponse({"error": "Prompt yuborilmadi."}, status=400)
 
-    cg = CodeGenerator()
+    cg = CodeGenerator(respond_func=_make_code_responder())
     reng = ReasoningEngine()
 
     trace = reng.reason(prompt, "code", reng._extract_keywords(prompt), [])
@@ -777,6 +787,121 @@ def api_knowledge_suggest(request):
     try:
         message = controller.knowledge_suggest(topic, context, mode)
         return JsonResponse({"message": message, "status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_GET
+def api_models_discover(request):
+    from .model_discovery import discover_all
+    try:
+        result = discover_all()
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+# ──────────────────────────────────────────────
+# Task 3 — Model Manager endpoints
+# ──────────────────────────────────────────────
+
+@require_GET
+def api_manager_list(request):
+    from .model_manager import ModelManager
+    try:
+        return JsonResponse(ModelManager.list_all())
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_GET
+def api_manager_get(request, model_id: str):
+    from .model_manager import ModelManager
+    try:
+        return JsonResponse(ModelManager.get_model(model_id))
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_manager_pull(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    model = str(payload.get("model", "")).strip()
+    if not model:
+        return JsonResponse({"error": "model nomi kerak"}, status=400)
+    from .model_manager import ModelManager
+    try:
+        result = ModelManager.pull_model(model)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_manager_remove(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    model = str(payload.get("model", "")).strip()
+    if not model:
+        return JsonResponse({"error": "model nomi kerak"}, status=400)
+    from .model_manager import ModelManager
+    try:
+        result = ModelManager.remove_model(model)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_manager_load(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    model = str(payload.get("model", "")).strip()
+    if not model:
+        return JsonResponse({"error": "model nomi kerak"}, status=400)
+    from .model_manager import ModelManager
+    try:
+        result = ModelManager.load_model(model)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_manager_unload(request):
+    from .model_manager import ModelManager
+    try:
+        result = ModelManager.unload_model()
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_manager_select(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    model = str(payload.get("model", "")).strip()
+    if not model:
+        return JsonResponse({"error": "model nomi kerak"}, status=400)
+    from .model_manager import ModelManager
+    try:
+        result = ModelManager.select_active(model)
+        return JsonResponse(result)
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 

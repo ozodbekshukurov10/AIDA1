@@ -37,6 +37,34 @@ try:
 except ImportError:
     CODE_FIXER_AVAILABLE = False
 
+# Import advanced code generation engine
+try:
+    from webapp.code_generation_engine import CodeGenerationEngine, CodeTaskType, CodeRequest, CodeResponse, generate_function, generate_class, refactor_code, generate_tests
+    CODE_GENERATION_ENGINE_AVAILABLE = True
+except ImportError:
+    CODE_GENERATION_ENGINE_AVAILABLE = False
+
+# Import CodeLLaMA provider
+try:
+    from webapp.codellama_provider import CodeLLaMAProvider, create_codellama_provider, setup_codellama_models
+    CODELLAMA_PROVIDER_AVAILABLE = True
+except ImportError:
+    CODELLAMA_PROVIDER_AVAILABLE = False
+
+# Import context injection system
+try:
+    from webapp.context_injection import ContextInjector, CodeSnippet, ContextQuery, ContextResult, create_context_injector, get_context_for_generation
+    CONTEXT_INJECTION_AVAILABLE = True
+except ImportError:
+    CONTEXT_INJECTION_AVAILABLE = False
+
+# Import model auto-start system
+try:
+    from webapp.model_auto_start import ModelAutoStart, ModelProvider, ProviderStatus, setup_auto_start, check_all_providers, get_available_provider
+    MODEL_AUTO_START_AVAILABLE = True
+except ImportError:
+    MODEL_AUTO_START_AVAILABLE = False
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MEMORY_DB = BASE_DIR / "aida_memory.db"
@@ -1132,6 +1160,9 @@ class CodeGenerator:
         "jsx": "jsx", "tsx": "tsx",
     }
 
+    def __init__(self, respond_func: callable = None):
+        self.respond_func = respond_func
+
     def detect_language(self, prompt: str) -> str:
         n = prompt.lower()
         for alias, lang in self.LANG_MAP.items():
@@ -1139,10 +1170,38 @@ class CodeGenerator:
                 return lang
         return "python"
 
+    def _extract_code(self, response: str, language: str) -> str:
+        import re
+        pattern = rf"```(?:{language}\b)?\s*\n?(.*?)```"
+        matches = re.findall(pattern, response, re.DOTALL)
+        if matches:
+            return max(matches, key=len).strip()
+        code = response.strip()
+        if code:
+            return code
+        return ""
+
     def generate(self, prompt: str, language: str = "") -> str:
         if not language:
             language = self.detect_language(prompt)
         lang = self.LANG_MAP.get(language, "python")
+
+        if self.respond_func:
+            try:
+                sys = (
+                    f"Sen professional {lang} dasturchisan. "
+                    f"Faqat to'liq ishlaydigan {lang} kodi yoz. "
+                    f"Tushuntirish, izoh, yoki qo'shimcha matn kerak emas. "
+                    f"Kodni ```{lang} ... ``` blokiga o'rab ber. "
+                    f"Error handling, input validation, va eng yaxshi amaliyotlarni qo'lla."
+                )
+                result = self.respond_func(prompt, [], sys)
+                code = self._extract_code(result, lang)
+                if code and len(code) > 20:
+                    return code
+            except Exception:
+                pass
+
         method = f"_generate_{lang}"
         if hasattr(self, method):
             return getattr(self, method)(prompt)
@@ -2159,6 +2218,9 @@ class ResearchFilter:
 
 class LocalProvider:
     name = "local"
+
+    def __init__(self, respond_func: callable = None):
+        self._respond_func = respond_func
 
     # ── Intent detection ─────────────────────────────────────────────────────
 
@@ -3251,7 +3313,7 @@ class LocalProvider:
         keywords = self._extract_keywords(prompt)
         business_type = (platform_profile or {}).get("business_type", "").lower()
         reasoning = ReasoningEngine()
-        code_gen = CodeGenerator()
+        code_gen = CodeGenerator(respond_func=self._respond_func)
         translator = TranslationEngine()
         comparer = ComparisonEngine()
 
@@ -3338,12 +3400,22 @@ class AIDAController:
     def __init__(self) -> None:
         self.memory = MemoryStore(MEMORY_DB)
         self.config = ProviderConfig.from_env()
-        self.local_provider = LocalProvider()
-        self.research_service = WebResearchService()
-        self.multi_model_manager = MultiModelManager(ollama_url="http://localhost:11434")
         self.provider = self._build_provider()
         self.providers = self._build_all_providers()
         self.react_provider = self._build_react_provider()
+
+        def _code_respond_func(p: str, mem: list, sys: str) -> str:
+            for prov in [self.provider, *self.providers.values(), self.react_provider]:
+                if prov and prov.name != "local":
+                    try:
+                        return prov.respond(prompt=p, memory=mem, system_prompt=sys)
+                    except Exception:
+                        continue
+            return ""
+
+        self.local_provider = LocalProvider(respond_func=_code_respond_func)
+        self.research_service = WebResearchService()
+        self.multi_model_manager = MultiModelManager(ollama_url="http://localhost:11434")
         # Initialize code engine if available
         self.code_analyzer = CodeAnalyzer() if CODE_ENGINE_AVAILABLE else None
         self.context_generator = None
