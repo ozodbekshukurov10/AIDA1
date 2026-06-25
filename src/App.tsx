@@ -17,6 +17,7 @@ import {
   TerminalSquare,
 } from 'lucide-react';
 import SplashScreen from './SplashScreen';
+import ModelSelector from './ModelSelector';
 
 type TabId = 'overview' | 'chat' | 'access';
 
@@ -421,19 +422,18 @@ export default function App() {
                   <div className="topbar-title">{status?.name ?? 'AIDA booting'}</div>
                 </motion.div>
                 <div className="topbar-meta">
-                  <motion.span 
-                    className="status-pill"
+                  <motion.div
                     initial={{ opacity: 0, scale: 0.3, y: 15 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 140,
-                      damping: 12,
-                      delay: 0.2
-                    }}
+                    transition={{ type: "spring", stiffness: 140, damping: 12, delay: 0.2 }}
                   >
-                    <Cpu size={14} />{status?.provider ?? 'local-core'}
-                  </motion.span>
+                    <ModelSelector
+                      currentProvider={(status?.provider as any) || 'ollama'}
+                      onProviderChange={(p) => console.log('Provider:', p)}
+                      currentModel={status?.model || ''}
+                      onModelChange={(m) => console.log('Model:', m)}
+                    />
+                  </motion.div>
                   <motion.span 
                     className="status-pill"
                     initial={{ opacity: 0, scale: 0.3, y: 15 }}
