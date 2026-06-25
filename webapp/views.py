@@ -1181,3 +1181,213 @@ def api_agent_queue(request):
     return JsonResponse({
         "queue_size": orch.queue.size,
     })
+
+
+# ── Tool Hub API endpoints ────────────────────────────────────────────────
+
+@safe_api_endpoint
+@require_GET
+def api_tools_list(request):
+    try:
+        from .tool_hub import get_tool_hub
+        hub = get_tool_hub()
+        return JsonResponse({"tools": hub.list_tools()})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_tools_execute(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    tool_name = str(payload.get("tool", "")).strip()
+    params = payload.get("params", {})
+    if not tool_name:
+        return JsonResponse({"error": "Tool nomi kerak"}, status=400)
+    try:
+        from .tool_hub import get_tool_hub
+        hub = get_tool_hub()
+        result = hub.execute(tool_name, **params)
+        return JsonResponse({
+            "success": result.success,
+            "output": result.output,
+            "error": result.error,
+            "data": result.data,
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+# ── Sandbox API endpoints ─────────────────────────────────────────────────
+
+@safe_api_endpoint
+@require_POST
+def api_sandbox_create(request):
+    try:
+        from .sandbox import get_sandbox
+        sandbox = get_sandbox()
+        session = sandbox.create_session()
+        return JsonResponse({
+            "session_id": session.id,
+            "dir": str(session.dir),
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_sandbox_run(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    session_id = str(payload.get("session_id", "")).strip()
+    code = str(payload.get("code", "")).strip()
+    language = str(payload.get("language", "python")).strip().lower()
+    timeout = int(payload.get("timeout", 10))
+    if not session_id or not code:
+        return JsonResponse({"error": "session_id va code kerak"}, status=400)
+    try:
+        from .sandbox import get_sandbox
+        sandbox = get_sandbox()
+        session = sandbox.get_session(session_id)
+        if not session:
+            return JsonResponse({"error": "Session topilmadi"}, status=404)
+        if language == "python":
+            result = session.run_python(code, timeout=timeout)
+        else:
+            result = session.run_shell(code, timeout=timeout)
+        return JsonResponse(result)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_sandbox_file_write(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    session_id = str(payload.get("session_id", "")).strip()
+    path = str(payload.get("path", "")).strip()
+    content = str(payload.get("content", ""))
+    if not session_id or not path:
+        return JsonResponse({"error": "session_id va path kerak"}, status=400)
+    try:
+        from .sandbox import get_sandbox
+        sandbox = get_sandbox()
+        session = sandbox.get_session(session_id)
+        if not session:
+            return JsonResponse({"error": "Session topilmadi"}, status=404)
+        result = session.write_file(path, content)
+        return JsonResponse({"message": result})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_GET
+def api_sandbox_list(request):
+    try:
+        from .sandbox import get_sandbox
+        sandbox = get_sandbox()
+        sessions = sandbox.list_sessions()
+        return JsonResponse({"sessions": sessions})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_sandbox_destroy(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    session_id = str(payload.get("session_id", "")).strip()
+    if not session_id:
+        return JsonResponse({"error": "session_id kerak"}, status=400)
+    try:
+        from .sandbox import get_sandbox
+        sandbox = get_sandbox()
+        sandbox.destroy_session(session_id)
+        return JsonResponse({"message": f"Session {session_id} o'chirildi"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+# ── Knowledge Store API endpoints ─────────────────────────────────────────
+
+@safe_api_endpoint
+@require_POST
+def api_knowledge_add(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    content = str(payload.get("content", "")).strip()
+    if not content:
+        return JsonResponse({"error": "Content kerak"}, status=400)
+    try:
+        from .knowledge_store import get_knowledge_store
+        store = get_knowledge_store()
+        doc_id = store.add(content, metadata=payload.get("metadata", {}))
+        return JsonResponse({"doc_id": doc_id})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_knowledge_search(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    query = str(payload.get("query", "")).strip()
+    if not query:
+        return JsonResponse({"error": "Query kerak"}, status=400)
+    top_k = int(payload.get("top_k", 5))
+    try:
+        from .knowledge_store import get_knowledge_store
+        store = get_knowledge_store()
+        results = store.search(query, top_k=top_k)
+        return JsonResponse({"results": results})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_GET
+def api_knowledge_list(request):
+    try:
+        from .knowledge_store import get_knowledge_store
+        store = get_knowledge_store()
+        docs = store.list_all()
+        return JsonResponse({"docs": docs, "total": len(docs)})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@safe_api_endpoint
+@require_POST
+def api_knowledge_remove(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri."}, status=400)
+    doc_id = str(payload.get("doc_id", "")).strip()
+    if not doc_id:
+        return JsonResponse({"error": "doc_id kerak"}, status=400)
+    try:
+        from .knowledge_store import get_knowledge_store
+        store = get_knowledge_store()
+        ok = store.remove(doc_id)
+        return JsonResponse({"removed": ok})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

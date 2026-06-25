@@ -236,9 +236,13 @@ class BaseAgent:
     task_type = TaskType.GENERAL
 
     def __init__(self, respond_func: Callable = None,
-                 model_name: str = "qwen2.5:3b"):
+                 model_name: str = "qwen2.5:3b",
+                 tool_hub: Any = None,
+                 agent_orch: Any = None):
         self.respond_func = respond_func
         self.model_name = model_name
+        self.tool_hub = tool_hub
+        self.agent_orch = agent_orch
         self._busy = False
         self.task_count = 0
         self.error_count = 0
@@ -292,6 +296,29 @@ class BaseAgent:
             "total_duration_sec": round(self.total_duration, 2),
             "model": self.model_name,
         }
+
+    def use_tool(self, tool_name: str, **kwargs) -> str:
+        if not self.tool_hub:
+            return "Tool Hub mavjud emas"
+        result = self.tool_hub.execute(tool_name, **kwargs)
+        if result.success:
+            return result.output
+        return f"Tool xatosi ({tool_name}): {result.error}"
+
+    def delegate_to(self, task_type: str, prompt: str) -> str:
+        if not self.agent_orch:
+            return "Agent Orchestrator mavjud emas"
+        try:
+            tt = TaskType(task_type)
+        except ValueError:
+            return f"Noma'lum task type: {task_type}"
+        task = Task(
+            id=f"sub-{int(time.time())}", prompt=prompt, task_type=tt,
+            priority=2, created_at=time.time())
+        agent = self.agent_orch._agents.get(tt)
+        if not agent:
+            return f"Agent topilmadi: {task_type}"
+        return agent.process(task)
 
 
 class CodeAgent(BaseAgent):
@@ -355,18 +382,19 @@ class TestAgent(BaseAgent):
 # ── Agent Orchestrator ────────────────────────────────────────────────────
 
 class AgentOrchestrator:
-    def __init__(self, respond_func: Callable = None):
+    def __init__(self, respond_func: Callable = None, tool_hub: Any = None):
         self.respond_func = respond_func
+        self.tool_hub = tool_hub
         self.router = TaskRouter()
         self.queue = PriorityQueue()
 
         self._agents: dict[TaskType, BaseAgent] = {
-            TaskType.CODE: CodeAgent(respond_func, model_name="qwen2.5:3b"),
-            TaskType.PLAN: PlanAgent(respond_func, model_name="qwen2.5:3b"),
-            TaskType.DEBUG: DebugAgent(respond_func, model_name="qwen2.5:3b"),
-            TaskType.TEST: TestAgent(respond_func, model_name="qwen2.5:3b"),
-            TaskType.GENERAL: BaseAgent(respond_func, model_name="qwen2.5:3b"),
-            TaskType.FAST: BaseAgent(respond_func, model_name="qwen2.5:3b"),
+            TaskType.CODE: CodeAgent(respond_func, model_name="qwen2.5:3b", tool_hub=tool_hub, agent_orch=self),
+            TaskType.PLAN: PlanAgent(respond_func, model_name="qwen2.5:3b", tool_hub=tool_hub, agent_orch=self),
+            TaskType.DEBUG: DebugAgent(respond_func, model_name="qwen2.5:3b", tool_hub=tool_hub, agent_orch=self),
+            TaskType.TEST: TestAgent(respond_func, model_name="qwen2.5:3b", tool_hub=tool_hub, agent_orch=self),
+            TaskType.GENERAL: BaseAgent(respond_func, model_name="qwen2.5:3b", tool_hub=tool_hub, agent_orch=self),
+            TaskType.FAST: BaseAgent(respond_func, model_name="qwen2.5:3b", tool_hub=tool_hub, agent_orch=self),
         }
 
         self._auto_assign_model_names()
@@ -449,8 +477,8 @@ class AgentOrchestrator:
 
 _orchestrator_instance = None
 
-def get_orchestrator(respond_func: Callable = None) -> AgentOrchestrator:
+def get_orchestrator(respond_func: Callable = None, tool_hub: Any = None) -> AgentOrchestrator:
     global _orchestrator_instance
     if _orchestrator_instance is None:
-        _orchestrator_instance = AgentOrchestrator(respond_func)
+        _orchestrator_instance = AgentOrchestrator(respond_func, tool_hub=tool_hub)
     return _orchestrator_instance
