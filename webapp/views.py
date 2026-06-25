@@ -1014,6 +1014,114 @@ def api_runtime_server_start(request):
         return JsonResponse({"error": str(e)}, status=400)
 
 
+# ──────────────────────────────────────────────
+# Task 5 — Orchestrator / Model / Server endpoints
+# ──────────────────────────────────────────────
+
+
+@require_GET
+def api_models_list(request):
+    try:
+        from .models.model_manager import ModelManager
+        mgr = ModelManager()
+        models = mgr.get_all_models()
+        status = mgr.get_status()
+        items = []
+        for key, info in models.items():
+            items.append({
+                "id": key,
+                "name": info["name"],
+                "provider": info["provider"],
+                "size": info["size"],
+            })
+        return JsonResponse({
+            "models": items,
+            "current": status["current_model"],
+            "ollama_running": status["ollama_running"],
+            "lmstudio_running": status["lmstudio_running"],
+        })
+    except Exception as e:
+        logger.exception("api_models_list error")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+@require_POST
+def api_models_select(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    model_name = str(payload.get("model", "")).strip()
+    if not model_name:
+        return JsonResponse({"error": "model field required"}, status=400)
+    try:
+        from .models.model_manager import ModelManager
+        mgr = ModelManager()
+        if not mgr.set_current_model(model_name):
+            return JsonResponse({"error": "Model not found"}, status=404)
+        return JsonResponse({"success": True, "current": model_name})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_GET
+def api_servers_status(request):
+    try:
+        from .models.model_manager import ModelManager
+        mgr = ModelManager()
+        status = mgr.get_status()
+        return JsonResponse({
+            "ollama": status["ollama_running"],
+            "lmstudio": status["lmstudio_running"],
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+@require_POST
+def api_orchestrate_task(request):
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+    prompt = str(payload.get("prompt", "")).strip()
+    if not prompt:
+        return JsonResponse({"error": "prompt field required"}, status=400)
+    priority = int(payload.get("priority", 5))
+    try:
+        from .orchestrator import Orchestrator, Task, TaskType
+        orch = Orchestrator()
+        task_type = orch._detect_task_type(prompt)
+        task = Task(prompt=prompt, type=task_type, priority=priority)
+        result = orch.route_task(task)
+        return JsonResponse(result)
+    except Exception as e:
+        logger.exception("api_orchestrate_task error")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_GET
+def api_agents_status(request):
+    try:
+        from .agents.base_agent import BaseAgent
+        from .agents.code_agent import CodeAgent
+        agent = CodeAgent()
+        return JsonResponse({
+            "agents": [
+                {
+                    "name": agent.name,
+                    "model": agent.model_name,
+                    "metrics": agent.performance_metrics,
+                    "history_count": len(agent.code_history),
+                }
+            ]
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
 @safe_api_endpoint
 @require_POST
 def api_runtime_server_stop(request):

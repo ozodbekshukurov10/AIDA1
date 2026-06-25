@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  aida:
+    build: .
+    ports:
+      - "8000:8000"
+      - "11434:11434"
+    environment:
+      - AIDA_PROVIDER=ollama
+      - DJANGO_DEBUG=false
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    restart: always
