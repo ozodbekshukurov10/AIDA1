@@ -3439,7 +3439,12 @@ class AIDAController:
         self.performance_optimizer = PerformanceOptimizer() if CODE_FIXER_AVAILABLE else None
         self.test_generator = TestGenerator() if CODE_FIXER_AVAILABLE else None
         # Initialize Agent Layer
-        self.agent_orchestrator = get_orchestrator(respond_func=_code_respond_func) if AGENTS_AVAILABLE else None
+        try:
+            from .tool_hub import get_tool_hub
+            _tool_hub = get_tool_hub()
+        except Exception:
+            _tool_hub = None
+        self.agent_orchestrator = get_orchestrator(respond_func=_code_respond_func, tool_hub=_tool_hub) if AGENTS_AVAILABLE else None
         self.task_router = TaskRouter() if AGENTS_AVAILABLE else None
         # Ixcham system prompt — qisqa = kamroq token = tezroq javob
         self.system_prompt = (
