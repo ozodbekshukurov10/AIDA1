@@ -133,6 +133,23 @@ export default function App() {
     return storedSessions[0]?.id ?? makeSession().id;
   });
 
+  // Model/Provider selection — persisted to localStorage
+  const [selectedProvider, setSelectedProvider] = useState(
+    () => localStorage.getItem('aida_provider') || 'ollama'
+  );
+  const [selectedModel, setSelectedModel] = useState(
+    () => localStorage.getItem('aida_model') || ''
+  );
+
+  const handleProviderChange = (p: string) => {
+    setSelectedProvider(p);
+    localStorage.setItem('aida_provider', p);
+  };
+  const handleModelChange = (m: string) => {
+    setSelectedModel(m);
+    localStorage.setItem('aida_model', m);
+  };
+
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [researchMode, setResearchMode] = useState(false);
@@ -248,7 +265,13 @@ export default function App() {
       const response = await fetch('/api/chat/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, research: researchMode, session_id: activeSessionId }),
+        body: JSON.stringify({
+          prompt,
+          research: researchMode,
+          session_id: activeSessionId,
+          provider: selectedProvider,
+          model: selectedModel,
+        }),
       });
       const payload = await readApiJson<{ error?: string; message?: string; sources?: Array<{ title: string; url: string }>; status?: StatusPayload }>(response);
 
@@ -428,10 +451,10 @@ export default function App() {
                     transition={{ type: "spring", stiffness: 140, damping: 12, delay: 0.2 }}
                   >
                     <ModelSelector
-                      currentProvider={(status?.provider as any) || 'ollama'}
-                      onProviderChange={(p) => console.log('Provider:', p)}
-                      currentModel={status?.model || ''}
-                      onModelChange={(m) => console.log('Model:', m)}
+                      currentProvider={selectedProvider as any}
+                      onProviderChange={handleProviderChange}
+                      currentModel={selectedModel}
+                      onModelChange={handleModelChange}
                     />
                   </motion.div>
                   <motion.span 
