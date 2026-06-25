@@ -20,10 +20,11 @@ test_body.json
 aida_test.py
 aida_feedback.db
 aida_training.db
+.aida_context.db
+.aida_knowledge.db
 check_ollama.py
 check_result.txt
 setup_multimodel.ps1
-test_body.json
 test_code_engine.py
 test_context_engine.py
 test_multimodel.py
