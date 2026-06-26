@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 from typing import List, Dict
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 DB_PATH = BASE_DIR / "aida_memory.db"   # Asosiy loyiha DB si bilan bir xil fayl
 
 

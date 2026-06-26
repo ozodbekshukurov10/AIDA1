@@ -46,7 +46,7 @@ except ImportError:
 
 # Import AIDA Beta provider
 try:
-    from webapp.aida_beta import AidaBetaProvider
+    from aida_beta import AidaBetaProvider
     AIDA_BETA_AVAILABLE = True
 except ImportError:
     AIDA_BETA_AVAILABLE = False

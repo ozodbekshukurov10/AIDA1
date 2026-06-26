@@ -1644,7 +1644,7 @@ def _get_aida_beta():
     global _aida_beta_provider
     if _aida_beta_provider is None:
         try:
-            from .aida_beta import AidaBetaProvider
+            from aida_beta import AidaBetaProvider
             _aida_beta_provider = AidaBetaProvider()
         except Exception as e:
             logger.warning("AidaBetaProvider init failed: %s", e)
