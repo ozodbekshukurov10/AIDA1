@@ -178,6 +178,31 @@ def api_chat(request):
     }
 
     try:
+        # Agent layer orqali yo'naltirish
+        orch = _get_orch()
+        if orch:
+            agent_result = orch.execute(prompt)
+            agent_response = (
+                agent_result.get("response")
+                or agent_result.get("code")
+                or agent_result.get("plan")
+                or ""
+            )
+            if agent_response and agent_result.get("status") == "success":
+                controller.memory.save("user", prompt, session_id=session_id)
+                controller.memory.save("assistant", agent_response, session_id=session_id)
+                logger.info("Chat via agent: session=%s len=%d", session_id, len(prompt))
+                return JsonResponse({
+                    "message": agent_response,
+                    "status": controller.status(),
+                    "session_id": session_id,
+                    "mode": mode,
+                    "agent": agent_result.get("agent", "AgentOrchestrator"),
+                    "recent_memory": controller.memory.recent(limit=6, session_id=session_id),
+                    "sources": [],
+                })
+
+        # Fallback: to'g'ridan-to'g'ri controller.chat()
         response = controller.chat(
             prompt,
             runtime_context=runtime_context,
@@ -1499,3 +1524,201 @@ def api_knowledge_remove(request):
         return JsonResponse({"removed": ok})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
+
+# ─── Model Build API ──────────────────────────────────────────────────────────
+
+@safe_api_endpoint
+@require_POST
+def api_model_build(request):
+    """
+    Ollama yoki LM Studio'dan olingan model asosida AIDA custom model build qiladi.
+    Body: { "base_model": "qwen2.5:3b", "name": "aida-beta", "system_prompt": "..." }
+    """
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri"}, status=400)
+
+    base_model = str(payload.get("base_model", "qwen2.5:3b")).strip()
+    model_name = str(payload.get("name", "aida-beta")).strip()
+    system_prompt = str(payload.get("system_prompt", "")).strip()
+    temperature = float(payload.get("temperature", 0.7))
+    num_ctx = int(payload.get("num_ctx", 4096))
+
+    if not base_model:
+        return JsonResponse({"error": "base_model kerak"}, status=400)
+
+    # Modelfile tarkibi
+    modelfile_content = f"FROM {base_model}\n\n"
+    if system_prompt:
+        modelfile_content += f'SYSTEM """{system_prompt}"""\n\n'
+    modelfile_content += (
+        f"PARAMETER temperature {temperature}\n"
+        f"PARAMETER num_ctx {num_ctx}\n"
+        f'PARAMETER stop "<|im_end|>"\n'
+        f'PARAMETER stop "<|endoftext|>"\n'
+    )
+
+    # Modelfile ni disk ga yoz
+    import tempfile, subprocess
+    modelfile_path = Path(__file__).resolve().parent.parent / "Modelfile"
+    try:
+        modelfile_path.write_text(modelfile_content, encoding="utf-8")
+    except Exception as e:
+        return JsonResponse({"error": f"Modelfile yozishda xato: {e}"}, status=500)
+
+    # ollama create <name> -f <Modelfile>
+    ollama_exe = _find_ollama()
+    if not ollama_exe:
+        return JsonResponse({"error": "Ollama topilmadi"}, status=500)
+
+    try:
+        result = subprocess.run(
+            [ollama_exe, "create", model_name, "-f", str(modelfile_path)],
+            capture_output=True, text=True, timeout=300
+        )
+        success = result.returncode == 0
+        return JsonResponse({
+            "success": success,
+            "model": model_name,
+            "base_model": base_model,
+            "stdout": result.stdout[-2000:] if result.stdout else "",
+            "stderr": result.stderr[-1000:] if result.stderr else "",
+        })
+    except subprocess.TimeoutExpired:
+        return JsonResponse({"error": "Build timeout (300s)"}, status=500)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@require_GET
+def api_model_build_status(request):
+    """Mavjud Ollama modellarini va aida-* custom modellarini qaytaradi."""
+    ollama_exe = _find_ollama()
+    models = []
+    if ollama_exe:
+        try:
+            import subprocess
+            r = subprocess.run([ollama_exe, "list"], capture_output=True, text=True, timeout=10)
+            for line in r.stdout.strip().splitlines()[1:]:  # skip header
+                parts = line.split()
+                if parts:
+                    models.append({
+                        "name": parts[0],
+                        "id": parts[1] if len(parts) > 1 else "",
+                        "size": parts[2] if len(parts) > 2 else "",
+                        "is_aida": parts[0].startswith("aida"),
+                    })
+        except Exception as e:
+            logger.warning("ollama list failed: %s", e)
+    return JsonResponse({"models": models, "ollama_available": bool(ollama_exe)})
+
+
+def _find_ollama() -> str:
+    """Ollama executable yo'lini topadi."""
+    import shutil
+    exe = shutil.which("ollama")
+    if exe:
+        return exe
+    candidates = [
+        r"%LOCALAPPDATA%\Programs\Ollama\ollama.exe",
+        r"C:\Program Files\Ollama\ollama.exe",
+        "/usr/local/bin/ollama",
+        "/usr/bin/ollama",
+    ]
+    import os
+    for c in candidates:
+        p = os.path.expandvars(c)
+        if os.path.exists(p):
+            return p
+    return ""
+
+
+
+# ─── AIDA Beta API ────────────────────────────────────────────────────────────
+
+_aida_beta_provider = None
+
+def _get_aida_beta():
+    global _aida_beta_provider
+    if _aida_beta_provider is None:
+        try:
+            from .aida_beta import AidaBetaProvider
+            _aida_beta_provider = AidaBetaProvider()
+        except Exception as e:
+            logger.warning("AidaBetaProvider init failed: %s", e)
+    return _aida_beta_provider
+
+
+@safe_api_endpoint
+@require_POST
+def api_aida_beta_chat(request):
+    """POST /api/aida-beta/chat/ — AIDA Beta modeli bilan chat."""
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri"}, status=400)
+
+    prompt = str(payload.get("prompt", "")).strip()
+    if not prompt:
+        return JsonResponse({"error": "prompt kerak"}, status=400)
+
+    session_id = str(payload.get("session_id", "default")).strip() or "default"
+
+    provider = _get_aida_beta()
+    if not provider:
+        return JsonResponse({"error": "AidaBetaProvider mavjud emas"}, status=503)
+
+    # Xotiradan oxirgi suhbatni olish
+    mem = provider.memory.recent(limit=20, session_id=session_id)
+    memory_list = [{"role": m["role"], "content": m["content"]} for m in mem]
+
+    response = provider.respond(prompt=prompt, memory=memory_list, session_id=session_id)
+
+    # Xotiraga saqlash
+    provider.memory.save("user", prompt, session_id=session_id)
+    provider.memory.save("assistant", response, session_id=session_id)
+
+    # O'rganish faktlarini tekshirish
+    learn_keywords = ["eslab qol", "yodda tut", "bilgin", "men ", "o'rgandim", "aytib o'tay"]
+    if any(kw in prompt.lower() for kw in learn_keywords):
+        provider.memory.remember_fact(prompt, session_id=session_id)
+
+    return JsonResponse({
+        "message": response,
+        "session_id": session_id,
+        "model": provider.model,
+    })
+
+
+@require_GET
+def api_aida_beta_status(request):
+    """GET /api/aida-beta/status/ — AIDA Beta model holati."""
+    provider = _get_aida_beta()
+    if not provider:
+        return JsonResponse({"available": False, "error": "Provider yuklanmadi"})
+    return JsonResponse({
+        "available": provider.is_available(),
+        "model": provider.model,
+        "mode": provider.mode,
+    })
+
+
+@safe_api_endpoint
+@require_POST
+def api_aida_beta_remember(request):
+    """POST /api/aida-beta/remember/ — Faktni xotiraga saqlash."""
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "JSON noto'g'ri"}, status=400)
+    fact = str(payload.get("fact", "")).strip()
+    session_id = str(payload.get("session_id", "default")).strip() or "default"
+    if not fact:
+        return JsonResponse({"error": "fact kerak"}, status=400)
+    provider = _get_aida_beta()
+    if not provider:
+        return JsonResponse({"error": "Provider mavjud emas"}, status=503)
+    provider.memory.remember_fact(fact, session_id=session_id)
+    return JsonResponse({"saved": True, "fact": fact})

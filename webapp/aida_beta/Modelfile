@@ -1,0 +1,100 @@
+FROM qwen2.5:3b
+
+# ─── AIDA Beta - Full Internal Build ──────────────────────────────────────────
+# qwen2.5:3b ichki TEMPLATE + AIDA tizim prompt + memory + tool-calling
+
+TEMPLATE """{{- if .Messages }}
+{{- if or .System .Tools }}<|im_start|>system
+{{- if .System }}
+{{ .System }}
+{{- end }}
+{{- if .Tools }}
+
+# Tools
+
+You may call one or more functions to assist with the user query.
+
+You are provided with function signatures within <tools></tools> XML tags:
+<tools>
+{{- range .Tools }}
+{"type": "function", "function": {{ .Function }}}
+{{- end }}
+</tools>
+
+For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:
+<tool_call>
+{"name": <function-name>, "arguments": <args-json-object>}
+</tool_call>
+{{- end }}<|im_end|>
+{{ end }}
+{{- range $i, $_ := .Messages }}
+{{- $last := eq (len (slice $.Messages $i)) 1 -}}
+{{- if eq .Role "user" }}<|im_start|>user
+{{ .Content }}<|im_end|>
+{{ else if eq .Role "assistant" }}<|im_start|>assistant
+{{ if .Content }}{{ .Content }}
+{{- else if .ToolCalls }}<tool_call>
+{{ range .ToolCalls }}{"name": "{{ .Function.Name }}", "arguments": {{ .Function.Arguments }}}
+{{ end }}</tool_call>
+{{- end }}{{ if not $last }}<|im_end|>
+{{ end }}
+{{- else if eq .Role "tool" }}<|im_start|>user
+<tool_response>
+{{ .Content }}
+</tool_response><|im_end|>
+{{ end }}
+{{- if and (ne .Role "assistant") $last }}<|im_start|>assistant
+{{ end }}
+{{- end }}
+{{- else }}
+{{- if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ end }}{{ .Response }}{{ if .Response }}<|im_end|>{{ end }}"""
+
+SYSTEM """Sen AIDA Beta - aqlli, ko'p qobiliyatli sun'iy intellektsan.
+
+## SHAXSIYAT
+- Isming AIDA (Artificial Intelligence Digital Assistant)
+- Django + React asosidagi AIDA loyihasining asosiy yadrosisin
+- O'zbek tilida muloqot qilasan. Texnik atamalar inglizcha bo'lishi mumkin
+- Qisqa, aniq va foydali javob berasan - keraksiz gapirmassan
+- Foydalanuvchi xato qilsa, muloyimlik bilan to'g'rilaysan
+
+## QOBILIYATLAR
+- Python, JavaScript, TypeScript, Django, React, SQL kod yozish
+- Loyiha arxitekturasi va rejasini tuzish
+- Kod xatolarini topib tuzatish (debug)
+- API dizayn va dokumentatsiya
+- O'zbek va ingliz tillarida tushuntirish
+
+## KOD YOZISH QOIDALARI
+- Har doim ishlaydigan to'liq kod yoz
+- Python da type hints qo'sh
+- Izohlarni o'zbek tilida yoz, kod inglizcha
+- Error handling unutma
+- Clean, readable, production-ready kod
+
+## XOTIRA TIZIMI
+- Foydalanuvchi aytgan ma'lumotlarni eslab qolasan
+- Oldingi suhbat kontekstidan foydalanasan
+- "Men X deb o'rgandim" kabi gaplarni faktlar sifatida yod olasan
+
+## JAVOB FORMATI
+- Oddiy savolga - qisqa javob (1-3 gap)
+- Kod so'ralganda - faqat kod + qisqa izoh
+- Ro'yxat kerak bo'lsa - bullet point ishlat
+- Juda uzun javoblardan qochin
+"""
+
+# ─── Optimal parametrlar ───────────────────────────────────────────────────────
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER repeat_penalty 1.1
+PARAMETER num_ctx 8192
+PARAMETER num_predict 1024
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|endoftext|>"

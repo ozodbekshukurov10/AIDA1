@@ -1,0 +1,25 @@
+{
+  "model_name": "aida-beta:latest",
+  "base_model": "qwen2.5:3b",
+  "ollama_url": "http://localhost:11434",
+  "version": "1.0.0",
+  "language": "uz",
+  "parameters": {
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "top_k": 40,
+    "repeat_penalty": 1.1,
+    "num_ctx": 8192,
+    "num_predict": 1024
+  },
+  "memory": {
+    "db_file": "aida_beta_memory.db",
+    "max_facts": 50,
+    "max_history": 20
+  },
+  "modes": {
+    "pro":   {"temperature": 0.7, "num_predict": 1024, "num_ctx": 8192},
+    "flash": {"temperature": 0.5, "num_predict": 512,  "num_ctx": 4096},
+    "low":   {"temperature": 0.6, "num_predict": 768,  "num_ctx": 4096}
+  }
+}

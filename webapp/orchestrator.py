@@ -160,6 +160,12 @@ class Orchestrator:
     def execute_with_fallback(self, task: Task) -> Dict[str, Any]:
         return self.route_task(task)
 
+    async def async_route_task(self, task: Task) -> Dict[str, Any]:
+        """Async wrapper — agent layer bilan birga ishlash uchun."""
+        import asyncio
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.route_task, task)
+
     def get_status(self) -> Dict[str, Any]:
         return {
             "active_tasks": len(self._active_tasks),

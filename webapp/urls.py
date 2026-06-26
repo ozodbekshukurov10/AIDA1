@@ -79,6 +79,11 @@ from .views import (
     dist_asset,
     login_page,
     spa_index,
+    api_model_build,
+    api_model_build_status,
+    api_aida_beta_chat,
+    api_aida_beta_status,
+    api_aida_beta_remember,
 )
 
 from .model_management_views import (
@@ -202,4 +207,9 @@ urlpatterns = [
     path("api/knowledge/search/", api_knowledge_search, name="api-knowledge-search"),
     path("api/knowledge/list/", api_knowledge_list, name="api-knowledge-list"),
     path("api/knowledge/remove/", api_knowledge_remove, name="api-knowledge-remove"),
+    path("api/model/build/", api_model_build, name="api-model-build"),
+    path("api/model/status/", api_model_build_status, name="api-model-build-status"),
+    path("api/aida-beta/chat/", api_aida_beta_chat, name="api-aida-beta-chat"),
+    path("api/aida-beta/status/", api_aida_beta_status, name="api-aida-beta-status"),
+    path("api/aida-beta/remember/", api_aida_beta_remember, name="api-aida-beta-remember"),
 ]

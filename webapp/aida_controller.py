@@ -44,6 +44,13 @@ try:
 except ImportError:
     CODE_GENERATION_ENGINE_AVAILABLE = False
 
+# Import AIDA Beta provider
+try:
+    from webapp.aida_beta import AidaBetaProvider
+    AIDA_BETA_AVAILABLE = True
+except ImportError:
+    AIDA_BETA_AVAILABLE = False
+
 # Import CodeLLaMA provider
 try:
     from webapp.codellama_provider import CodeLLaMAProvider, create_codellama_provider, setup_codellama_models
@@ -3475,6 +3482,15 @@ class AIDAController:
 
         # Ollama rejimi: model nomini to'g'ridan-to'g'ri .env dan olamiz
         # "AIDA Local Core" bo'lsa preferred_model None qoladi, auto-tanlash ishlaydi
+        if p == "aida-beta":
+            if AIDA_BETA_AVAILABLE:
+                return AidaBetaProvider(mode=self.config.mode)
+            op = self._try_connect_ollama(
+                url=url or "http://localhost:11434",
+                preferred_model="aida-beta:latest",
+            )
+            return op or self.local_provider
+
         if p in ("local", "ollama"):
             raw_model = self.config.model
             preferred = None if (not raw_model or raw_model == "AIDA Local Core") else raw_model
@@ -3484,7 +3500,6 @@ class AIDAController:
             )
             if ollama_provider:
                 return ollama_provider
-            # Ollama rejimi belgilangan lekin server yo'q — local fallback
             if p == "ollama":
                 return self.local_provider
 
@@ -4202,6 +4217,11 @@ class AIDAController:
                 url_context = "\n\nFoydalanuvchi yuborgan URL manzillar tarkibi:\n" + "\n".join(downloaded)
 
         system_prompt = self.system_prompt
+        # Memory injection: o'rganilgan faktlarni system prompt ga qo'shish
+        facts = self.memory.learned_facts(limit=8, session_id=session_id)
+        if facts:
+            facts_block = "\n\n## Eslab qolingan ma'lumotlar:\n" + "\n".join(f"- {f}" for f in facts)
+            system_prompt = system_prompt + facts_block
         if url_context:
             system_prompt = system_prompt + url_context
 
