@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "aida-beta"
+version = "2.0.0"
+description = "AIDA Beta — Standalone Code Assistant (Claude Code / Codex kabi)"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "AIDA Team" },
+]
+requires-python = ">=3.10"
+keywords = ["ai", "code-assistant", "ollama", "cli", "uzbek"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Natural Language :: Uzbek",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Code Generators",
+]
+
+[project.scripts]
+aida-beta = "aida_beta.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["aida_beta*"]
