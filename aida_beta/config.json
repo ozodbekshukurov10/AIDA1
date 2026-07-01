@@ -2,7 +2,7 @@
   "model_name": "aida-beta:latest",
   "base_model": "qwen2.5-coder:3b",
   "ollama_url": "http://localhost:11434",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "language": "uz",
   "mode": "code",
   "parameters": {
@@ -14,9 +14,10 @@
     "num_predict": 2048
   },
   "memory": {
-    "db_file": "aida_beta_memory.db",
+    "db_file": "aida_memory.db",
     "max_facts": 50,
-    "max_history": 50
+    "max_history": 50,
+    "checkpoints": true
   },
   "modes": {
     "code":   {"temperature": 0.3, "num_predict": 2048, "num_ctx": 16384},

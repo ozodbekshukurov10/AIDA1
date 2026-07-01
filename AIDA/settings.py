@@ -10,6 +10,8 @@ DIST_ASSETS_DIR = DIST_DIR / "assets"
 TEMPLATES_DIR = BASE_DIR / "templates"
 LOGS_DIR = BASE_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
+DATA_DIR = BASE_DIR / "data"
+DATA_DIR.mkdir(exist_ok=True)
 
 
 import secrets

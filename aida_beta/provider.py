@@ -1,4 +1,4 @@
-"""AidaBetaProvider — aida-beta:latest Ollama modeli uchun provider."""
+"""AidaBetaProvider — aida-beta:latest modeli uchun provider."""
 from __future__ import annotations
 
 import json
@@ -23,11 +23,6 @@ def _load_system_prompt() -> str:
 
 
 class AidaBetaProvider:
-    """Ollama asosida aida-beta:latest modeli uchun provider.
-    
-    Standalone code assistant sifatida ishlaydi.
-    Terminal CLI (aida-beta) yoki AIDA platformasi orqali ishlatiladi.
-    """
     name = "aida-beta"
 
     def __init__(self, mode: str = "code") -> None:
@@ -65,9 +60,18 @@ class AidaBetaProvider:
             messages.append({"role": m["role"], "content": m["content"]})
         messages.append({"role": "user", "content": prompt})
 
+        if len(json.dumps(messages)) > 30000:
+            messages = self._compact(messages)
+
         if stream:
             return self._stream_chat(messages)
         return self._chat(messages)
+
+    def _compact(self, messages: List[Dict]) -> List[Dict]:
+        system = [m for m in messages if m["role"] == "system"]
+        user_later = [m for m in messages if m["role"] == "user"][-2:]
+        assistant_later = [m for m in messages if m["role"] == "assistant"][-2:]
+        return system + user_later + assistant_later
 
     def _chat(self, messages: List[Dict]) -> str:
         payload = {
@@ -142,7 +146,6 @@ class AidaBetaProvider:
             yield f"AIDA Beta xatosi: {e}"
 
     def is_available(self) -> bool:
-        """Ollama da aida-beta modeli borligini tekshiradi."""
         try:
             with urllib.request.urlopen(f"{self.url}/api/tags", timeout=5) as r:
                 models = json.loads(r.read()).get("models", [])

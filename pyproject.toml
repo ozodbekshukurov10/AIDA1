@@ -24,6 +24,7 @@ classifiers = [
 
 [project.scripts]
 aida-beta = "aida_beta.cli:main"
+aida = "aida_beta.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["aida_beta*"]
