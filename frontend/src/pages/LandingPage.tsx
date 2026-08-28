@@ -14,6 +14,7 @@ import IntroManager from '../components/intro/IntroManager';
 import OnScrollShapeMorphSection from '../sections/OnScrollShapeMorphSection';
 import BackgroundScrollTextMotion from '../components/intro/BackgroundScrollTextMotion';
 import AIDAContextVisualizer from '../components/ai/AIDAContextVisualizer';
+import FullscreenScrollSection from '../sections/FullscreenScrollSection';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -76,16 +77,23 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
           onOpenContext={() => setShowContext(true)}
         />
 
-        {/* Main Sections */}
+        {/* Main Hero Section */}
         <Hero 
           onStart={onGetStarted} 
-          onExplore={() => handleNavigate('morph')} 
+          onExplore={() => handleNavigate('fullscreen-scroll')} 
           onOpenContext={() => setShowContext(true)}
           morphFromIntro={fromIntro} 
         />
 
+        {/* â”€â”€â”€ Fullscreen Scroll Showcase (from FullscreenScroll-main) â”€â”€â”€ */}
+        <div id="fullscreen-scroll">
+          <FullscreenScrollSection />
+        </div>
+
         {/* â”€â”€â”€ On-Scroll Shape Morphing Kinetic Showcase â”€â”€â”€ */}
-        <OnScrollShapeMorphSection />
+        <div id="morph">
+          <OnScrollShapeMorphSection />
+        </div>
 
         <CTA onStart={onGetStarted} />
 
