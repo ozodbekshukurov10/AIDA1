@@ -59,10 +59,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         <Navbar onGetStarted={onGetStarted} onNavigate={handleNavigate} onReplayIntro={handleReplayIntro} />
 
         {/* Main Sections */}
-        <Hero onStart={onGetStarted} onExplore={() => handleNavigate('demo')} morphFromIntro={fromIntro} />
-
-        {/* â”€â”€â”€ Holographic Cortana AI HUD Workspace â”€â”€â”€ */}
-        <Demo />
+        <Hero onStart={onGetStarted} onExplore={() => handleNavigate('morph')} morphFromIntro={fromIntro} />
 
         {/* â”€â”€â”€ On-Scroll Shape Morphing Kinetic Showcase â”€â”€â”€ */}
         <OnScrollShapeMorphSection />
