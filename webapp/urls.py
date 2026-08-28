@@ -21,7 +21,7 @@ from .api.gateway_api import (
 )
 from .api.knowledge_api import api_knowledge_add, api_knowledge_search, api_knowledge_list, api_knowledge_remove
 
-# Legacy endpoints (views.py) — maintained for backward compatibility
+# Legacy endpoints (views.py) â€” maintained for backward compatibility
 from .views import (
     api_architecture_analyze, api_agent_stats, api_agent_submit, api_agent_queue,
     api_code_analyze, api_code_fix, api_code_generate, api_code_improve,
@@ -61,7 +61,7 @@ from .model_views import (
 
 
 urlpatterns = [
-    # ── New Clean API v2 ──────────────────────────────────────
+    # â”€â”€ New Clean API v2 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     path("api/v2/status/", api_status, name="v2-status"),
     path("api/v2/chat/", api_chat, name="v2-chat"),
     path("api/v2/chat/stream/", api_chat_stream, name="v2-chat-stream"),
@@ -91,15 +91,16 @@ urlpatterns = [
     path("api/v2/knowledge/", api_knowledge_list, name="v2-knowledge-list"),
     path("api/v2/knowledge/remove/", api_knowledge_remove, name="v2-knowledge-remove"),
 
-    # ── Static Assets ────────────────────────────────────────
+    # â”€â”€ Static Assets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     re_path(r"^assets/(?P<asset_path>.+)$", dist_asset, name="dist-asset"),
+    re_path(r"^(?P<asset_path>.+\.(mp4|webm|png|jpg|jpeg|svg|ico|json))$", dist_asset, name="root-dist-asset"),
     path("code/", code_workspace, name="code-workspace"),
     path("code_workspace/<path:file_path>", code_workspace_asset, name="code-workspace-asset"),
     path("login/", login_page, name="login-page-alt"),
     path("app/", spa_index, name="spa-index"),
     path("", login_page, name="login-page"),
 
-    # ── Legacy API (backward compatible) ─────────────────────
+    # â”€â”€ Legacy API (backward compatible) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     # Keys
     path("api/keys/", api_keys_list, name="api-keys-list"),
     path("api/keys/create/", api_keys_create, name="api-keys-create"),
@@ -147,7 +148,7 @@ urlpatterns = [
     path("api/training/stats/", api_training_stats, name="api-training-stats"),
     path("api/training/analyze/", api_training_analyze, name="api-training-analyze"),
 
-    # Knowledge (legacy — maps to new)
+    # Knowledge (legacy â€” maps to new)
     path("api/knowledge/suggest/", api_knowledge_suggest, name="api-knowledge-suggest"),
     path("api/knowledge/add/", api_knowledge_add, name="api-knowledge-add"),
     path("api/knowledge/search/", api_knowledge_search, name="api-knowledge-search"),
@@ -198,7 +199,7 @@ urlpatterns = [
     path("api/agents/status/", api_agents_status, name="api-agents-status"),
     path("api/orchestrate/task/", api_orchestrate_task, name="api-orchestrate-task"),
 
-    # Tools (legacy — maps to new)
+    # Tools (legacy â€” maps to new)
     path("api/tools/list/", api_tools_list, name="api-tools-list"),
     path("api/tools/execute/", api_tools_execute, name="api-tools-execute"),
 

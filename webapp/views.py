@@ -62,8 +62,10 @@ def spa_index(request):
 @require_GET
 def dist_asset(request, asset_path: str):
     resolved = (ASSETS_DIR / asset_path).resolve()
+    if not resolved.exists():
+        resolved = (DIST_DIR / asset_path).resolve()
     try:
-        resolved.relative_to(ASSETS_DIR.resolve())
+        resolved.relative_to(DIST_DIR.resolve())
     except ValueError:
         raise Http404("Asset topilmadi.")
     if not resolved.exists():
@@ -826,9 +828,9 @@ def api_models_discover(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-# ──────────────────────────────────────────────
-# Task 3 — Model Manager endpoints
-# ──────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Task 3 â€” Model Manager endpoints
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @require_GET
 def api_manager_list(request):
@@ -1039,9 +1041,9 @@ def api_runtime_server_start(request):
         return JsonResponse({"error": str(e)}, status=400)
 
 
-# ──────────────────────────────────────────────
-# Task 5 — Orchestrator / Model / Server endpoints
-# ──────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# Task 5 â€” Orchestrator / Model / Server endpoints
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 @require_GET
@@ -1241,7 +1243,7 @@ def api_project_git_clone(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-# ── Agent Layer API endpoints ─────────────────────────────────────────────
+# â”€â”€ Agent Layer API endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 _AGENT_MODULE = None
 
@@ -1316,7 +1318,7 @@ def api_agent_queue(request):
     })
 
 
-# ── Tool Hub API endpoints ────────────────────────────────────────────────
+# â”€â”€ Tool Hub API endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @safe_api_endpoint
 @require_GET
@@ -1354,7 +1356,7 @@ def api_tools_execute(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-# ── Sandbox API endpoints ─────────────────────────────────────────────────
+# â”€â”€ Sandbox API endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @safe_api_endpoint
 @require_POST
@@ -1454,7 +1456,7 @@ def api_sandbox_destroy(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-# ── Knowledge Store API endpoints ─────────────────────────────────────────
+# â”€â”€ Knowledge Store API endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @safe_api_endpoint
 @require_POST
@@ -1526,7 +1528,7 @@ def api_knowledge_remove(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-# ─── Model Build API ──────────────────────────────────────────────────────────
+# â”€â”€â”€ Model Build API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @safe_api_endpoint
 @require_POST
@@ -1636,7 +1638,7 @@ def _find_ollama() -> str:
 
 
 
-# ─── AIDA Beta API (LLM Gateway orqali) ───────────────────────────────────────
+# â”€â”€â”€ AIDA Beta API (LLM Gateway orqali) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 from webapp.llm.gateway import get_gateway
 from webapp.llm.base import Message, MessageRole
@@ -1646,7 +1648,7 @@ from webapp.memory.session import get_session_store
 @safe_api_endpoint
 @require_POST
 def api_aida_beta_chat(request):
-    """POST /api/aida-beta/chat/ — Gateway orqali chat."""
+    """POST /api/aida-beta/chat/ â€” Gateway orqali chat."""
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except json.JSONDecodeError:
@@ -1689,7 +1691,7 @@ def api_aida_beta_chat(request):
 
 @require_GET
 def api_aida_beta_status(request):
-    """GET /api/aida-beta/status/ — Gateway holati."""
+    """GET /api/aida-beta/status/ â€” Gateway holati."""
     gw = get_gateway()
     status = gw.get_status()
     ollama_plugin = gw.get_provider("ollama")
@@ -1704,7 +1706,7 @@ def api_aida_beta_status(request):
 @safe_api_endpoint
 @require_POST
 def api_aida_beta_remember(request):
-    """POST /api/aida-beta/remember/ — Bilimga saqlash."""
+    """POST /api/aida-beta/remember/ â€” Bilimga saqlash."""
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except json.JSONDecodeError:
