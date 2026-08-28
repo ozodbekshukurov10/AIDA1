@@ -59,25 +59,29 @@ export default function FullscreenScrollSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  
   const sectionRef = useRef<HTMLElement>(null);
+  const currentSlideRef = useRef(currentSlide);
+  const isAnimatingRef = useRef(isAnimating);
+
+  useEffect(() => {
+    currentSlideRef.current = currentSlide;
+  }, [currentSlide]);
+
+  useEffect(() => {
+    isAnimatingRef.current = isAnimating;
+  }, [isAnimating]);
 
   const activeSlide = slidesData[currentSlide];
 
-  const handleNext = () => {
-    if (isAnimating) return;
+  const changeSlide = (newIndex: number) => {
+    if (isAnimatingRef.current) return;
     setIsAnimating(true);
-    setCurrentSlide((prev) => (prev + 1) % slidesData.length);
-    setTimeout(() => setIsAnimating(false), 900);
+    setCurrentSlide(newIndex);
+    setTimeout(() => setIsAnimating(false), 800);
   };
 
-  const handlePrev = () => {
-    if (isAnimating) return;
-    setIsAnimating(true);
-    setCurrentSlide((prev) => (prev - 1 + slidesData.length) % slidesData.length);
-    setTimeout(() => setIsAnimating(false), 900);
-  };
-
-  // Mouse Wheel / Trackpad Scroll Observer (Matches GSAP Observer in FullscreenScroll-main)
+  // Pinning & Locked Scroll Sequence Controller
   useEffect(() => {
     const el = sectionRef.current;
     if (!el || isOpen) return;
@@ -85,26 +89,41 @@ export default function FullscreenScrollSection() {
     let wheelCooldown = false;
 
     const handleWheel = (e: WheelEvent) => {
-      // If user scrolls within the section, intercept wheel to slide pages!
-      if (wheelCooldown || isAnimating) return;
+      if (wheelCooldown || isAnimatingRef.current) return;
 
-      if (e.deltaY > 25) {
-        wheelCooldown = true;
-        handleNext();
-        setTimeout(() => { wheelCooldown = false; }, 900);
-      } else if (e.deltaY < -25) {
-        wheelCooldown = true;
-        handlePrev();
-        setTimeout(() => { wheelCooldown = false; }, 900);
+      const curr = currentSlideRef.current;
+      const maxIndex = slidesData.length - 1;
+
+      if (e.deltaY > 20) {
+        // User scrolling DOWN
+        if (curr < maxIndex) {
+          // Lock window scroll & advance slide
+          e.preventDefault();
+          wheelCooldown = true;
+          changeSlide(curr + 1);
+          setTimeout(() => { wheelCooldown = false; }, 850);
+        }
+        // If curr === maxIndex, do NOT preventDefault() -> allows normal scroll to next section!
+      } else if (e.deltaY < -20) {
+        // User scrolling UP
+        if (curr > 0) {
+          // Lock window scroll & go back slide
+          e.preventDefault();
+          wheelCooldown = true;
+          changeSlide(curr - 1);
+          setTimeout(() => { wheelCooldown = false; }, 850);
+        }
+        // If curr === 0, do NOT preventDefault() -> allows normal scroll up to Hero!
       }
     };
 
-    el.addEventListener('wheel', handleWheel, { passive: true });
+    // Attach non-passive wheel listener to allow e.preventDefault()
+    el.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {
       el.removeEventListener('wheel', handleWheel);
     };
-  }, [isOpen, isAnimating]);
+  }, [isOpen]);
 
   return (
     <section
@@ -112,14 +131,14 @@ export default function FullscreenScrollSection() {
       className="relative w-full h-screen bg-[#03050A] text-[#F5F7FF] overflow-hidden select-none font-sans"
     >
       
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 1. Fullscreen Background Image Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 1. Fullscreen Background Image â”€â”€ */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id}
           initial={{ opacity: 0, scale: 1.15, y: 40 }}
           animate={{ opacity: 0.45, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -40 }}
-          transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="absolute inset-0 z-0 bg-cover bg-center cursor-pointer"
           style={{ backgroundImage: `url(${activeSlide.image})` }}
           onClick={() => setIsOpen(true)}
@@ -128,7 +147,7 @@ export default function FullscreenScrollSection() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-[#03050A] via-transparent to-[#03050A]/70 pointer-events-none z-0" />
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 2. Top Bar UI Frame Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 2. Top Bar UI Frame â”€â”€ */}
       <div className="absolute top-0 left-0 w-full p-8 md:p-12 flex items-start justify-between z-20 pointer-events-none">
         
         {/* Top Left: "+ DISCOVER MORE" */}
@@ -142,12 +161,12 @@ export default function FullscreenScrollSection() {
 
         {/* Top Right: Frame Title */}
         <div className="text-right text-xs font-mono tracking-widest text-[#9CA9BC] uppercase">
-          AIDA 2.0 // NEURAL ENGINE ONLINE Ã¢â€ â€™
+          AIDA 2.0 // NEURAL ENGINE ONLINE â†’
         </div>
 
       </div>
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 3. Bottom UI Frame Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 3. Bottom UI Frame â”€â”€ */}
       <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 flex flex-col md:flex-row md:items-end justify-between gap-6 z-20 pointer-events-none">
         
         {/* Bottom Left Navigation Menu */}
@@ -156,13 +175,7 @@ export default function FullscreenScrollSection() {
             <button
               key={slide.id}
               type="button"
-              onClick={() => {
-                if (!isAnimating) {
-                  setIsAnimating(true);
-                  setCurrentSlide(idx);
-                  setTimeout(() => setIsAnimating(false), 900);
-                }
-              }}
+              onClick={() => changeSlide(idx)}
               className={`text-left font-['Space_Grotesk'] text-sm md:text-base font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer ${
                 currentSlide === idx
                   ? 'text-white border-b-2 border-[#5DE8FF] pb-1 pl-2'
@@ -176,20 +189,24 @@ export default function FullscreenScrollSection() {
 
         {/* Bottom Center: Scroll or Drag */}
         <div
-          onClick={handleNext}
+          onClick={() => {
+            if (currentSlide < slidesData.length - 1) {
+              changeSlide(currentSlide + 1);
+            }
+          }}
           className="pointer-events-auto text-center font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.3em] text-[#9CA9BC] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase animate-bounce"
         >
-          Ã¢â€ â€œ SCROLL OR CLICK Ã¢â€ â€œ
+          {currentSlide === slidesData.length - 1 ? 'â†“ SCROLL FOR NEXT SECTION â†“' : 'â†“ SCROLL OR CLICK â†“'}
         </div>
 
         {/* Bottom Right: Slide Indicator */}
         <div className="text-right font-['JetBrains_Mono',monospace] text-xs font-bold tracking-widest text-[#5DE8FF] uppercase">
-          SLIDESHOW 0{currentSlide + 1} / 0{slidesData.length} Ã¢â€ â€”
+          SLIDESHOW 0{currentSlide + 1} / 0{slidesData.length} â†—
         </div>
 
       </div>
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 4. Main Slide Overlay Card Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 4. Main Slide Overlay Card â”€â”€ */}
       <div className="absolute inset-0 flex items-center justify-center p-6 z-10 pointer-events-none">
         <motion.div
           key={activeSlide.id}
@@ -223,12 +240,12 @@ export default function FullscreenScrollSection() {
             onClick={() => setIsOpen(true)}
             className="mt-4 px-8 py-3 rounded-full bg-white text-[#03050A] font-['Space_Grotesk'] text-xs font-bold tracking-widest hover:bg-[#5DE8FF] transition-all duration-300 cursor-pointer uppercase shadow-[0_0_20px_rgba(255,255,255,0.3)]"
           >
-            DISCOVER MORE Ã¢â€ â€™
+            DISCOVER MORE â†’
           </button>
         </motion.div>
       </div>
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 5. Full-Bleed Content Detail Drawer Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 5. Full-Bleed Content Detail Drawer â”€â”€ */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
