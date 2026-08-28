@@ -16,14 +16,14 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
       id="hero"
       className="relative min-h-screen bg-[#03050A] flex flex-col items-center justify-center overflow-hidden pt-28 pb-16 px-6 md:px-12 z-10 select-none"
     >
-      {/* â”€â”€ 1. Ambient Pulsing Radial Blur Glow Blobs â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 1. Ambient Pulsing Radial Blur Glow Blobs Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="absolute w-[650px] h-[650px] bg-[#5DE8FF]/8 blur-[180px] rounded-full pointer-events-none animate-pulse" />
       <div className="absolute w-[500px] h-[500px] bg-[#7C5CFF]/8 blur-[150px] rounded-full pointer-events-none" />
 
-      {/* â”€â”€ 2. Animated Header Canvas Background (from AnimatedHeaderBackgrounds) â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 2. Animated Header Canvas Background (from AnimatedHeaderBackgrounds) Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <AnimatedHeaderCanvas />
 
-      {/* â”€â”€ 3. Ambient background video & gradient overlay â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 3. Ambient background video & gradient overlay Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-25">
         <video
           autoPlay
@@ -38,7 +38,7 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
         <div className="absolute inset-0 bg-gradient-to-b from-[#03050A] via-transparent to-[#03050A]" />
       </div>
 
-      {/* â”€â”€ 4. Main Central Hero Title & AIDA Branding (Pure Minimalist + Blur Animation) â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 4. Main Central Hero Title & AIDA Branding (Pure Minimalist + Blur Animation) Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-8 relative z-10">
         
         {/* Micro Status Badge */}
@@ -74,7 +74,7 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
           Sun'iy Ong va Avtonom Intellekt Tizimi
         </motion.p>
 
-        {/* Sleek CTA Actions */}
+        {/* Sleek CTA Actions (Matching media_1787942471001.png 100% exactly) */}
         <motion.div
           initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -82,18 +82,14 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
           className="flex flex-wrap items-center justify-center gap-4 mt-2"
         >
           <Button variant="primary" onClick={onStart}>
-            Start with AIDA →
+            Start with AIDA â†’
           </Button>
           {onOpenContext && (
-            <button
-              type="button"
-              onClick={onOpenContext}
-              className="px-7 py-3.5 rounded-2xl border border-[#7C5CFF]/50 bg-[#7C5CFF]/15 text-[#F5F7FF] font-['Space_Grotesk'] text-sm font-bold tracking-wider hover:bg-[#7C5CFF]/30 hover:border-[#7C5CFF] shadow-[0_0_20px_rgba(124,92,255,0.3)] transition-all duration-300 cursor-pointer flex items-center gap-2"
-            >
-              <span>🧠</span> AIDA Context
-            </button>
+            <Button variant="secondary" onClick={onOpenContext}>
+              <span>ðŸ§ </span> AIDA Context
+            </Button>
           )}
-          <Button variant="secondary" onClick={onExplore}>
+          <Button variant="ghost" onClick={onExplore}>
             Explore 3D World
           </Button>
         </motion.div>
