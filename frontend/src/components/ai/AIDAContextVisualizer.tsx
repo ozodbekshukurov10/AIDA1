@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import * as THREE from 'three';
 
 interface AIDAContextVisualizerProps {
@@ -14,7 +14,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
   const networkMountRef = useRef<HTMLDivElement>(null);
   const symbiosisMountRef = useRef<HTMLDivElement>(null);
 
-  // Tab 3 States
+  // Tab 3 Interactive States
   const [activeTheme, setActiveTheme] = useState(0);
   const [density, setDensity] = useState(100);
   const [formation, setFormation] = useState(0);
@@ -39,7 +39,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       "Compressing Context Window (Lossless 99.8%)",
       "Swarm Agent Sync: 16 Parallel Pipelines",
       "Embedding Synaptic Attention Matrix",
-      "Human-AI Symbiosis Neural Sync Active",
+      "Human-AI Symbiosis Shader Mesh Active",
     ];
 
     const logInterval = setInterval(() => {
@@ -158,7 +158,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab]);
 
-  // â”€â”€ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain â”€â”€
+  // â”€â”€ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain (Exact Match to Image 2) â”€â”€
   useEffect(() => {
     if (activeTab !== 'earth') return;
     const container = earthMountRef.current;
@@ -375,7 +375,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab]);
 
-  // â”€â”€ TAB 3: Three.js 3D Interactive Synaptic Neural Network Matrix â”€â”€
+  // â”€â”€ TAB 3: Three.js 3D Interactive Synaptic Neural Network Matrix (Exact Match to Image 1) â”€â”€
   useEffect(() => {
     if (activeTab !== 'network') return;
     const container = networkMountRef.current;
@@ -529,7 +529,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab, activeTheme, density, formation, isPaused]);
 
-  // â”€â”€ TAB 4: Three.js 3D Depth Point-Cloud Human-AI Symbiosis Engine â”€â”€
+  // â”€â”€ TAB 4: Three.js 3D Depth Point-Cloud Human-AI Symbiosis Shader Engine (Exact Match to Image 3 from threejs-depth-points-image-main) â”€â”€
   useEffect(() => {
     if (activeTab !== 'symbiosis') return;
     const container = symbiosisMountRef.current;
@@ -541,117 +541,146 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 75);
+    camera.position.set(0, 0, 48);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Create 3D Depth Point Cloud Mesh of Human Face/Body & Neural Synapses
-    const cols = 120;
-    const rows = 120;
-    const numPoints = cols * rows;
+    // Load Diffuse Texture (man.jpg) & Depth Map (man_depth.png)
+    const textureLoader = new THREE.TextureLoader();
+    const manDiffuseMap = textureLoader.load('/man.jpg');
+    const manDepthMap = textureLoader.load('/man_depth.png');
 
-    const positions = new Float32Array(numPoints * 3);
-    const colors = new Float32Array(numPoints * 3);
+    const geometry = new THREE.PlaneGeometry(36, 22, 220, 220);
 
-    const colorHuman = new THREE.Color(0x5de8ff);
-    const colorAI = new THREE.Color(0x7c5cff);
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const idx = r * cols + c;
-        const u = c / cols - 0.5;
-        const v = r / rows - 0.5;
-
-        // Human Silhouette & Head Depth Profile Math
-        const x = u * 45;
-        const y = v * 45;
-
-        // Depth profile equation simulating human facial head contour
-        const distFromCenter = Math.sqrt(u * u + v * v);
-        const z = Math.max(0, Math.cos(distFromCenter * Math.PI * 1.8) * 12);
-
-        positions[idx * 3] = x;
-        positions[idx * 3 + 1] = y;
-        positions[idx * 3 + 2] = z;
-
-        const mixRatio = Math.random();
-        const finalColor = colorHuman.clone().lerp(colorAI, mixRatio);
-        colors[idx * 3] = finalColor.r;
-        colors[idx * 3 + 1] = finalColor.g;
-        colors[idx * 3 + 2] = finalColor.b;
+    // Exact GLSL Simplex Noise Shader + Vertex Displacement + Scanning Line Fragment Shader
+    const simplexNoiseGLSL = `
+      vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+      vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+      float snoise(vec3 v){ 
+        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+        vec3 i = floor(v + dot(v, C.yyy));
+        vec3 x0 = v - i + dot(i, C.xxx);
+        vec3 g = step(x0.yzx, x0.xyz);
+        vec3 l = 1.0 - g;
+        vec3 i1 = min(g.xyz, l.zxy);
+        vec3 i2 = max(g.xyz, l.zxy);
+        vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+        vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+        vec3 x3 = x0 - 1. + 3.0 * C.xxx;
+        i = mod(i, 289.0); 
+        vec4 p = permute(permute(permute(i.z + vec4(0.0, i1.z, i2.z, 1.0)) + i.y + vec4(0.0, i1.y, i2.y, 1.0)) + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+        float n_ = 1.0/7.0;
+        vec3 ns = n_ * D.wyz - D.xzx;
+        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+        vec4 x_ = floor(j * ns.z);
+        vec4 y_ = floor(j - 7.0 * x_);
+        vec4 x = x_ * ns.x + ns.yyyy;
+        vec4 y = y_ * ns.x + ns.yyyy;
+        vec4 h = 1.0 - abs(x) - abs(y);
+        vec4 b0 = vec4(x.xy, y.xy);
+        vec4 b1 = vec4(x.zw, y.zw);
+        vec4 s0 = floor(b0) * 2.0 + 1.0;
+        vec4 s1 = floor(b1) * 2.0 + 1.0;
+        vec4 sh = -step(h, vec4(0.0));
+        vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+        vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+        vec3 p0 = vec3(a0.xy, h.x);
+        vec3 p1 = vec3(a0.zw, h.y);
+        vec3 p2 = vec3(a1.xy, h.z);
+        vec3 p3 = vec3(a1.zw, h.w);
+        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+        m = m * m;
+        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
       }
-    }
+    `;
 
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const vertexShader = `
+      varying vec2 vUv;
+      varying float vAlpha;
+      varying float vEdge;
+      uniform float u_edge;
+      uniform float u_maxDepth;
+      uniform sampler2D u_manDepthMap;
 
-    const mat = new THREE.PointsMaterial({
-      size: 1.8,
-      vertexColors: true,
+      void main() {
+        vUv = uv;
+        vec3 transformed = vec3(position);
+
+        vAlpha = distance(vUv, vec2(0.5));
+        vAlpha = 1.0 - smoothstep(0.1, 0.5, vAlpha);
+
+        vEdge = smoothstep(u_edge - 0.025, u_edge + 0.025, vUv.x);
+
+        vec4 mapColor = texture2D(u_manDepthMap, vUv);
+        float depth = (mapColor.r + mapColor.g + mapColor.b) / 3.0;
+        transformed.z -= depth * u_maxDepth;
+
+        gl_PointSize = 1.6 + vEdge * 0.8;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
+      }
+    `;
+
+    const fragmentShader = `
+      varying vec2 vUv;
+      varying float vAlpha;
+      varying float vEdge;
+      uniform float u_time;
+      uniform sampler2D u_manDiffuseMap;
+
+      ${simplexNoiseGLSL}
+
+      void main() {
+        vec3 mapColor = texture2D(u_manDiffuseMap, vUv).rgb;
+        mapColor = mix(mapColor, vec3(0.0, 0.95, 1.0), 1.0 - vEdge);
+
+        if (vEdge > 0.48 && vEdge < 0.52) {
+          mapColor = vec3(0.0, 0.95, 1.0); // Teal Scanning Scanline
+        }
+
+        float noise = snoise(vec3(vUv, u_time * 0.0003) * 40.0);
+        float alpha = 0.35 * vAlpha + (0.75 * vAlpha - noise * 0.5 * vAlpha) * vEdge;
+
+        gl_FragColor = vec4(mapColor, alpha);
+      }
+    `;
+
+    const material = new THREE.ShaderMaterial({
+      vertexShader,
+      fragmentShader,
+      uniforms: {
+        u_time: { value: 0 },
+        u_edge: { value: 0.5 },
+        u_maxDepth: { value: 12.0 },
+        u_manDiffuseMap: { value: manDiffuseMap },
+        u_manDepthMap: { value: manDepthMap },
+      },
       transparent: true,
-      opacity: 0.88,
+      depthWrite: false,
       blending: THREE.AdditiveBlending,
     });
 
-    const humanMesh = new THREE.Points(geo, mat);
-    scene.add(humanMesh);
+    const mesh = new THREE.Points(geometry, material);
+    scene.add(mesh);
 
-    // Surrounding Neural Synapse Lines connecting Human & AI
-    const linesGeo = new THREE.BufferGeometry();
-    const linePoints: number[] = [];
-    for (let i = 0; i < 90; i++) {
-      const angle = (i / 90) * Math.PI * 2;
-      const r1 = 15;
-      const r2 = 28 + Math.random() * 8;
-      linePoints.push(
-        Math.cos(angle) * r1, Math.sin(angle) * r1, 4,
-        Math.cos(angle) * r2, Math.sin(angle) * r2, -10
-      );
-    }
-    linesGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePoints, 3));
-    const linesMat = new THREE.LineBasicMaterial({ color: 0x5de8ff, transparent: true, opacity: 0.35 });
-    const linesMesh = new THREE.LineSegments(linesGeo, linesMat);
-    scene.add(linesMesh);
-
-    // Mouse Interaction
-    let isDragging = false;
-    let prevMouse = { x: 0, y: 0 };
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDragging = true;
-      prevMouse = { x: e.clientX, y: e.clientY };
+    // Mouse interactive edge movement
+    let mouseX = 0.5;
+    const onMouseMoveWindow = (e: MouseEvent) => {
+      mouseX = e.clientX / window.innerWidth;
+      material.uniforms.u_edge.value = THREE.MathUtils.lerp(material.uniforms.u_edge.value, mouseX, 0.05);
     };
 
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDragging) return;
-      const dx = e.clientX - prevMouse.x;
-      const dy = e.clientY - prevMouse.y;
-
-      humanMesh.rotation.y += dx * 0.005;
-      humanMesh.rotation.x += dy * 0.005;
-      linesMesh.rotation.y += dx * 0.005;
-
-      prevMouse = { x: e.clientX, y: e.clientY };
-    };
-
-    const onMouseUp = () => {
-      isDragging = false;
-    };
-
-    container.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('mousemove', onMouseMoveWindow);
 
     let animationFrameId: number;
     const animate = () => {
-      if (!isDragging) {
-        humanMesh.rotation.y += 0.003;
-        linesMesh.rotation.y -= 0.002;
-      }
+      material.uniforms.u_time.value += 1;
+      mesh.rotation.y = Math.sin(material.uniforms.u_time.value * 0.005) * 0.08;
       renderer.render(scene, camera);
       animationFrameId = requestAnimationFrame(animate);
     };
@@ -660,12 +689,10 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      container.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('mousemove', onMouseMoveWindow);
       renderer.dispose();
-      geo.dispose();
-      mat.dispose();
+      geometry.dispose();
+      material.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
@@ -963,7 +990,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       )}
 
       {activeTab === 'symbiosis' && (
-        /* â”€â”€ TAB 4 HUMAN-AI SYMBIOSIS EXPLANATION WIDGET â”€â”€ */
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-none mt-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
