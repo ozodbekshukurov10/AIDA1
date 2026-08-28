@@ -92,13 +92,11 @@ export default function FullscreenScrollSection() {
       if (isOpen) return;
 
       const rect = el.getBoundingClientRect();
-      // Section is active if it takes up most of the viewport
       const isInView = rect.top <= 100 && rect.bottom >= window.innerHeight - 100;
 
       if (!isInView) return;
 
       if (wheelCooldown || isAnimatingRef.current) {
-        // While animating or cooling down, lock scroll to section top
         if (Math.abs(rect.top) < 200) {
           e.preventDefault();
         }
@@ -117,7 +115,6 @@ export default function FullscreenScrollSection() {
           changeSlide(curr + 1);
           setTimeout(() => { wheelCooldown = false; }, 800);
         }
-        // If curr === maxIndex (last slide), do NOT preventDefault() -> allows smooth scroll to next section!
       } else if (e.deltaY < -15) {
         // User scrolling UP
         if (curr > 0) {
@@ -127,7 +124,6 @@ export default function FullscreenScrollSection() {
           changeSlide(curr - 1);
           setTimeout(() => { wheelCooldown = false; }, 800);
         }
-        // If curr === 0 (first slide), do NOT preventDefault() -> allows smooth scroll up to Hero!
       }
     };
 
@@ -148,10 +144,10 @@ export default function FullscreenScrollSection() {
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id}
-          initial={{ opacity: 0, scale: 1.15, y: 40 }}
-          animate={{ opacity: 0.45, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -40 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, scale: 1.15, filter: 'blur(15px)' }}
+          animate={{ opacity: 0.5, scale: 1, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, scale: 0.95, filter: 'blur(15px)' }}
+          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
           className="absolute inset-0 z-0 bg-cover bg-center cursor-pointer"
           style={{ backgroundImage: `url(${activeSlide.image})` }}
           onClick={() => setIsOpen(true)}
@@ -219,43 +215,48 @@ export default function FullscreenScrollSection() {
 
       </div>
 
-      {/* â”€â”€ 4. Main Slide Overlay Card â”€â”€ */}
+      {/* â”€â”€ 4. Main Floating Side-Blur Content (No Background Box!) â”€â”€ */}
       <div className="absolute inset-0 flex items-center justify-center p-6 z-10 pointer-events-none">
-        <motion.div
-          key={activeSlide.id}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -30 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-2xl text-center flex flex-col items-center gap-4 bg-[#03050A]/70 backdrop-blur-md p-8 md:p-12 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] pointer-events-auto"
-        >
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2"
-            style={{ backgroundColor: `${activeSlide.color}20`, color: activeSlide.color }}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeSlide.id}
+            initial={{ opacity: 0, x: -90, filter: 'blur(25px)' }}
+            animate={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, x: 90, filter: 'blur(25px)' }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+            className="max-w-3xl text-center flex flex-col items-center gap-5 pointer-events-auto drop-shadow-[0_4px_30px_rgba(0,0,0,0.9)]"
           >
-            <activeSlide.icon className="w-6 h-6" />
-          </div>
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-1 backdrop-blur-md border border-white/20 shadow-[0_0_25px_rgba(93,232,255,0.3)]"
+              style={{ backgroundColor: `${activeSlide.color}25`, color: activeSlide.color }}
+            >
+              <activeSlide.icon className="w-7 h-7" />
+            </div>
 
-          <span className="font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.25em] text-[#5DE8FF] uppercase">
-            {activeSlide.tagline}
-          </span>
+            <span
+              className="font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.3em] uppercase px-4 py-1 rounded-full border border-white/10 backdrop-blur-md"
+              style={{ color: activeSlide.color, backgroundColor: `${activeSlide.color}15` }}
+            >
+              {activeSlide.tagline}
+            </span>
 
-          <h2 className="font-['Space_Grotesk'] text-3xl md:text-5xl font-black text-white tracking-wide uppercase">
-            {activeSlide.title}
-          </h2>
+            <h2 className="font-['Space_Grotesk'] text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-wide uppercase leading-none drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]">
+              {activeSlide.title}
+            </h2>
 
-          <p className="text-sm md:text-base text-[#C4CEDF] leading-relaxed">
-            {activeSlide.shortDesc}
-          </p>
+            <p className="text-base sm:text-lg text-[#E2E8F0] font-medium leading-relaxed max-w-xl drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)]">
+              {activeSlide.shortDesc}
+            </p>
 
-          <button
-            type="button"
-            onClick={() => setIsOpen(true)}
-            className="mt-4 px-8 py-3 rounded-full bg-white text-[#03050A] font-['Space_Grotesk'] text-xs font-bold tracking-widest hover:bg-[#5DE8FF] transition-all duration-300 cursor-pointer uppercase shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-          >
-            DISCOVER MORE â†’
-          </button>
-        </motion.div>
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="mt-4 px-9 py-3.5 rounded-full bg-white text-[#03050A] font-['Space_Grotesk'] text-xs font-bold tracking-widest hover:bg-[#5DE8FF] hover:scale-105 transition-all duration-300 cursor-pointer uppercase shadow-[0_0_30px_rgba(255,255,255,0.4)]"
+            >
+              DISCOVER MORE â†’
+            </button>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* â”€â”€ 5. Full-Bleed Content Detail Drawer â”€â”€ */}
