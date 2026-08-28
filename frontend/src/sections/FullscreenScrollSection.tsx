@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ArrowUpRight, Sparkles, Brain, Globe, Cpu, Zap, X } from 'lucide-react';
 
@@ -58,28 +58,68 @@ const slidesData = [
 export default function FullscreenScrollSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
   const activeSlide = slidesData[currentSlide];
 
   const handleNext = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
     setCurrentSlide((prev) => (prev + 1) % slidesData.length);
+    setTimeout(() => setIsAnimating(false), 900);
   };
 
   const handlePrev = () => {
+    if (isAnimating) return;
+    setIsAnimating(true);
     setCurrentSlide((prev) => (prev - 1 + slidesData.length) % slidesData.length);
+    setTimeout(() => setIsAnimating(false), 900);
   };
 
+  // Mouse Wheel / Trackpad Scroll Observer (Matches GSAP Observer in FullscreenScroll-main)
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || isOpen) return;
+
+    let wheelCooldown = false;
+
+    const handleWheel = (e: WheelEvent) => {
+      // If user scrolls within the section, intercept wheel to slide pages!
+      if (wheelCooldown || isAnimating) return;
+
+      if (e.deltaY > 25) {
+        wheelCooldown = true;
+        handleNext();
+        setTimeout(() => { wheelCooldown = false; }, 900);
+      } else if (e.deltaY < -25) {
+        wheelCooldown = true;
+        handlePrev();
+        setTimeout(() => { wheelCooldown = false; }, 900);
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: true });
+
+    return () => {
+      el.removeEventListener('wheel', handleWheel);
+    };
+  }, [isOpen, isAnimating]);
+
   return (
-    <section className="relative w-full h-screen bg-[#03050A] text-[#F5F7FF] overflow-hidden select-none font-sans">
+    <section
+      ref={sectionRef}
+      className="relative w-full h-screen bg-[#03050A] text-[#F5F7FF] overflow-hidden select-none font-sans"
+    >
       
       {/* â”€â”€ 1. Fullscreen Background Image â”€â”€ */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id}
-          initial={{ opacity: 0, scale: 1.15 }}
-          animate={{ opacity: 0.45, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, scale: 1.15, y: 40 }}
+          animate={{ opacity: 0.45, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: -40 }}
+          transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
           className="absolute inset-0 z-0 bg-cover bg-center cursor-pointer"
           style={{ backgroundImage: `url(${activeSlide.image})` }}
           onClick={() => setIsOpen(true)}
@@ -88,7 +128,7 @@ export default function FullscreenScrollSection() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-[#03050A] via-transparent to-[#03050A]/70 pointer-events-none z-0" />
 
-      {/* â”€â”€ 2. Top Bar UI Frame (100% Exact Match to Codrops Frame in Image) â”€â”€ */}
+      {/* â”€â”€ 2. Top Bar UI Frame â”€â”€ */}
       <div className="absolute top-0 left-0 w-full p-8 md:p-12 flex items-start justify-between z-20 pointer-events-none">
         
         {/* Top Left: "+ DISCOVER MORE" */}
@@ -107,7 +147,7 @@ export default function FullscreenScrollSection() {
 
       </div>
 
-      {/* â”€â”€ 3. Bottom UI Frame (100% Exact Match to Codrops Frame in Image) â”€â”€ */}
+      {/* â”€â”€ 3. Bottom UI Frame â”€â”€ */}
       <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 flex flex-col md:flex-row md:items-end justify-between gap-6 z-20 pointer-events-none">
         
         {/* Bottom Left Navigation Menu */}
@@ -116,7 +156,13 @@ export default function FullscreenScrollSection() {
             <button
               key={slide.id}
               type="button"
-              onClick={() => setCurrentSlide(idx)}
+              onClick={() => {
+                if (!isAnimating) {
+                  setIsAnimating(true);
+                  setCurrentSlide(idx);
+                  setTimeout(() => setIsAnimating(false), 900);
+                }
+              }}
               className={`text-left font-['Space_Grotesk'] text-sm md:text-base font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer ${
                 currentSlide === idx
                   ? 'text-white border-b-2 border-[#5DE8FF] pb-1 pl-2'
@@ -131,7 +177,7 @@ export default function FullscreenScrollSection() {
         {/* Bottom Center: Scroll or Drag */}
         <div
           onClick={handleNext}
-          className="pointer-events-auto text-center font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.3em] text-[#9CA9BC] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase"
+          className="pointer-events-auto text-center font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.3em] text-[#9CA9BC] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase animate-bounce"
         >
           â†“ SCROLL OR CLICK â†“
         </div>
@@ -149,6 +195,7 @@ export default function FullscreenScrollSection() {
           key={activeSlide.id}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -30 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-2xl text-center flex flex-col items-center gap-4 bg-[#03050A]/70 backdrop-blur-md p-8 md:p-12 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] pointer-events-auto"
         >
