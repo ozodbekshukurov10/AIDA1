@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowRight, ChevronDown, ChevronUp, Sparkles, Brain, Globe, Cpu, Zap } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Sparkles, Brain, Globe, Cpu, Zap, X } from 'lucide-react';
 
 const slidesData = [
   {
     id: 'synapse',
     title: 'QUANTUM SYNAPSE MATRIX',
     tagline: '2,097,152 Token Context Capacity',
-    description: 'AIDA processes multi-dimensional context windows in real-time, retrieving vector embeddings across millions of tokens with 99.8% lossless compression.',
+    shortDesc: 'Multi-dimensional context processing engine with 99.8% lossless vector compression.',
+    fullDesc: 'AIDA processes multi-dimensional context windows in real-time, retrieving vector embeddings across millions of tokens with 99.8% lossless compression. Our synaptic matrix ensures zero information degradation across massive multi-turn conversation trajectories.',
     icon: Brain,
     image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1600&auto=format&fit=crop',
     color: '#5DE8FF',
@@ -16,7 +17,8 @@ const slidesData = [
     id: 'swarm',
     title: 'AUTONOMOUS SWARM ORCHESTRATION',
     tagline: '1,024 Parallel Regional Hubs',
-    description: 'Self-organizing AI agents coordinate across global infrastructure hubs, executing complex multi-step workflows, code debugging, and autonomous task execution.',
+    shortDesc: 'Self-organizing AI agents coordinate across global infrastructure hubs.',
+    fullDesc: 'Self-organizing AI agents coordinate across global infrastructure hubs, executing complex multi-step workflows, code debugging, and autonomous task execution with microsecond-level synchronization.',
     icon: Cpu,
     image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1600&auto=format&fit=crop',
     color: '#7C5CFF',
@@ -25,7 +27,8 @@ const slidesData = [
     id: 'healing',
     title: 'SELF-HEALING CODE ENGINE',
     tagline: 'Zero-Bug Verification Pipeline',
-    description: 'Continuous static & dynamic analysis inspects runtime stack traces, auto-corrects syntax errors, and validates API contracts before deployment.',
+    shortDesc: 'Continuous static & dynamic analysis inspects runtime stack traces.',
+    fullDesc: 'Continuous static & dynamic analysis inspects runtime stack traces, auto-corrects syntax errors, and validates API contracts before deployment. If an execution pipeline encounters a fault, AIDA re-routes logic autonomously.',
     icon: Zap,
     image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1600&auto=format&fit=crop',
     color: '#FF007F',
@@ -34,7 +37,8 @@ const slidesData = [
     id: 'planetary',
     title: 'PLANETARY INTELLIGENCE MESH',
     tagline: '1.2ms Global Synapse Latency',
-    description: 'High-speed optical neural arcs connect Tashkent, Tokyo, London, NYC, and Sydney in a unified cognitive mesh spanning the entire globe.',
+    shortDesc: 'High-speed optical neural arcs connect Tashkent, Tokyo, London & NYC.',
+    fullDesc: 'High-speed optical neural arcs connect Tashkent, Tokyo, London, NYC, and Sydney in a unified cognitive mesh spanning the entire globe, delivering instant planetary-scale intelligence.',
     icon: Globe,
     image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1600&auto=format&fit=crop',
     color: '#00F2FF',
@@ -43,7 +47,8 @@ const slidesData = [
     id: 'symbiosis',
     title: 'HUMAN-AI SYMBIOTIC COGNITION',
     tagline: 'The Future of Augmented Intelligence',
-    description: 'Human creative vision and ethical intent fuse seamlessly with AIDA\'s ultra-fast computational engine, transcending single-brain limitations.',
+    shortDesc: 'Human creative vision fuses seamlessly with AIDA\'s computational engine.',
+    fullDesc: 'Human creative vision and ethical intent fuse seamlessly with AIDA\'s ultra-fast computational engine, transcending single-brain limitations to create an augmented human-AI supermind.',
     icon: Sparkles,
     image: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=1600&auto=format&fit=crop',
     color: '#5DE8FF',
@@ -52,141 +57,194 @@ const slidesData = [
 
 export default function FullscreenScrollSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
 
-  const nextSlide = () => {
+  const activeSlide = slidesData[currentSlide];
+
+  const handleNext = () => {
     setCurrentSlide((prev) => (prev + 1) % slidesData.length);
   };
 
-  const prevSlide = () => {
+  const handlePrev = () => {
     setCurrentSlide((prev) => (prev - 1 + slidesData.length) % slidesData.length);
   };
 
-  const activeSlide = slidesData[currentSlide];
-  const IconComponent = activeSlide.icon;
-
   return (
-    <section className="relative w-full min-h-screen bg-[#03050A] flex flex-col justify-between p-6 md:p-12 overflow-hidden select-none">
+    <section className="relative w-full h-screen bg-[#03050A] text-[#F5F7FF] overflow-hidden select-none font-sans">
       
-      {/* â”€â”€ Background Image & Gradient Overlay â”€â”€ */}
+      {/* â”€â”€ 1. Fullscreen Background Image â”€â”€ */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id}
-          initial={{ opacity: 0, scale: 1.1, filter: 'blur(20px)' }}
-          animate={{ opacity: 0.35, scale: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, scale: 0.95, filter: 'blur(20px)' }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="absolute inset-0 z-0 bg-cover bg-center pointer-events-none"
+          initial={{ opacity: 0, scale: 1.15 }}
+          animate={{ opacity: 0.45, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-0 z-0 bg-cover bg-center cursor-pointer"
           style={{ backgroundImage: `url(${activeSlide.image})` }}
+          onClick={() => setIsOpen(true)}
         />
       </AnimatePresence>
 
-      <div className="absolute inset-0 bg-gradient-to-b from-[#03050A] via-[#03050A]/70 to-[#03050A] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#03050A] via-transparent to-[#03050A]/70 pointer-events-none z-0" />
 
-      {/* â”€â”€ Top Header Controls â”€â”€ */}
-      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-3 h-3 rounded-full animate-ping"
-            style={{ backgroundColor: activeSlide.color }}
-          />
-          <span className="font-['Space_Grotesk'] text-xs font-bold tracking-[0.25em] text-[#F5F7FF] uppercase">
-            AIDA 2.0 // KINETIC SHOWCASE
-          </span>
+      {/* â”€â”€ 2. Top Bar UI Frame (100% Exact Match to Codrops Frame in Image) â”€â”€ */}
+      <div className="absolute top-0 left-0 w-full p-8 md:p-12 flex items-start justify-between z-20 pointer-events-none">
+        
+        {/* Top Left: "+ DISCOVER MORE" */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="pointer-events-auto flex items-center gap-2 text-xs font-mono font-bold tracking-[0.25em] text-[#F5F7FF] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase"
+        >
+          <span>+ DISCOVER MORE</span>
+        </button>
+
+        {/* Top Right: Frame Title */}
+        <div className="text-right text-xs font-mono tracking-widest text-[#9CA9BC] uppercase">
+          AIDA 2.0 // NEURAL ENGINE ONLINE â†’
         </div>
 
-        {/* Slide Selector Buttons */}
-        <div className="flex items-center gap-2 p-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+      </div>
+
+      {/* â”€â”€ 3. Bottom UI Frame (100% Exact Match to Codrops Frame in Image) â”€â”€ */}
+      <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 flex flex-col md:flex-row md:items-end justify-between gap-6 z-20 pointer-events-none">
+        
+        {/* Bottom Left Navigation Menu */}
+        <div className="flex flex-col gap-2.5 pointer-events-auto">
           {slidesData.map((slide, idx) => (
             <button
               key={slide.id}
               type="button"
               onClick={() => setCurrentSlide(idx)}
-              className={`px-3 py-1.5 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
+              className={`text-left font-['Space_Grotesk'] text-sm md:text-base font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer ${
                 currentSlide === idx
-                  ? 'bg-white text-[#03050A] shadow-[0_0_15px_rgba(255,255,255,0.4)]'
-                  : 'text-[#9CA9BC] hover:text-white'
+                  ? 'text-white border-b-2 border-[#5DE8FF] pb-1 pl-2'
+                  : 'text-[#9CA9BC]/60 hover:text-white'
               }`}
             >
-              0{idx + 1}
+              {slide.title}
             </button>
           ))}
         </div>
+
+        {/* Bottom Center: Scroll or Drag */}
+        <div
+          onClick={handleNext}
+          className="pointer-events-auto text-center font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.3em] text-[#9CA9BC] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase"
+        >
+          â†“ SCROLL OR CLICK â†“
+        </div>
+
+        {/* Bottom Right: Slide Indicator */}
+        <div className="text-right font-['JetBrains_Mono',monospace] text-xs font-bold tracking-widest text-[#5DE8FF] uppercase">
+          SLIDESHOW 0{currentSlide + 1} / 0{slidesData.length} â†—
+        </div>
+
       </div>
 
-      {/* â”€â”€ Main Slide Content â”€â”€ */}
-      <div className="relative z-10 max-w-5xl mx-auto my-auto flex flex-col gap-6 py-12">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeSlide.id}
-            initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -30, filter: 'blur(10px)' }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="flex flex-col gap-6"
+      {/* â”€â”€ 4. Main Slide Overlay Card â”€â”€ */}
+      <div className="absolute inset-0 flex items-center justify-center p-6 z-10 pointer-events-none">
+        <motion.div
+          key={activeSlide.id}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-2xl text-center flex flex-col items-center gap-4 bg-[#03050A]/70 backdrop-blur-md p-8 md:p-12 rounded-3xl border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] pointer-events-auto"
+        >
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center mb-2"
+            style={{ backgroundColor: `${activeSlide.color}20`, color: activeSlide.color }}
           >
-            {/* Tag Pill */}
-            <div
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border w-fit backdrop-blur-md"
-              style={{
-                borderColor: `${activeSlide.color}40`,
-                backgroundColor: `${activeSlide.color}15`,
-                color: activeSlide.color,
-              }}
-            >
-              <IconComponent className="w-4 h-4" />
-              <span className="font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider uppercase">
-                {activeSlide.tagline}
-              </span>
+            <activeSlide.icon className="w-6 h-6" />
+          </div>
+
+          <span className="font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.25em] text-[#5DE8FF] uppercase">
+            {activeSlide.tagline}
+          </span>
+
+          <h2 className="font-['Space_Grotesk'] text-3xl md:text-5xl font-black text-white tracking-wide uppercase">
+            {activeSlide.title}
+          </h2>
+
+          <p className="text-sm md:text-base text-[#C4CEDF] leading-relaxed">
+            {activeSlide.shortDesc}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="mt-4 px-8 py-3 rounded-full bg-white text-[#03050A] font-['Space_Grotesk'] text-xs font-bold tracking-widest hover:bg-[#5DE8FF] transition-all duration-300 cursor-pointer uppercase shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+          >
+            DISCOVER MORE â†’
+          </button>
+        </motion.div>
+      </div>
+
+      {/* â”€â”€ 5. Full-Bleed Content Detail Drawer â”€â”€ */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: '100%' }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: '100%' }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-50 bg-[#03050A]/95 backdrop-blur-2xl p-8 md:p-16 flex flex-col justify-between overflow-y-auto"
+          >
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[#5DE8FF] hover:text-white transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>â†- GO BACK</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="p-2 rounded-full border border-white/20 text-white hover:bg-white/20 transition-all cursor-pointer"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </div>
 
-            {/* BOLD TITLE */}
-            <h2 className="font-['Space_Grotesk'] text-4xl sm:text-6xl md:text-7xl font-black text-white tracking-wide uppercase leading-tight">
-              {activeSlide.title}
-            </h2>
+            {/* Drawer Body */}
+            <div className="max-w-4xl mx-auto my-auto py-12 flex flex-col gap-8">
+              <div className="flex items-center gap-3">
+                <span
+                  className="px-4 py-1 rounded-full font-mono text-xs font-bold tracking-wider uppercase"
+                  style={{ backgroundColor: `${activeSlide.color}20`, color: activeSlide.color }}
+                >
+                  {activeSlide.tagline}
+                </span>
+              </div>
 
-            {/* Description */}
-            <p className="font-sans text-base sm:text-xl text-[#C4CEDF] max-w-2xl leading-relaxed">
-              {activeSlide.description}
-            </p>
+              <h1 className="font-['Space_Grotesk'] text-4xl md:text-7xl font-black text-white uppercase tracking-tight leading-none">
+                {activeSlide.title}
+              </h1>
+
+              <p className="font-sans text-lg md:text-2xl text-[#C4CEDF] leading-relaxed">
+                {activeSlide.fullDesc}
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
+                  <span className="font-mono text-xs text-[#5DE8FF] font-bold uppercase">SWARM PIPELINE STATUS</span>
+                  <span className="font-['Space_Grotesk'] text-2xl font-bold text-white">100% OPERATIONAL</span>
+                </div>
+                <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
+                  <span className="font-mono text-xs text-[#7C5CFF] font-bold uppercase">LATENCY INDEX</span>
+                  <span className="font-['Space_Grotesk'] text-2xl font-bold text-white">1.2ms ULTRA-FAST</span>
+                </div>
+              </div>
+            </div>
+
           </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* â”€â”€ Bottom Controls & Slide Progress Indicator â”€â”€ */}
-      <div className="relative z-10 flex items-center justify-between pt-6 border-t border-white/10">
-        <div className="flex items-center gap-4">
-          <span className="font-['JetBrains_Mono',monospace] text-sm text-[#5DE8FF] font-bold">
-            0{currentSlide + 1} / 0{slidesData.length}
-          </span>
-          <div className="w-32 bg-white/10 h-1.5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#5DE8FF] transition-all duration-500"
-              style={{ width: `${((currentSlide + 1) / slidesData.length) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Up / Down Navigation Buttons */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={prevSlide}
-            className="p-3 rounded-full border border-white/20 bg-white/5 text-white hover:bg-white/20 transition-all cursor-pointer"
-            aria-label="Previous slide"
-          >
-            <ChevronUp className="w-5 h-5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={nextSlide}
-            className="p-3 rounded-full border border-[#5DE8FF]/40 bg-[#5DE8FF]/15 text-[#5DE8FF] hover:bg-[#5DE8FF]/30 transition-all cursor-pointer shadow-[0_0_15px_rgba(93,232,255,0.2)]"
-            aria-label="Next slide"
-          >
-            <ChevronDown className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+        )}
+      </AnimatePresence>
 
     </section>
   );
