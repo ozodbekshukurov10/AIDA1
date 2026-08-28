@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import * as THREE from 'three';
 
 interface AIDAContextVisualizerProps {
@@ -7,9 +7,11 @@ interface AIDAContextVisualizerProps {
 }
 
 export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizerProps) {
-  const mountRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<'funnel' | 'earth'>('funnel');
+  const funnelMountRef = useRef<HTMLDivElement>(null);
+  const earthMountRef = useRef<HTMLDivElement>(null);
+
   const [tokenCount, setTokenCount] = useState(1849200);
-  const [activeSignal, setActiveSignal] = useState('CYBER_CYAN');
   const [logs, setLogs] = useState<string[]>([
     "[00:01] AIDA Context Engine v2.0 Initialized",
     "[00:02] Loading 2,097,152 Token Vector Pipeline...",
@@ -28,7 +30,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       "Compressing Context Window (Lossless 99.8%)",
       "Swarm Agent Sync: 16 Parallel Pipelines",
       "Embedding Synaptic Attention Matrix",
-      "Memory Retrieval: Fast Vector Cache hit",
+      "Global Planetary Hub: Tashkent - Tokyo Arc Sync",
     ];
 
     const logInterval = setInterval(() => {
@@ -42,9 +44,10 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, []);
 
-  // Three.js 3D WebGL Neural Funnel Particle Stream Engine
+  // â”€â”€ TAB 1: Three.js 3D WebGL Neural Funnel Canvas â”€â”€
   useEffect(() => {
-    const container = mountRef.current;
+    if (activeTab !== 'funnel') return;
+    const container = funnelMountRef.current;
     if (!container) return;
 
     let width = container.clientWidth;
@@ -61,23 +64,19 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Create 3D Funnel Particle Geometry
     const particleCount = 2800;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const sizes = new Float32Array(particleCount);
     const velocities = new Float32Array(particleCount);
 
-    const color1 = new THREE.Color(0x5de8ff); // Cyan
-    const color2 = new THREE.Color(0x7c5cff); // Purple
-    const color3 = new THREE.Color(0xff007f); // Magenta
+    const color1 = new THREE.Color(0x5de8ff);
+    const color2 = new THREE.Color(0x7c5cff);
+    const color3 = new THREE.Color(0xff007f);
 
     for (let i = 0; i < particleCount; i++) {
-      // Funnel shape: wide on left (negative X), tight beam on right (positive X)
-      const progress = Math.random(); // 0 to 1 along X axis
-      const x = (progress - 0.5) * 260; // -130 to +130
-      
-      // Radius shrinks dramatically as X increases to form the funnel
+      const progress = Math.random();
+      const x = (progress - 0.5) * 260;
       const funnelRadius = Math.max(4, (130 - x) * 0.42);
       const angle = Math.random() * Math.PI * 2;
       const r = Math.sqrt(Math.random()) * funnelRadius;
@@ -89,7 +88,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       velocities[i] = 0.6 + Math.random() * 1.8;
       sizes[i] = 1.5 + Math.random() * 3.5;
 
-      // Color gradient
       const mixColor = Math.random() > 0.4 ? color1 : (Math.random() > 0.5 ? color2 : color3);
       colors[i * 3] = mixColor.r;
       colors[i * 3 + 1] = mixColor.g;
@@ -101,7 +99,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-    // Particle Material
     const material = new THREE.PointsMaterial({
       size: 3.2,
       vertexColors: true,
@@ -113,34 +110,13 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     const particleSystem = new THREE.Points(geometry, material);
     scene.add(particleSystem);
 
-    // Add Central Glowing Synapse Line Beam
-    const lineGeometry = new THREE.BufferGeometry();
-    const linePoints = [];
-    for (let x = -140; x <= 140; x += 5) {
-      linePoints.push(new THREE.Vector3(x, 0, 0));
-    }
-    lineGeometry.setFromPoints(linePoints);
-
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x5de8ff,
-      transparent: true,
-      opacity: 0.6,
-      linewidth: 2,
-    });
-    const lineBeam = new THREE.Line(lineGeometry, lineMaterial);
-    scene.add(lineBeam);
-
-    // Animation Loop
     let animationFrameId: number;
     const animate = () => {
       const posAttr = geometry.attributes.position as THREE.BufferAttribute;
       const posArray = posAttr.array as Float32Array;
 
       for (let i = 0; i < particleCount; i++) {
-        // Move particles along funnel (left to right)
         posArray[i * 3] += velocities[i];
-
-        // Reset particle if it passes end of funnel
         if (posArray[i * 3] > 130) {
           const x = -130;
           const funnelRadius = (130 - x) * 0.42;
@@ -162,20 +138,8 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
 
     animate();
 
-    const handleResize = () => {
-      if (!container) return;
-      width = container.clientWidth;
-      height = container.clientHeight;
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
-    };
-
-    window.addEventListener('resize', handleResize);
-
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('resize', handleResize);
       renderer.dispose();
       geometry.dispose();
       material.dispose();
@@ -183,21 +147,212 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
         container.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [activeTab]);
+
+  // â”€â”€ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain Canvas â”€â”€
+  useEffect(() => {
+    if (activeTab !== 'earth') return;
+    const container = earthMountRef.current;
+    if (!container) return;
+
+    let width = container.clientWidth;
+    let height = container.clientHeight;
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    camera.position.set(0, 0, 110);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // Ambient & Directional Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0x5de8ff, 1.8);
+    dirLight.position.set(100, 50, 100);
+    scene.add(dirLight);
+
+    // Create 3D Earth Globe Mesh
+    const earthRadius = 38;
+    const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
+
+    const textureLoader = new THREE.TextureLoader();
+    const earthTexture = textureLoader.load('/world.topo.jpg');
+
+    const earthMat = new THREE.MeshPhongMaterial({
+      map: earthTexture,
+      shininess: 15,
+      specular: new THREE.Color(0x333333),
+    });
+
+    const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    scene.add(earthMesh);
+
+    // Atmosphere Outer Glow Sphere
+    const atmosGeo = new THREE.SphereGeometry(earthRadius * 1.08, 64, 64);
+    const atmosMat = new THREE.MeshBasicMaterial({
+      color: 0x5de8ff,
+      transparent: true,
+      opacity: 0.18,
+      side: THREE.BackSide,
+      blending: THREE.AdditiveBlending,
+    });
+    const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
+    scene.add(atmosMesh);
+
+    // Global Neural Hub Nodes & Connecting Synapse Arcs
+    const globalHubs = [
+      { name: "Tashkent", lat: 41.2995, lng: 69.2401 },
+      { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
+      { name: "London", lat: 51.5074, lng: -0.1278 },
+      { name: "New York", lat: 40.7128, lng: -74.006 },
+      { name: "San Francisco", lat: 37.7749, lng: -122.4194 },
+      { name: "Sydney", lat: -33.8688, lng: 151.2093 },
+      { name: "Dubai", lat: 25.2048, lng: 55.2708 },
+    ];
+
+    const latLngToVector3 = (lat: number, lng: number, r: number) => {
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lng + 180) * (Math.PI / 180);
+      const x = -(r * Math.sin(phi) * Math.cos(theta));
+      const z = r * Math.sin(phi) * Math.sin(theta);
+      const y = r * Math.cos(phi);
+      return new THREE.Vector3(x, y, z);
+    };
+
+    // Draw Hub Nodes & Arcs
+    const arcsGroup = new THREE.Group();
+
+    globalHubs.forEach((hub) => {
+      const pos = latLngToVector3(hub.lat, hub.lng, earthRadius * 1.02);
+      const dotGeo = new THREE.SphereGeometry(1.2, 16, 16);
+      const dotMat = new THREE.MeshBasicMaterial({ color: 0x5de8ff });
+      const dotMesh = new THREE.Mesh(dotGeo, dotMat);
+      dotMesh.position.copy(pos);
+      arcsGroup.add(dotMesh);
+    });
+
+    // Create Connecting Curves between hubs
+    for (let i = 0; i < globalHubs.length; i++) {
+      for (let j = i + 1; j < globalHubs.length; j++) {
+        const v1 = latLngToVector3(globalHubs[i].lat, globalHubs[i].lng, earthRadius * 1.02);
+        const v2 = latLngToVector3(globalHubs[j].lat, globalHubs[j].lng, earthRadius * 1.02);
+
+        const mid = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
+        const distance = v1.distanceTo(v2);
+        mid.normalize().multiplyScalar(earthRadius + distance * 0.35);
+
+        const curve = new THREE.QuadraticBezierCurve3(v1, mid, v2);
+        const points = curve.getPoints(50);
+        const curveGeo = new THREE.BufferGeometry().setFromPoints(points);
+
+        const curveMat = new THREE.LineBasicMaterial({
+          color: i % 2 === 0 ? 0x5de8ff : 0x7c5cff,
+          transparent: true,
+          opacity: 0.6,
+        });
+
+        const line = new THREE.Line(curveGeo, curveMat);
+        arcsGroup.add(line);
+      }
+    }
+
+    earthMesh.add(arcsGroup);
+
+    // Mouse Drag Rotation
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - previousMousePosition.x;
+      const deltaY = e.clientY - previousMousePosition.y;
+
+      earthMesh.rotation.y += deltaX * 0.005;
+      earthMesh.rotation.x += deltaY * 0.005;
+
+      previousMousePosition = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseUp = () => {
+      isDragging = false;
+    };
+
+    container.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+
+    // Animation Loop
+    let animationFrameId: number;
+    const animate = () => {
+      if (!isDragging) {
+        earthMesh.rotation.y += 0.003;
+      }
+      renderer.render(scene, camera);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      container.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      renderer.dispose();
+      earthGeo.dispose();
+      earthMat.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+    };
+  }, [activeTab]);
 
   return (
     <div className="fixed inset-0 w-screen h-screen z-[100000] bg-[#03050A]/95 backdrop-blur-xl flex flex-col justify-between p-6 md:p-10 select-none font-sans overflow-hidden">
       
-      {/* â”€â”€ 1. Top Bar Navigation & Close â”€â”€ */}
-      <div className="flex items-center justify-between z-20">
+      {/* â”€â”€ 1. Top Bar Navigation, Tabs & Close â”€â”€ */}
+      <div className="flex flex-wrap items-center justify-between gap-4 z-20">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 bg-[#5DE8FF] rounded-full animate-ping" />
           <span className="font-['Space_Grotesk',sans-serif] text-xl font-bold text-[#F5F7FF] tracking-wider uppercase">
             AIDA CONTEXT ENGINE
           </span>
-          <span className="px-3 py-1 rounded-full bg-[#5DE8FF]/15 border border-[#5DE8FF]/30 text-[#5DE8FF] font-['JetBrains_Mono',monospace] text-xs font-bold uppercase">
-            2,097,152 TOKENS LIVE
-          </span>
+        </div>
+
+        {/* TAB NAVIGATION BUTTONS */}
+        <div className="flex items-center gap-2 p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setActiveTab('funnel')}
+            className={`px-5 py-2 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
+              activeTab === 'funnel'
+                ? 'bg-gradient-to-r from-[#5DE8FF] to-[#4C7DFF] text-[#03050A] shadow-[0_0_15px_rgba(93,232,255,0.4)]'
+                : 'text-[#9CA9BC] hover:text-white'
+            }`}
+          >
+            [1] CONTEXT STREAM
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('earth')}
+            className={`px-5 py-2 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
+              activeTab === 'earth'
+                ? 'bg-gradient-to-r from-[#7C5CFF] to-[#5DE8FF] text-[#03050A] shadow-[0_0_15px_rgba(124,92,255,0.4)]'
+                : 'text-[#9CA9BC] hover:text-white'
+            }`}
+          >
+            [2] GLOBAL PLANETARY BRAIN ðŸŒ-
+          </button>
         </div>
 
         <button
@@ -209,73 +364,125 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
         </button>
       </div>
 
-      {/* â”€â”€ 2. Three.js 3D WebGL Neural Funnel Canvas â”€â”€ */}
+      {/* â”€â”€ 2. 3D WebGL Canvas Render Area â”€â”€ */}
       <div className="absolute inset-0 z-0 flex items-center justify-center">
-        <div ref={mountRef} className="w-full h-full" />
+        {activeTab === 'funnel' ? (
+          <div ref={funnelMountRef} className="w-full h-full" />
+        ) : (
+          <div ref={earthMountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+        )}
       </div>
 
-      {/* â”€â”€ 3. Overlay Telemetry HUD Widgets â”€â”€ */}
-      <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-none mt-auto">
-        
-        {/* Widget 1: Token Capacity Meter */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="p-5 rounded-2xl border border-[#5DE8FF]/20 bg-[#03050A]/75 backdrop-blur-md flex flex-col gap-2 shadow-[0_0_20px_rgba(93,232,255,0.15)] pointer-events-auto"
-        >
-          <span className="font-['JetBrains_Mono',monospace] text-xs text-[#5DE8FF] tracking-widest uppercase">
-            ACTIVE CONTEXT CAPACITY
-          </span>
-          <div className="font-['Space_Grotesk'] text-3xl font-extrabold text-white">
-            {tokenCount.toLocaleString()} / 2,097,152
-          </div>
-          <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mt-1">
-            <div
-              className="bg-gradient-to-r from-[#5DE8FF] to-[#7C5CFF] h-full transition-all duration-300"
-              style={{ width: `${(tokenCount / 2097152) * 100}%` }}
-            />
-          </div>
-        </motion.div>
+      {/* â”€â”€ 3. Overlay Telemetry HUD Widgets (Tab 1 vs Tab 2) â”€â”€ */}
+      {activeTab === 'funnel' ? (
+        /* â”€â”€ TAB 1 TELEMETRY HUD â”€â”€ */
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-none mt-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-5 rounded-2xl border border-[#5DE8FF]/20 bg-[#03050A]/75 backdrop-blur-md flex flex-col gap-2 shadow-[0_0_20px_rgba(93,232,255,0.15)] pointer-events-auto"
+          >
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#5DE8FF] tracking-widest uppercase font-semibold">
+              ACTIVE CONTEXT CAPACITY
+            </span>
+            <div className="font-['Space_Grotesk'] text-3xl font-extrabold text-white">
+              {tokenCount.toLocaleString()} / 2,097,152
+            </div>
+            <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mt-1">
+              <div
+                className="bg-gradient-to-r from-[#5DE8FF] to-[#7C5CFF] h-full transition-all duration-300"
+                style={{ width: `${(tokenCount / 2097152) * 100}%` }}
+              />
+            </div>
+          </motion.div>
 
-        {/* Widget 2: Compression & Latency */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="p-5 rounded-2xl border border-[#7C5CFF]/20 bg-[#03050A]/75 backdrop-blur-md flex flex-col gap-2 shadow-[0_0_20px_rgba(124,92,255,0.15)] pointer-events-auto"
-        >
-          <span className="font-['JetBrains_Mono',monospace] text-xs text-[#7C5CFF] tracking-widest uppercase">
-            RAG VECTOR SYNTHESIS
-          </span>
-          <div className="flex justify-between items-baseline">
-            <span className="font-['Space_Grotesk'] text-3xl font-extrabold text-white">99.8%</span>
-            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#5DE8FF]">Lossless Compression</span>
-          </div>
-          <span className="font-['JetBrains_Mono',monospace] text-xs text-[#9CA9BC]">
-            16 Parallel Swarm Inference Streams Active
-          </span>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="p-5 rounded-2xl border border-[#7C5CFF]/20 bg-[#03050A]/75 backdrop-blur-md flex flex-col gap-2 shadow-[0_0_20px_rgba(124,92,255,0.15)] pointer-events-auto"
+          >
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#7C5CFF] tracking-widest uppercase font-semibold">
+              RAG VECTOR SYNTHESIS
+            </span>
+            <div className="flex justify-between items-baseline">
+              <span className="font-['Space_Grotesk'] text-3xl font-extrabold text-white">99.8%</span>
+              <span className="font-['JetBrains_Mono',monospace] text-xs text-[#5DE8FF]">Lossless Compression</span>
+            </div>
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#9CA9BC]">
+              16 Parallel Swarm Inference Streams Active
+            </span>
+          </motion.div>
 
-        {/* Widget 3: Live Telemetry Terminal Logs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="p-5 rounded-2xl border border-white/15 bg-[#03050A]/85 backdrop-blur-md flex flex-col gap-2 font-['JetBrains_Mono',monospace] text-xs pointer-events-auto max-h-44 overflow-y-auto"
-        >
-          <span className="text-[#5DE8FF] font-bold tracking-widest uppercase mb-1">
-            LIVE CONTEXT LOGS
-          </span>
-          <div className="flex flex-col gap-1 text-[#9CA9BC]">
-            {logs.map((log, idx) => (
-              <div key={idx} className={idx === 0 ? "text-[#5DE8FF] font-semibold" : ""}>
-                {log}
-              </div>
-            ))}
-          </div>
-        </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="p-5 rounded-2xl border border-white/15 bg-[#03050A]/85 backdrop-blur-md flex flex-col gap-2 font-['JetBrains_Mono',monospace] text-xs pointer-events-auto max-h-44 overflow-y-auto"
+          >
+            <span className="text-[#5DE8FF] font-bold tracking-widest uppercase mb-1">
+              LIVE CONTEXT LOGS
+            </span>
+            <div className="flex flex-col gap-1 text-[#9CA9BC]">
+              {logs.map((log, idx) => (
+                <div key={idx} className={idx === 0 ? "text-[#5DE8FF] font-semibold" : ""}>
+                  {log}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      ) : (
+        /* â”€â”€ TAB 2 GLOBAL PLANETARY BRAIN TELEMETRY HUD â”€â”€ */
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-none mt-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-5 rounded-2xl border border-[#7C5CFF]/30 bg-[#03050A]/80 backdrop-blur-md flex flex-col gap-2 shadow-[0_0_25px_rgba(124,92,255,0.2)] pointer-events-auto"
+          >
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#7C5CFF] tracking-widest uppercase font-semibold">
+              GLOBAL NEURAL COVERAGE
+            </span>
+            <div className="font-['Space_Grotesk'] text-3xl font-extrabold text-white">
+              100% PLANETARY MESH
+            </div>
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#5DE8FF]">
+              1,024 Regional Swarm Infrastructure Hubs
+            </span>
+          </motion.div>
 
-      </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="p-5 rounded-2xl border border-[#5DE8FF]/30 bg-[#03050A]/80 backdrop-blur-md flex flex-col gap-2 shadow-[0_0_25px_rgba(93,232,255,0.2)] pointer-events-auto"
+          >
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#5DE8FF] tracking-widest uppercase font-semibold">
+              PLANETARY SYNAPSE LATENCY
+            </span>
+            <div className="font-['Space_Grotesk'] text-3xl font-extrabold text-white">
+              1.2 ms ROUND-TRIP
+            </div>
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#9CA9BC]">
+              Synaptic arcs connect Tashkent, Tokyo, London & NYC
+            </span>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="p-5 rounded-2xl border border-white/20 bg-[#03050A]/90 backdrop-blur-md flex flex-col gap-2 pointer-events-auto"
+          >
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#5DE8FF] font-bold tracking-widest uppercase">
+              PLANETARY BRAIN PROOF
+            </span>
+            <p className="font-['Space_Grotesk'] text-xs text-[#F5F7FF] leading-relaxed">
+              AIDA's cognitive brain spans the entire planet like Earth's neural network, orchestrating real-time intelligence across global nodes.
+            </p>
+          </motion.div>
+        </div>
+      )}
 
     </div>
   );
