@@ -78,50 +78,63 @@ export default function FullscreenScrollSection() {
     if (isAnimatingRef.current) return;
     setIsAnimating(true);
     setCurrentSlide(newIndex);
-    setTimeout(() => setIsAnimating(false), 800);
+    setTimeout(() => setIsAnimating(false), 750);
   };
 
-  // Pinning & Locked Scroll Sequence Controller
+  // â”€â”€ Bulletproof Scroll-Lock & Pinning Controller â”€â”€
   useEffect(() => {
     const el = sectionRef.current;
     if (!el || isOpen) return;
 
     let wheelCooldown = false;
 
-    const handleWheel = (e: WheelEvent) => {
-      if (wheelCooldown || isAnimatingRef.current) return;
+    const handleWindowWheel = (e: WheelEvent) => {
+      if (isOpen) return;
+
+      const rect = el.getBoundingClientRect();
+      // Section is active if it takes up most of the viewport
+      const isInView = rect.top <= 100 && rect.bottom >= window.innerHeight - 100;
+
+      if (!isInView) return;
+
+      if (wheelCooldown || isAnimatingRef.current) {
+        // While animating or cooling down, lock scroll to section top
+        if (Math.abs(rect.top) < 200) {
+          e.preventDefault();
+        }
+        return;
+      }
 
       const curr = currentSlideRef.current;
       const maxIndex = slidesData.length - 1;
 
-      if (e.deltaY > 20) {
+      if (e.deltaY > 15) {
         // User scrolling DOWN
         if (curr < maxIndex) {
-          // Lock window scroll & advance slide
           e.preventDefault();
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           wheelCooldown = true;
           changeSlide(curr + 1);
-          setTimeout(() => { wheelCooldown = false; }, 850);
+          setTimeout(() => { wheelCooldown = false; }, 800);
         }
-        // If curr === maxIndex, do NOT preventDefault() -> allows normal scroll to next section!
-      } else if (e.deltaY < -20) {
+        // If curr === maxIndex (last slide), do NOT preventDefault() -> allows smooth scroll to next section!
+      } else if (e.deltaY < -15) {
         // User scrolling UP
         if (curr > 0) {
-          // Lock window scroll & go back slide
           e.preventDefault();
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
           wheelCooldown = true;
           changeSlide(curr - 1);
-          setTimeout(() => { wheelCooldown = false; }, 850);
+          setTimeout(() => { wheelCooldown = false; }, 800);
         }
-        // If curr === 0, do NOT preventDefault() -> allows normal scroll up to Hero!
+        // If curr === 0 (first slide), do NOT preventDefault() -> allows smooth scroll up to Hero!
       }
     };
 
-    // Attach non-passive wheel listener to allow e.preventDefault()
-    el.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('wheel', handleWindowWheel, { passive: false });
 
     return () => {
-      el.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('wheel', handleWindowWheel);
     };
   }, [isOpen]);
 
@@ -138,7 +151,7 @@ export default function FullscreenScrollSection() {
           initial={{ opacity: 0, scale: 1.15, y: 40 }}
           animate={{ opacity: 0.45, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -40 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="absolute inset-0 z-0 bg-cover bg-center cursor-pointer"
           style={{ backgroundImage: `url(${activeSlide.image})` }}
           onClick={() => setIsOpen(true)}
