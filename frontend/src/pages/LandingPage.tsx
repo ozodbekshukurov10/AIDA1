@@ -11,6 +11,7 @@ import CTA from '../sections/CTA';
 import Footer from '../sections/Footer';
 import CustomCursor from '../components/ui/CustomCursor';
 import IntroManager from '../components/intro/IntroManager';
+import OnScrollShapeMorphSection from '../sections/OnScrollShapeMorphSection';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -64,7 +65,10 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         {/* â”€â”€â”€ Holographic Cortana AI HUD Workspace â”€â”€â”€ */}
         <Demo />
 
-        {/* â”€â”€â”€ City Intelligence Strip â€” Full-bleed city image with white brand text â”€â”€â”€ */}
+        {/* â”€â”€â”€ On-Scroll Shape Morphing Kinetic Showcase â”€â”€â”€ */}
+        <OnScrollShapeMorphSection />
+
+        {/* â”€â”€â”€ City Intelligence Strip â”€â”€â”€ */}
         <section className="relative overflow-hidden -mt-1">
           <div className="relative h-[240px] md:h-[340px] overflow-hidden">
             <img
