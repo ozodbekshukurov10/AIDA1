@@ -31,8 +31,12 @@ export default function AIHoloInterface() {
   const [selectedAbility, setSelectedAbility] = useState<AbilityNode>(ABILITIES[0]);
 
   return (
-    <div className="w-full min-h-[640px] bg-[#020409]/95 border border-[#5DE8FF]/20 rounded-3xl p-6 md:p-10 backdrop-blur-2xl shadow-[0_0_80px_rgba(3,5,10,0.9)] relative overflow-hidden select-none font-sans">
-      
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96, filter: 'blur(10px)' }}
+      animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full min-h-[640px] bg-[#020409]/95 border border-[#5DE8FF]/20 rounded-3xl p-6 md:p-10 backdrop-blur-2xl shadow-[0_0_80px_rgba(3,5,10,0.9)] relative overflow-hidden select-none font-sans"
+    >
       {/* Background Holographic Grid Mesh */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(93,232,255,0.06)_0,transparent_70%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(93,232,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(93,232,255,0.03)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
@@ -53,7 +57,7 @@ export default function AIHoloInterface() {
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`font-mono text-xs md:text-sm tracking-[0.25em] uppercase font-bold relative py-2 transition-all cursor-pointer ${
+                className={`font-['JetBrains_Mono',monospace] text-xs md:text-sm tracking-[0.25em] uppercase font-bold relative py-2 transition-all cursor-pointer ${
                   isActive
                     ? 'text-[#5DE8FF] filter drop-shadow-[0_0_8px_rgba(93,232,255,0.6)]'
                     : 'text-[#F5F7FF]/40 hover:text-[#F5F7FF]/80'
@@ -72,7 +76,7 @@ export default function AIHoloInterface() {
         </div>
 
         {/* Top Right Live Telemetry Badge */}
-        <div className="hidden sm:flex items-center gap-3 font-mono text-[10px] text-[#5DE8FF] bg-[#5DE8FF]/10 border border-[#5DE8FF]/20 px-3 py-1.5 rounded-full">
+        <div className="hidden sm:flex items-center gap-3 font-['JetBrains_Mono',monospace] text-[10px] text-[#5DE8FF] bg-[#5DE8FF]/10 border border-[#5DE8FF]/20 px-3 py-1.5 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-[#5DE8FF] animate-ping" />
           <span>HUD v2.4 // ONLINE</span>
         </div>
@@ -86,23 +90,28 @@ export default function AIHoloInterface() {
           
           {/* Header Title */}
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-[0.3em] text-[#5DE8FF] uppercase font-semibold">
+            <span className="font-['JetBrains_Mono',monospace] text-[10px] tracking-[0.3em] text-[#5DE8FF] uppercase font-semibold">
               TACTICAL NEURAL ABILITIES
             </span>
-            <h1 className="font-['Space_Grotesk'] text-3xl md:text-4xl font-extrabold text-[#F5F7FF] tracking-wider uppercase">
+            <h1 className="font-['Space_Grotesk',sans-serif] text-3xl md:text-4xl font-extrabold text-[#F5F7FF] tracking-wider uppercase">
               {activeTab === 'cortana' ? 'C O R T A N A' : activeTab.toUpperCase()}
             </h1>
           </div>
 
           {/* Circular Node Matrix Grid (4x3) */}
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
-            {ABILITIES.map((node) => {
+            {ABILITIES.map((node, i) => {
               const isSelected = selectedAbility.id === node.id;
               return (
-                <button
+                <motion.button
                   key={node.id}
                   type="button"
                   onClick={() => setSelectedAbility(node)}
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.04, duration: 0.3 }}
+                  whileHover={{ scale: 1.15, filter: 'drop-shadow(0 0 12px rgba(93,232,255,0.8))' }}
+                  whileTap={{ scale: 0.95 }}
                   className={`w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center text-lg md:text-xl relative transition-all duration-300 cursor-pointer ${
                     isSelected
                       ? 'bg-[#5DE8FF]/20 border-2 border-[#5DE8FF] shadow-[0_0_20px_rgba(93,232,255,0.6)] scale-110'
@@ -117,7 +126,7 @@ export default function AIHoloInterface() {
                       className="absolute -inset-1 rounded-full border border-[#5DE8FF]/40 animate-pulse pointer-events-none"
                     />
                   )}
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -126,22 +135,22 @@ export default function AIHoloInterface() {
           <AnimatePresence mode="wait">
             <motion.div
               key={selectedAbility.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
+              initial={{ opacity: 0, y: 12, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -12, filter: 'blur(6px)' }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
               className="bg-[#07101A]/90 border border-[#5DE8FF]/25 rounded-2xl p-5 md:p-6 backdrop-blur-xl flex flex-col gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs text-[#5DE8FF] tracking-[0.2em] font-bold uppercase">
+                <span className="font-['JetBrains_Mono',monospace] text-xs text-[#5DE8FF] tracking-[0.2em] font-bold uppercase">
                   {selectedAbility.category} // #{selectedAbility.id}
                 </span>
-                <span className="font-mono text-[10px] text-[#9CA9BC] border border-white/10 px-2 py-0.5 rounded">
+                <span className="font-['JetBrains_Mono',monospace] text-[10px] text-[#9CA9BC] border border-white/10 px-2 py-0.5 rounded">
                   LATENCY: {selectedAbility.stats.speed}
                 </span>
               </div>
 
-              <h3 className="font-['Space_Grotesk'] font-bold text-xl text-[#F5F7FF] tracking-wide">
+              <h3 className="font-['Space_Grotesk',sans-serif] font-bold text-xl text-[#F5F7FF] tracking-wide">
                 {selectedAbility.name}
               </h3>
 
@@ -151,7 +160,7 @@ export default function AIHoloInterface() {
 
               {/* Stats & Action Controls */}
               <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-1">
-                <div className="flex items-center gap-4 font-mono text-[11px]">
+                <div className="flex items-center gap-4 font-['JetBrains_Mono',monospace] text-[11px]">
                   <div>
                     <span className="text-[#F5F7FF]/40">ACCURACY: </span>
                     <span className="text-[#5DE8FF] font-semibold">{selectedAbility.stats.accuracy}</span>
@@ -163,12 +172,14 @@ export default function AIHoloInterface() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <button
+                  <motion.button
                     type="button"
-                    className="px-4 py-1.5 rounded-xl border border-[#5DE8FF]/40 bg-[#5DE8FF]/15 text-[#5DE8FF] font-mono text-xs font-bold tracking-wider hover:bg-[#5DE8FF]/30 hover:shadow-[0_0_15px_rgba(93,232,255,0.4)] transition-all cursor-pointer"
+                    whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(93,232,255,0.5)' }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-4 py-1.5 rounded-xl border border-[#5DE8FF]/40 bg-[#5DE8FF]/15 text-[#5DE8FF] font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider hover:bg-[#5DE8FF]/30 transition-all cursor-pointer"
                   >
                     Equip Ability
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </motion.div>
@@ -195,13 +206,21 @@ export default function AIHoloInterface() {
             </div>
 
             {/* HUD Telemetry Floating Orbit Badges */}
-            <div className="absolute top-4 left-2 font-mono text-[9px] text-[#5DE8FF] bg-[#03050A]/80 border border-[#5DE8FF]/20 px-2.5 py-1 rounded-md backdrop-blur-md">
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute top-4 left-2 font-['JetBrains_Mono',monospace] text-[9px] text-[#5DE8FF] bg-[#03050A]/80 border border-[#5DE8FF]/20 px-2.5 py-1 rounded-md backdrop-blur-md shadow-[0_0_10px_rgba(93,232,255,0.2)]"
+            >
               NEURAL LINKS: 1,024 ACTIVE
-            </div>
+            </motion.div>
 
-            <div className="absolute bottom-6 right-2 font-mono text-[9px] text-[#7C5CFF] bg-[#03050A]/80 border border-[#7C5CFF]/20 px-2.5 py-1 rounded-md backdrop-blur-md">
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute bottom-6 right-2 font-['JetBrains_Mono',monospace] text-[9px] text-[#7C5CFF] bg-[#03050A]/80 border border-[#7C5CFF]/20 px-2.5 py-1 rounded-md backdrop-blur-md shadow-[0_0_10px_rgba(124,92,255,0.2)]"
+            >
               SYNAPSE FREQ: 4.8 GHz
-            </div>
+            </motion.div>
 
           </div>
 
@@ -209,6 +228,6 @@ export default function AIHoloInterface() {
 
       </div>
 
-    </div>
+    </motion.div>
   );
 }
