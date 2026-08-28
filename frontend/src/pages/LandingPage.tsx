@@ -59,9 +59,12 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         <Navbar onGetStarted={onGetStarted} onNavigate={handleNavigate} onReplayIntro={handleReplayIntro} />
 
         {/* Main Sections */}
-        <Hero onStart={onGetStarted} onExplore={() => handleNavigate('features')} morphFromIntro={fromIntro} />
+        <Hero onStart={onGetStarted} onExplore={() => handleNavigate('demo')} morphFromIntro={fromIntro} />
 
-        {/* ─── City Intelligence Strip — Full-bleed city image with white brand text ─── */}
+        {/* â”€â”€â”€ Holographic Cortana AI HUD Workspace â”€â”€â”€ */}
+        <Demo />
+
+        {/* â”€â”€â”€ City Intelligence Strip â€” Full-bleed city image with white brand text â”€â”€â”€ */}
         <section className="relative overflow-hidden -mt-1">
           <div className="relative h-[240px] md:h-[340px] overflow-hidden">
             <img
@@ -75,7 +78,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             {/* Centered white text overlay */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
               <p className="font-['JetBrains_Mono',monospace] text-[10px] tracking-[0.35em] text-[#5DE8FF] uppercase mb-3">
-                AIDA Intelligence — Everywhere
+                AIDA Intelligence â€” Everywhere
               </p>
               <h2
                 className="font-['Space_Grotesk',sans-serif] font-bold text-white tracking-tight leading-tight max-w-2xl"
@@ -93,8 +96,6 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         <Capabilities />
         
         <Technology />
-        
-        <Demo />
 
         <Dashboard />
         

@@ -13,20 +13,20 @@ interface IntroManagerProps {
 
 /**
  * Phase timeline:
- *   0  →  0–3s   Black opening
- *   1  →  3–6s   AIDA Logo Reveal
- *   2  →  6–9s   Story Text
- *   3  →  9–12s  "AIDA Connects It All"
- *   4  → 12–15s  AI Core title
- *   5  → 15–20s  Virtual Brain — brain map emerges
- *   6  → 20–25s  Virtual Brain — Input / Context
- *   7  → 25–30s  Virtual Brain — Reasoning
- *   8  → 30–35s  Virtual Brain — Tools & Memory
- *   9  → 35–40s  Virtual Brain — Verification
- *  10  → 40–45s  Virtual Brain — Brain Map + What makes AIDA different
- *  11  → 45–50s  Virtual Brain — Final message + Intelligence Loop
- *  12  → 50–53s  Product Reveal
- *  13  → 53–55s  Intro Transition → Hero
+ *   0  â†’  0â€“3s   Black opening
+ *   1  â†’  3â€“6s   AIDA Logo Reveal
+ *   2  â†’  6â€“9s   Story Text
+ *   3  â†’  9â€“12s  "AIDA Connects It All"
+ *   4  â†’ 12â€“15s  AI Core title
+ *   5  â†’ 15â€“20s  Virtual Brain â€” brain map emerges
+ *   6  â†’ 20â€“25s  Virtual Brain â€” Input / Context
+ *   7  â†’ 25â€“30s  Virtual Brain â€” Reasoning
+ *   8  â†’ 30â€“35s  Virtual Brain â€” Tools & Memory
+ *   9  â†’ 35â€“40s  Virtual Brain â€” Verification
+ *  10  â†’ 40â€“45s  Virtual Brain â€” Brain Map + What makes AIDA different
+ *  11  â†’ 45â€“50s  Virtual Brain â€” Final message + Intelligence Loop
+ *  12  â†’ 50â€“53s  Product Reveal
+ *  13  â†’ 53â€“55s  Intro Transition â†’ Hero
  */
 
 export default function IntroManager({ onComplete }: IntroManagerProps) {
@@ -55,12 +55,6 @@ export default function IntroManager({ onComplete }: IntroManagerProps) {
 
   // Preloader 2.0 micro-initialization routine
   useEffect(() => {
-    const seen = sessionStorage.getItem('aida_intro_seen');
-    if (seen === 'true') {
-      onComplete();
-      return;
-    }
-
     let current = 0;
     const interval = setInterval(() => {
       current += 25;
@@ -209,7 +203,7 @@ export default function IntroManager({ onComplete }: IntroManagerProps) {
         )}
       </AnimatePresence>
 
-      {/* ─── Phase 1, 12 & 13: AIDA Logo Reveals & Wordmark Fly-Through Transition ─── */}
+      {/* â”€â”€â”€ Phase 1, 12 & 13: AIDA Logo Reveals & Wordmark Fly-Through Transition â”€â”€â”€ */}
       <AIDALogoReveal active={!isPreloading && (phase === 1 || phase === 12 || phase === 13)} phase={phase} onStartClick={handleStartClick} />
       <StoryText active={!isPreloading && phase === 2} />
 
@@ -253,14 +247,14 @@ export default function IntroManager({ onComplete }: IntroManagerProps) {
         )}
       </AnimatePresence>
 
-      {/* ─── Phase 5–10: Virtual Brain / Neural Intelligence Experience ─── */}
+      {/* â”€â”€â”€ Phase 5â€“10: Virtual Brain / Neural Intelligence Experience â”€â”€â”€ */}
       <AnimatePresence>
         {!isPreloading && isBrainPhase && (
           <VirtualBrainExperience active={isBrainPhase} phase={phase} />
         )}
       </AnimatePresence>
 
-      {/* ─── Phase 13: Final Transition ─── */}
+      {/* â”€â”€â”€ Phase 13: Final Transition â”€â”€â”€ */}
       <IntroTransition active={!isPreloading && phase === 13} />
 
       {/* Ambient vignette background glow */}
