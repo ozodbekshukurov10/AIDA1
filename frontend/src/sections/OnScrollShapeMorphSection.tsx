@@ -44,9 +44,9 @@ export default function OnScrollShapeMorphSection() {
         },
         scrollTrigger: {
           trigger: itemElement,
-          start: 'top 65%',
-          end: '+=70%',
-          scrub: 1,
+          start: 'top 75%',
+          end: 'bottom 25%',
+          scrub: 0.8,
         },
         perspective: false,
       };
@@ -65,16 +65,27 @@ export default function OnScrollShapeMorphSection() {
       };
     };
 
-    // Helper: Prepare text spans for splitting
+    // Helper: Prepare text spans for splitting safely
     const prepareTextForAnimation = (itemElement: Element) => {
-      const textSpans = itemElement.querySelectorAll('.content__text > span');
-      Splitting({ target: textSpans as any });
+      const textSpans = itemElement.querySelectorAll('.content__text > span:not(.content__text-tiny)');
+      if (!textSpans || textSpans.length === 0) return [];
+      
+      try {
+        Splitting({ target: Array.from(textSpans) as any });
+      } catch (err) {
+        console.warn('Splitting warning:', err);
+      }
+
       const charsArray = Array.from(textSpans).map((span) =>
         Array.from(span.querySelectorAll('.char'))
       );
+
       charsArray.forEach((charArray) => {
-        gsap.set(charArray, { opacity: 0 });
+        if (charArray.length > 0) {
+          gsap.set(charArray, { opacity: 0.35, y: 15, filter: 'blur(3px)' });
+        }
       });
+
       return charsArray;
     };
 
@@ -96,10 +107,10 @@ export default function OnScrollShapeMorphSection() {
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'sine.in', filter: 'brightness(350%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'sine.in', filter: 'brightness(250%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { ease: 'sine.in', rotationY: -40, scale: 1.4 }, 0)
+        .to(innerElements[0], { ease: 'sine.in', rotationY: -30, scale: 1.25 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
@@ -111,24 +122,23 @@ export default function OnScrollShapeMorphSection() {
         })
         .to(
           innerElements[1],
-          { startAt: { rotationY: 40, scale: 1.4 }, rotationY: 0, scale: 1 },
+          { startAt: { rotationY: 30, scale: 1.25 }, rotationY: 0, scale: 1 },
           '<'
-        )
-        .addLabel('texts', '<-=0.3');
-
-      charsArray.forEach((charArray, index) => {
-        const staggerDirection = index % 2 === 0 ? 1 : -1;
-        tl.to(
-          charArray,
-          {
-            startAt: { opacity: 1, scale: 0.2 },
-            opacity: 1,
-            scale: 1,
-            yPercent: -staggerDirection * 40,
-            stagger: staggerDirection * 0.04,
-          },
-          'texts'
         );
+
+      charsArray.forEach((charArray) => {
+        if (charArray.length > 0) {
+          tl.to(
+            charArray,
+            {
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              stagger: 0.03,
+            },
+            0.1
+          );
+        }
       });
     };
 
@@ -150,10 +160,10 @@ export default function OnScrollShapeMorphSection() {
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'none', filter: 'brightness(400%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'none', filter: 'brightness(300%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { ease: 'none', rotationX: 40, scale: 1.4 }, 0)
+        .to(innerElements[0], { ease: 'none', rotationX: 30, scale: 1.25 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
@@ -165,22 +175,23 @@ export default function OnScrollShapeMorphSection() {
         })
         .to(
           innerElements[1],
-          { startAt: { rotationX: -40, scale: 1.4 }, rotationX: 0, scale: 1 },
+          { startAt: { rotationX: -30, scale: 1.25 }, rotationX: 0, scale: 1 },
           '<'
-        )
-        .addLabel('texts', '<-=0.3');
+        );
 
       charsArray.forEach((charArray) => {
-        tl.to(
-          charArray,
-          {
-            startAt: { opacity: 0, yPercent: 50 },
-            opacity: 1,
-            yPercent: 0,
-            stagger: 0.03,
-          },
-          'texts'
-        );
+        if (charArray.length > 0) {
+          tl.to(
+            charArray,
+            {
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              stagger: 0.03,
+            },
+            0.1
+          );
+        }
       });
     };
 
@@ -202,10 +213,10 @@ export default function OnScrollShapeMorphSection() {
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'power2.in', filter: 'brightness(500%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'power2.in', filter: 'brightness(350%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { ease: 'power2.in', scale: 2, rotationZ: 15 }, 0)
+        .to(innerElements[0], { ease: 'power2.in', scale: 1.5, rotationZ: 10 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
@@ -217,22 +228,23 @@ export default function OnScrollShapeMorphSection() {
         })
         .to(
           innerElements[1],
-          { startAt: { scale: 2, rotationZ: -15 }, scale: 1, rotationZ: 0 },
+          { startAt: { scale: 1.5, rotationZ: -10 }, scale: 1, rotationZ: 0 },
           '<'
-        )
-        .addLabel('texts', '<-=0.3');
+        );
 
       charsArray.forEach((charArray) => {
-        tl.to(
-          charArray,
-          {
-            startAt: { opacity: 0, scale: 0 },
-            opacity: 1,
-            scale: 1,
-            stagger: 0.04,
-          },
-          'texts'
-        );
+        if (charArray.length > 0) {
+          tl.to(
+            charArray,
+            {
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              stagger: 0.03,
+            },
+            0.1
+          );
+        }
       });
     };
 
@@ -251,10 +263,10 @@ export default function OnScrollShapeMorphSection() {
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'sine.inOut', filter: 'brightness(300%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'sine.inOut', filter: 'brightness(250%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { ease: 'sine.inOut', scale: 1.3, xPercent: -20 }, 0)
+        .to(innerElements[0], { ease: 'sine.inOut', scale: 1.25, xPercent: -15 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
@@ -266,22 +278,23 @@ export default function OnScrollShapeMorphSection() {
         })
         .to(
           innerElements[1],
-          { startAt: { scale: 1.3, xPercent: 20 }, scale: 1, xPercent: 0 },
+          { startAt: { scale: 1.25, xPercent: 15 }, scale: 1, xPercent: 0 },
           '<'
-        )
-        .addLabel('texts', '<-=0.3');
+        );
 
       charsArray.forEach((charArray) => {
-        tl.to(
-          charArray,
-          {
-            startAt: { opacity: 0, yPercent: -30 },
-            opacity: 1,
-            yPercent: 0,
-            stagger: 0.02,
-          },
-          'texts'
-        );
+        if (charArray.length > 0) {
+          tl.to(
+            charArray,
+            {
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              stagger: 0.02,
+            },
+            0.1
+          );
+        }
       });
     };
 
@@ -300,10 +313,10 @@ export default function OnScrollShapeMorphSection() {
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'power1.inOut', filter: 'brightness(350%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'power1.inOut', filter: 'brightness(280%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { ease: 'power1.inOut', scale: 1.5, yPercent: -30 }, 0)
+        .to(innerElements[0], { ease: 'power1.inOut', scale: 1.35, yPercent: -20 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
@@ -315,22 +328,23 @@ export default function OnScrollShapeMorphSection() {
         })
         .to(
           innerElements[1],
-          { startAt: { scale: 1.5, yPercent: 30 }, scale: 1, yPercent: 0 },
+          { startAt: { scale: 1.35, yPercent: 20 }, scale: 1, yPercent: 0 },
           '<'
-        )
-        .addLabel('texts', '<-=0.3');
+        );
 
       charsArray.forEach((charArray) => {
-        tl.to(
-          charArray,
-          {
-            startAt: { opacity: 0, scale: 0.5 },
-            opacity: 1,
-            scale: 1,
-            stagger: 0.03,
-          },
-          'texts'
-        );
+        if (charArray.length > 0) {
+          tl.to(
+            charArray,
+            {
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              stagger: 0.03,
+            },
+            0.1
+          );
+        }
       });
     };
 
@@ -349,10 +363,10 @@ export default function OnScrollShapeMorphSection() {
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'sine.inOut', filter: 'brightness(400%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'sine.inOut', filter: 'brightness(300%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { ease: 'sine.inOut', scale: 1.4, rotationZ: 10 }, 0)
+        .to(innerElements[0], { ease: 'sine.inOut', scale: 1.3, rotationZ: 8 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
@@ -364,22 +378,23 @@ export default function OnScrollShapeMorphSection() {
         })
         .to(
           innerElements[1],
-          { startAt: { scale: 1.4, rotationZ: -10 }, scale: 1, rotationZ: 0 },
+          { startAt: { scale: 1.3, rotationZ: -8 }, scale: 1, rotationZ: 0 },
           '<'
-        )
-        .addLabel('texts', '<-=0.3');
+        );
 
       charsArray.forEach((charArray) => {
-        tl.to(
-          charArray,
-          {
-            startAt: { opacity: 0, yPercent: 40 },
-            opacity: 1,
-            yPercent: 0,
-            stagger: 0.03,
-          },
-          'texts'
-        );
+        if (charArray.length > 0) {
+          tl.to(
+            charArray,
+            {
+              opacity: 1,
+              y: 0,
+              filter: 'blur(0px)',
+              stagger: 0.03,
+            },
+            0.1
+          );
+        }
       });
     };
 
@@ -404,7 +419,6 @@ export default function OnScrollShapeMorphSection() {
             step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(0% 50%, 100% 50%, 100% 50%, 0% 50%)' },
             step2: { initial: 'polygon(0% 50%, 0% 0%, 100% 0%, 100% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'top 70%', end: '+=80%' },
           perspective: 800,
         },
       },
@@ -416,7 +430,6 @@ export default function OnScrollShapeMorphSection() {
             step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(30% 30%, 70% 30%, 70% 70%, 30% 70%)' },
             step2: { initial: 'polygon(30% 30%, 70% 30%, 70% 70%, 30% 70%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'top 65%', end: '+=75%' },
           perspective: 1200,
         },
       },
@@ -428,7 +441,6 @@ export default function OnScrollShapeMorphSection() {
             step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' },
             step2: { initial: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'top 65%', end: '+=75%' },
         },
       },
       {
@@ -439,7 +451,6 @@ export default function OnScrollShapeMorphSection() {
             step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(0% 0%, 50% 50%, 100% 0%, 50% 100%)' },
             step2: { initial: 'polygon(0% 0%, 50% 50%, 100% 0%, 50% 100%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'top 65%', end: '+=75%' },
         },
       },
       {
@@ -450,7 +461,6 @@ export default function OnScrollShapeMorphSection() {
             step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(50% 0%, 50% 50%, 50% 50%, 50% 100%)' },
             step2: { initial: 'polygon(50% 50%, 50% 0%, 50% 100%, 50% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'top 65%', end: '+=75%' },
           perspective: 1000,
         },
       },
@@ -465,7 +475,7 @@ export default function OnScrollShapeMorphSection() {
 
     setTimeout(() => {
       ScrollTrigger.refresh();
-    }, 500);
+    }, 400);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
