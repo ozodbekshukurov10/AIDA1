@@ -71,6 +71,7 @@ export default function IntroScene({ phase, time, isReducedMotion }: IntroSceneP
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setClearColor(0x000000, 0);
 
     // 4. Lighting System 2.0 (Dynamic 4-Light Rig — Synced to bg-video.mp4)
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.20);
@@ -326,8 +327,18 @@ export default function IntroScene({ phase, time, isReducedMotion }: IntroSceneP
   }, [isReducedMotion]);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 w-full h-full bg-[#03050A]">
-      <canvas ref={canvasRef} className="w-full h-full block" />
+    <div ref={containerRef} className="absolute inset-0 w-full h-full bg-[#03050A] overflow-hidden">
+      {/* Background AI Video Layer */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover opacity-40 pointer-events-none mix-blend-screen z-0"
+        src="/bg-video.mp4"
+      />
+      {/* WebGL 3D Interactive Canvas Layer */}
+      <canvas ref={canvasRef} className="relative z-10 w-full h-full block bg-transparent" />
     </div>
   );
 }
