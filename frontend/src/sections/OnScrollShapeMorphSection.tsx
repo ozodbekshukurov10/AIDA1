@@ -44,9 +44,9 @@ export default function OnScrollShapeMorphSection() {
         },
         scrollTrigger: {
           trigger: itemElement,
-          start: 'top 60%',
-          end: '+=60%',
-          scrub: true,
+          start: 'top 65%',
+          end: '+=70%',
+          scrub: 1,
         },
         perspective: false,
       };
@@ -96,7 +96,7 @@ export default function OnScrollShapeMorphSection() {
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'sine.in', filter: 'brightness(400%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'sine.in', filter: 'brightness(350%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
         .to(innerElements[0], { ease: 'sine.in', rotationY: -40, scale: 1.4 }, 0)
@@ -149,11 +149,11 @@ export default function OnScrollShapeMorphSection() {
       })
         .fromTo(
           imageElement,
-          { filter: 'brightness(100%) hue-rotate(0deg)', 'clip-path': settings.clipPaths.step1.initial },
-          { filter: 'brightness(400%) hue-rotate(90deg)', 'clip-path': settings.clipPaths.step1.final },
+          { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
+          { ease: 'none', filter: 'brightness(400%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { rotationZ: -5, scaleX: 1.8 }, 0)
+        .to(innerElements[0], { ease: 'none', rotationX: 40, scale: 1.4 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
@@ -161,14 +161,26 @@ export default function OnScrollShapeMorphSection() {
         .to(imageElement, {
           startAt: { 'clip-path': settings.clipPaths.step2.initial },
           'clip-path': settings.clipPaths.step2.final,
-          filter: 'brightness(100%) hue-rotate(0deg)',
+          filter: 'brightness(100%)',
         })
-        .to(innerElements[1], { startAt: { rotationZ: 5, scaleX: 1.8 }, rotationZ: 0, scaleX: 1 }, '<')
+        .to(
+          innerElements[1],
+          { startAt: { rotationX: -40, scale: 1.4 }, rotationX: 0, scale: 1 },
+          '<'
+        )
         .addLabel('texts', '<-=0.3');
 
-      charsArray.forEach((charArray, index) => {
-        const staggerDirection = index % 2 === 0 ? 1 : -1;
-        tl.to(charArray, { duration: 0.1, opacity: 1, stagger: staggerDirection * 0.04 }, 'texts');
+      charsArray.forEach((charArray) => {
+        tl.to(
+          charArray,
+          {
+            startAt: { opacity: 0, yPercent: 50 },
+            opacity: 1,
+            yPercent: 0,
+            stagger: 0.03,
+          },
+          'texts'
+        );
       });
     };
 
@@ -177,38 +189,51 @@ export default function OnScrollShapeMorphSection() {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
       const innerElements = imageElement?.querySelectorAll('.content__img-inner');
-      const text = itemElement.querySelector('.content__text');
       if (!imageElement || !innerElements || innerElements.length < 2) return;
+      const charsArray = prepareTextForAnimation(itemElement);
 
-      gsap.timeline({
+      const tl = gsap.timeline({
         defaults: { ease: 'none' },
         onStart: () => {
-          if (settings.perspective) gsap.set([imageElement, itemElement], { perspective: settings.perspective });
+          if (settings.perspective) gsap.set(imageElement, { perspective: settings.perspective });
         },
         scrollTrigger: settings.scrollTrigger,
       })
         .fromTo(
           imageElement,
-          { scale: 0.3, filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'sine', rotationX: -35, rotationY: 35, filter: 'brightness(60%)', scale: 0.7, 'clip-path': settings.clipPaths.step1.final },
+          { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
+          { ease: 'power2.in', filter: 'brightness(500%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { ease: 'sine', skewY: 10, scaleY: 1.2 }, 0)
+        .to(innerElements[0], { ease: 'power2.in', scale: 2, rotationZ: 15 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
-        }, '>')
+        })
         .to(imageElement, {
-          ease: 'sine.in',
           startAt: { 'clip-path': settings.clipPaths.step2.initial },
           'clip-path': settings.clipPaths.step2.final,
           filter: 'brightness(100%)',
-          scale: 1,
-          rotationX: 0,
-          rotationY: 0,
-        }, '<')
-        .to(innerElements[1], { ease: 'sine.in', startAt: { skewY: 10, scaleY: 2 }, skewY: 0, scaleY: 1 }, '<')
-        .fromTo(text, { opacity: 0, yPercent: 40 }, { opacity: 1, yPercent: 0 }, '>');
+        })
+        .to(
+          innerElements[1],
+          { startAt: { scale: 2, rotationZ: -15 }, scale: 1, rotationZ: 0 },
+          '<'
+        )
+        .addLabel('texts', '<-=0.3');
+
+      charsArray.forEach((charArray) => {
+        tl.to(
+          charArray,
+          {
+            startAt: { opacity: 0, scale: 0 },
+            opacity: 1,
+            scale: 1,
+            stagger: 0.04,
+          },
+          'texts'
+        );
+      });
     };
 
     // â”€â”€ FX 4 â”€â”€
@@ -220,43 +245,40 @@ export default function OnScrollShapeMorphSection() {
       const charsArray = prepareTextForAnimation(itemElement);
 
       const tl = gsap.timeline({
-        defaults: { ease: 'power1.inOut' },
-        onStart: () => {
-          if (settings.perspective) gsap.set([imageElement, itemElement], { perspective: settings.perspective });
-        },
+        defaults: { ease: 'none' },
         scrollTrigger: settings.scrollTrigger,
       })
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { rotationZ: 90, scale: 0.6, filter: 'brightness(300%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'sine.inOut', filter: 'brightness(300%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { rotationZ: -5, scaleX: 1.4 }, 0)
+        .to(innerElements[0], { ease: 'sine.inOut', scale: 1.3, xPercent: -20 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
         })
         .to(imageElement, {
-          startAt: { 'clip-path': settings.clipPaths.step1.final, rotationZ: -90 },
+          startAt: { 'clip-path': settings.clipPaths.step2.initial },
           'clip-path': settings.clipPaths.step2.final,
           filter: 'brightness(100%)',
-          rotationZ: 0,
-          scale: 1,
         })
-        .to(innerElements[1], { startAt: { rotationZ: -350, scaleX: 1.4 }, rotationZ: -360, scaleX: 1 }, '<')
+        .to(
+          innerElements[1],
+          { startAt: { scale: 1.3, xPercent: 20 }, scale: 1, xPercent: 0 },
+          '<'
+        )
         .addLabel('texts', '<-=0.3');
 
-      charsArray.forEach((charArray, index) => {
-        const staggerDirection = index % 2 === 0 ? 1 : -1;
+      charsArray.forEach((charArray) => {
         tl.to(
           charArray,
           {
-            startAt: { opacity: 1, scale: 0.2 },
+            startAt: { opacity: 0, yPercent: -30 },
             opacity: 1,
-            scale: 1,
-            yPercent: staggerDirection * 400,
-            stagger: staggerDirection * 0.02,
+            yPercent: 0,
+            stagger: 0.02,
           },
           'texts'
         );
@@ -272,39 +294,41 @@ export default function OnScrollShapeMorphSection() {
       const charsArray = prepareTextForAnimation(itemElement);
 
       const tl = gsap.timeline({
-        defaults: { ease: 'back.out(1.5)' },
-        onStart: () => {
-          if (settings.perspective) gsap.set([imageElement, itemElement], { perspective: settings.perspective });
-        },
+        defaults: { ease: 'none' },
         scrollTrigger: settings.scrollTrigger,
       })
         .fromTo(
           imageElement,
           { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
-          { ease: 'back.in(1.5)', rotationZ: 90, scale: 0.6, filter: 'brightness(300%)', 'clip-path': settings.clipPaths.step1.final },
+          { ease: 'power1.inOut', filter: 'brightness(350%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .to(innerElements[0], { ease: 'back.in(1.5)', scaleX: 1.4 }, 0)
+        .to(innerElements[0], { ease: 'power1.inOut', scale: 1.5, yPercent: -30 }, 0)
         .add(() => {
           innerElements[0].classList.toggle('content__img-inner--hidden');
           innerElements[1].classList.toggle('content__img-inner--hidden');
         })
         .to(imageElement, {
-          startAt: { 'clip-path': settings.clipPaths.step1.final, rotationZ: -90 },
+          startAt: { 'clip-path': settings.clipPaths.step2.initial },
           'clip-path': settings.clipPaths.step2.final,
           filter: 'brightness(100%)',
-          rotationZ: 0,
-          scale: 1,
         })
-        .to(innerElements[1], { startAt: { scaleX: 1.4 }, scaleX: 1 }, '<')
+        .to(
+          innerElements[1],
+          { startAt: { scale: 1.5, yPercent: 30 }, scale: 1, yPercent: 0 },
+          '<'
+        )
         .addLabel('texts', '<-=0.3');
 
-      charsArray.forEach((charArray, index) => {
-        const staggerDirection = index % 2 === 0 ? 1 : -1;
-        tl.fromTo(
+      charsArray.forEach((charArray) => {
+        tl.to(
           charArray,
-          { opacity: 1, transformOrigin: `50% ${staggerDirection < 0 ? 100 : 0}%`, scaleY: 0 },
-          { duration: 0.1, ease: 'none', scaleY: 1, stagger: staggerDirection * 0.02 },
+          {
+            startAt: { opacity: 0, scale: 0.5 },
+            opacity: 1,
+            scale: 1,
+            stagger: 0.03,
+          },
           'texts'
         );
       });
@@ -314,49 +338,74 @@ export default function OnScrollShapeMorphSection() {
     const fx6 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
-      const inner = imageElement?.querySelector('.content__img-inner');
-      if (!imageElement || !inner) return;
+      const innerElements = imageElement?.querySelectorAll('.content__img-inner');
+      if (!imageElement || !innerElements || innerElements.length < 2) return;
       const charsArray = prepareTextForAnimation(itemElement);
 
       const tl = gsap.timeline({
-        defaults: { ease: 'power2.inOut' },
-        onStart: () => {
-          if (settings.perspective) gsap.set(imageElement, { perspective: settings.perspective });
-        },
+        defaults: { ease: 'none' },
         scrollTrigger: settings.scrollTrigger,
       })
         .fromTo(
           imageElement,
-          { scale: 0.2, filter: 'brightness(50%)', 'clip-path': settings.clipPaths.step1.initial, transformOrigin: '75% 50%' },
-          { scale: 1, filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.final },
+          { filter: 'brightness(100%)', 'clip-path': settings.clipPaths.step1.initial },
+          { ease: 'sine.inOut', filter: 'brightness(400%)', 'clip-path': settings.clipPaths.step1.final },
           0
         )
-        .fromTo(inner, { rotationY: 40, scale: 2 }, { rotationY: 0, scale: 1 }, 0);
+        .to(innerElements[0], { ease: 'sine.inOut', scale: 1.4, rotationZ: 10 }, 0)
+        .add(() => {
+          innerElements[0].classList.toggle('content__img-inner--hidden');
+          innerElements[1].classList.toggle('content__img-inner--hidden');
+        })
+        .to(imageElement, {
+          startAt: { 'clip-path': settings.clipPaths.step2.initial },
+          'clip-path': settings.clipPaths.step2.final,
+          filter: 'brightness(100%)',
+        })
+        .to(
+          innerElements[1],
+          { startAt: { scale: 1.4, rotationZ: -10 }, scale: 1, rotationZ: 0 },
+          '<'
+        )
+        .addLabel('texts', '<-=0.3');
 
-      charsArray.forEach((charArray, index) => {
-        const staggerDirection = index % 2 === 0 ? 1 : -1;
-        tl.fromTo(
+      charsArray.forEach((charArray) => {
+        tl.to(
           charArray,
-          { opacity: 0, scale: 1.2 },
-          { opacity: 1, scale: 1, yPercent: staggerDirection * 100, stagger: staggerDirection * -0.02 },
-          0
+          {
+            startAt: { opacity: 0, yPercent: 40 },
+            opacity: 1,
+            yPercent: 0,
+            stagger: 0.03,
+          },
+          'texts'
         );
       });
     };
 
-    // â”€â”€ Apply Scroll Animation Configurations â”€â”€
+    // Items array mapping
     const items = [
-      { id: '#item-1', animationProfile: fx1, options: { perspective: 1000 } },
+      {
+        id: '#item-1',
+        animationProfile: fx1,
+        options: {
+          clipPaths: {
+            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(50% 0%, 50% 50%, 50% 50%, 50% 100%)' },
+            step2: { initial: 'polygon(50% 50%, 50% 0%, 50% 100%, 50% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
+          },
+          perspective: 1000,
+        },
+      },
       {
         id: '#item-2',
         animationProfile: fx2,
         options: {
           clipPaths: {
-            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(40% 50%, 60% 50%, 80% 50%, 20% 50%)' },
-            step2: { initial: 'polygon(20% 50%, 80% 50%, 60% 50%, 40% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
+            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(0% 50%, 100% 50%, 100% 50%, 0% 50%)' },
+            step2: { initial: 'polygon(0% 50%, 0% 0%, 100% 0%, 100% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'center bottom', end: 'top top' },
-          perspective: 500,
+          scrollTrigger: { start: 'top 70%', end: '+=80%' },
+          perspective: 800,
         },
       },
       {
@@ -364,11 +413,11 @@ export default function OnScrollShapeMorphSection() {
         animationProfile: fx3,
         options: {
           clipPaths: {
-            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(50% 0%, 50% 50%, 50% 50%, 50% 100%)' },
-            step2: { initial: 'polygon(50% 50%, 50% 0%, 50% 100%, 50% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
+            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(30% 30%, 70% 30%, 70% 70%, 30% 70%)' },
+            step2: { initial: 'polygon(30% 30%, 70% 30%, 70% 70%, 30% 70%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'center center', end: '+=120%', pin: false },
-          perspective: 400,
+          scrollTrigger: { start: 'top 65%', end: '+=75%' },
+          perspective: 1200,
         },
       },
       {
@@ -376,11 +425,10 @@ export default function OnScrollShapeMorphSection() {
         animationProfile: fx4,
         options: {
           clipPaths: {
-            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(40% 50%, 60% 50%, 80% 50%, 20% 50%)' },
-            step2: { initial: 'polygon(20% 50%, 80% 50%, 60% 50%, 40% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
+            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' },
+            step2: { initial: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'center bottom', end: 'top top-=10%' },
-          perspective: 500,
+          scrollTrigger: { start: 'top 65%', end: '+=75%' },
         },
       },
       {
@@ -388,17 +436,10 @@ export default function OnScrollShapeMorphSection() {
         animationProfile: fx5,
         options: {
           clipPaths: {
-            step1: {
-              initial: 'polygon(50% 0%, 80% 10%, 100% 35%, 100% 70%, 80% 90%, 50% 100%, 20% 90%, 0% 70%, 0% 35%, 20% 10%)',
-              final: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%)',
-            },
-            step2: {
-              initial: 'polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%)',
-              final: 'polygon(50% 0%, 80% 10%, 100% 35%, 100% 70%, 80% 90%, 50% 100%, 20% 90%, 0% 70%, 0% 35%, 20% 10%)',
-            },
+            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(0% 0%, 50% 50%, 100% 0%, 50% 100%)' },
+            step2: { initial: 'polygon(0% 0%, 50% 50%, 100% 0%, 50% 100%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'top bottom+=20%', end: 'bottom top' },
-          perspective: 500,
+          scrollTrigger: { start: 'top 65%', end: '+=75%' },
         },
       },
       {
@@ -406,9 +447,10 @@ export default function OnScrollShapeMorphSection() {
         animationProfile: fx6,
         options: {
           clipPaths: {
-            step1: { initial: 'polygon(50% 0%, 50% 50%, 50% 50%, 50% 100%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
+            step1: { initial: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)', final: 'polygon(50% 0%, 50% 50%, 50% 50%, 50% 100%)' },
+            step2: { initial: 'polygon(50% 50%, 50% 0%, 50% 100%, 50% 50%)', final: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)' },
           },
-          scrollTrigger: { start: 'center bottom', end: '+=80%' },
+          scrollTrigger: { start: 'top 65%', end: '+=75%' },
           perspective: 1000,
         },
       },
@@ -420,6 +462,10 @@ export default function OnScrollShapeMorphSection() {
         item.animationProfile(el, item.options);
       }
     });
+
+    setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 500);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
@@ -455,8 +501,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-1" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--1">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1400&q=80)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1400&q=80)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1600&q=85&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--center content__text--large font-['Space_Grotesk'] text-[#F5F7FF]">
@@ -469,8 +515,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-2" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--1">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1400&q=80)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=1400&q=80)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=1600&q=85&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--left font-['Space_Grotesk'] text-[#5DE8FF]">
@@ -483,8 +529,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-3" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--2">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1400&q=80)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1400&q=80)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1677442136019-21780efad99a?w=1600&q=85&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--left font-['Space_Grotesk'] text-[#F5F7FF]">
@@ -500,8 +546,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-4" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--4">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1400&q=80)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1400&q=80)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1600&q=85&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--center font-['Space_Grotesk'] text-[#7C5CFF]">
@@ -514,8 +560,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-5" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--5">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=1400&q=80)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1400&q=80)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1600&q=85&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--left font-['Space_Grotesk'] text-[#5DE8FF]">
@@ -528,7 +574,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-6" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--6">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1400&q=80)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1677442136019-21780efad99a?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&q=85&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--center font-['Space_Grotesk'] text-[#F5F7FF]">
