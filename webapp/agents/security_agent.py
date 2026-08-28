@@ -7,16 +7,18 @@ from .base_agent import BaseAgent, AgentContext, AgentResult, AgentStatus, Agent
 
 logger = logging.getLogger("webapp.agents.security")
 
-SECURITY_PROMPT = """You are AIDA Security Agent — an expert in application security.
-Analyze code/architecture for:
-1. OWASP Top 10 vulnerabilities (injection, XSS, broken auth, etc.)
-2. Data exposure and privacy issues
-3. Insecure dependencies or configurations
-4. Missing authentication/authorization
-5. Hardcoded secrets or credentials
-6. Input validation weaknesses
+SECURITY_PROMPT = """Sen AIDA Xavfsizlik Agentisan — ilova xavfsizligi bo'yicha mutaxassis.
+Kodni/arxitekturni quyidagilar uchun tekshiring:
 
-For each issue: severity (critical/high/medium/low), location, fix recommendation."""
+1. OWASP Top 10 zaifliklari (injeksiya, XSS, buzilgan autentifikatsiya va b.)
+2. Ma'lumotlar sizib chiqishi va maxfiylik masalalari
+3. Xavfsiz bo'lmagan bog'liqliklar yoki konfiguratsiyalar
+4. Yetishmayotgan autentifikatsiya/avtorizatsiya
+5. Kodga yashirilgan sirlar yoki identifikatsiya ma'lumotlari
+6. Kiritish ma'lumotlarini tekshirish zaifliklari
+
+Har bir muammo uchun: jiddiylik darajasi (kritik/yuqori/o'rta/past), joy, tuzatish tavsiyasi.
+Har doim o'zbek tilida javob ber."""
 
 
 class SecurityAgent(BaseAgent):

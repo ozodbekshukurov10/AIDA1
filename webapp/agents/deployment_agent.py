@@ -7,16 +7,18 @@ from .base_agent import BaseAgent, AgentContext, AgentResult, AgentStatus, Agent
 
 logger = logging.getLogger("webapp.agents.deployment")
 
-DEPLOYMENT_PROMPT = """You are AIDA Deployment Agent — a DevOps and deployment expert.
-Generate deployment configurations:
-1. Dockerfile — multi-stage builds, security best practices
-2. docker-compose.yml — service definitions, networking
-3. CI/CD pipeline config (GitHub Actions/GitLab CI)
-4. Environment configuration
-5. Health check and monitoring setup
-6. Scaling considerations
+DEPLOYMENT_PROMPT = """Sen AIDA Deploy Agentisan — DevOps va joylashtirish bo'yicha mutaxassis.
+Joylashtirish konfiguratsiyalarini yozing:
 
-Output production-ready configurations with explanations."""
+1. Dockerfile — ko'p bosqichli build, xavfsizlik amaliyotlari
+2. docker-compose.yml — xizmatlar aniqlash, tarmoq sozlash
+3. CI/CD pipeline konfiguratsiyasi (GitHub Actions/GitLab CI)
+4. Muhit konfiguratsiyasi
+5. Sog'liqni saqlash tekshiruvi va monitoring o'rnatish
+6. Masshtablash masalalari
+
+Ishlab chiqishga tayyor konfiguratsiyalarni tushuntirishlar bilan chiqaring.
+Har doim o'zbek tilida javob ber."""
 
 
 class DeploymentAgent(BaseAgent):

@@ -64,10 +64,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hid
 .typing span:nth-child(2){animation-delay:0.2s}
 .typing span:nth-child(3){animation-delay:0.4s}
 @keyframes typing{0%,60%,100%{opacity:0.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
-.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:20px;padding:40px;text-align:center}
-.welcome .icon{width:64px;height:64px;background:linear-gradient(135deg,var(--accent-glow),rgba(91,122,255,0.2));border-radius:18px;display:flex;align-items:center;justify-content:center;color:var(--accent);box-shadow:0 0 30px rgba(91,122,255,0.08);animation:float 4s ease-in-out infinite}
-.welcome .icon svg{width:32px;height:32px}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.welcome{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:20px;padding:40px;text-align:center;overflow:hidden}
+.welcome *{position:relative;z-index:10}
+.matrix-canvas-welcome{position:absolute;inset:0;width:100%;height:100%;z-index:1!important;pointer-events:none;opacity:0.85}
+.welcome .icon.brain-glow{width:130px;height:130px;background:transparent;border-radius:0;box-shadow:none;display:flex;align-items:center;justify-content:center;animation:pulse-brain 3s ease-in-out infinite}
+.welcome .icon.brain-glow svg{width:120px;height:120px}
+@keyframes pulse-brain{0%,100%{transform:scale(1);filter:drop-shadow(0 0 10px rgba(91,122,255,0.45))}50%{transform:scale(1.06);filter:drop-shadow(0 0 20px rgba(91,122,255,0.8))}}
 .welcome h1{font-size:24px;font-weight:700;background:linear-gradient(135deg,var(--text),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .welcome p{color:var(--text2);max-width:450px;font-size:14px;line-height:1.7}
 .welcome .tips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
@@ -103,7 +105,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hid
 .sidebar-header .brand{font-size:14px}
 .msg .bubble{max-width:90%;font-size:13px}
 .welcome h1{font-size:20px}
-.welcome .icon{width:56px;height:56px}
+.welcome .icon.brain-glow{width:90px;height:90px}
+.welcome .icon.brain-glow svg{width:80px;height:80px}
 }
 .sidebar-toggle{display:none;background:none;border:none;color:var(--text2);cursor:pointer;padding:4px;flex-shrink:0;transition:color 0.2s}
 .sidebar-toggle:hover{color:var(--text)}
@@ -156,7 +159,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);overflow:hid
     </div>
     <div class="chat-feed" id="chatFeed">
       <div class="welcome" id="welcome">
-        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <canvas id="matrixCanvasWelcome" class="matrix-canvas-welcome"></canvas>
+        <div class="icon brain-glow">
+          <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 12px var(--accent))">
+            <path d="M100 40 C75 40 50 50 50 80 C50 100 65 110 65 125 C65 140 80 150 100 150" stroke="var(--accent)" stroke-width="2.5" />
+            <path d="M100 40 C125 40 150 50 150 80 C150 100 135 110 135 125 C135 140 120 150 100 150" stroke="var(--accent)" stroke-width="2.5" />
+            <path d="M75 65 C75 80 85 90 100 95" stroke="var(--accent)" opacity="0.7" />
+            <path d="M60 95 C75 105 85 105 95 115" stroke="var(--accent)" opacity="0.7" />
+            <path d="M70 125 C80 125 90 135 98 145" stroke="var(--accent)" opacity="0.7" />
+            <path d="M125 65 C125 80 115 90 100 95" stroke="var(--accent)" opacity="0.7" />
+            <path d="M140 95 C125 105 115 105 105 115" stroke="var(--accent)" opacity="0.7" />
+            <path d="M130 125 C120 125 110 135 102 145" stroke="var(--accent)" opacity="0.7" />
+            <circle cx="100" cy="95" r="4.5" fill="var(--accent)" />
+            <circle cx="75" cy="65" r="2.5" fill="#fff" />
+            <circle cx="125" cy="65" r="2.5" fill="#fff" />
+            <circle cx="60" cy="95" r="2.5" fill="#fff" />
+            <circle cx="140" cy="95" r="2.5" fill="#fff" />
+            <circle cx="70" cy="125" r="2.5" fill="#fff" />
+            <circle cx="130" cy="125" r="2.5" fill="#fff" />
+          </svg>
+        </div>
         <h1>AIDA — Sun'iy Ong</h1>
         <p>Men umumiy sun'iy ongman. Istalgan vazifani bajara olaman: kod, reja, tarjima, tahlil, internet qidiruv, fayllar bilan ishlash va boshqalar.</p>
         <div class="tips">
@@ -220,10 +242,67 @@ function sidebarClose(){sidebar.classList.remove('open');overlay.classList.remov
 toggleBtn.onclick=sidebarOpen;
 overlay.onclick=sidebarClose;
 
+var matrixInterval = null;
+function initWelcomeMatrix() {
+  if (matrixInterval) {
+    clearInterval(matrixInterval);
+    matrixInterval = null;
+  }
+  var canvas = document.getElementById('matrixCanvasWelcome');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  
+  var resize = function() {
+    canvas.width = canvas.parentElement.offsetWidth;
+    canvas.height = canvas.parentElement.offsetHeight;
+  };
+  resize();
+  window.addEventListener('resize', resize);
+  
+  var digits = "0123456789";
+  var fontSize = 13;
+  var columns = Math.ceil(canvas.width / fontSize);
+  var drops = [];
+  for (var x = 0; x < columns; x++) {
+    drops[x] = Math.random() * -canvas.height;
+  }
+  
+  matrixInterval = setInterval(function() {
+    if (!document.getElementById('matrixCanvasWelcome')) {
+      clearInterval(matrixInterval);
+      matrixInterval = null;
+      window.removeEventListener('resize', resize);
+      return;
+    }
+    
+    ctx.fillStyle = 'rgba(11, 13, 18, 0.08)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.font = fontSize + 'px monospace';
+    
+    for (var i = 0; i < drops.length; i++) {
+      var text = digits.charAt(Math.floor(Math.random() * digits.length));
+      var y = drops[i];
+      var screenProgress = y / canvas.height;
+      var opacity = Math.min(1, screenProgress * 1.5);
+      
+      ctx.fillStyle = 'rgba(91, 122, 255, ' + (opacity * 0.16) + ')';
+      ctx.fillText(text, i * fontSize, y);
+      
+      drops[i] += 2.5;
+      if (drops[i] > canvas.height) {
+        drops[i] = Math.random() * -100;
+      }
+    }
+  }, 33);
+}
+
 function showWelcome(){
-  var w='<div class="welcome" id="welcome"><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><h1>AIDA \u2014 Sun\'iy Ong</h1><p>Men umumiy sun\'iy ongman. Istalgan vazifani bajara olaman: kod, reja, tarjima, tahlil, internet qidiruv, fayllar bilan ishlash va boshqalar.</p><div class="tips"><button onclick="sendMsg(\'Salom\')">Salom</button><button onclick="sendMsg(\'Menga html login formasi kodini yoz\')">Kod</button><button onclick="sendMsg(\'Python da yangi funksiya qosh\')">Self-Modify</button><button onclick="sendMsg(\'Internetdan AIDA haqida qidir\')">Internet</button><button onclick="sendMsg(\'Django vs FastAPI taqqosla\')">Taqqoslash</button><button onclick="window.open(\'/code/\',\'_self\')">AIDA Code</button></div></div>';
+  var w='<div class="welcome" id="welcome"><canvas id="matrixCanvasWelcome" class="matrix-canvas-welcome"></canvas><div class="icon brain-glow"><svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 12px var(--accent))"><path d="M100 40 C75 40 50 50 50 80 C50 100 65 110 65 125 C65 140 80 150 100 150" stroke="var(--accent)" stroke-width="2.5" /><path d="M100 40 C125 40 150 50 150 80 C150 100 135 110 135 125 C135 140 120 150 100 150" stroke="var(--accent)" stroke-width="2.5" /><path d="M75 65 C75 80 85 90 100 95" stroke="var(--accent)" opacity="0.7" /><path d="M60 95 C75 105 85 105 95 115" stroke="var(--accent)" opacity="0.7" /><path d="M70 125 C80 125 90 135 98 145" stroke="var(--accent)" opacity="0.7" /><path d="M125 65 C125 80 115 90 100 95" stroke="var(--accent)" opacity="0.7" /><path d="M140 95 C125 105 115 105 105 115" stroke="var(--accent)" opacity="0.7" /><path d="M130 125 C120 125 110 135 102 145" stroke="var(--accent)" opacity="0.7" /><circle cx="100" cy="95" r="4.5" fill="var(--accent)" /><circle cx="75" cy="65" r="2.5" fill="#fff" /><circle cx="125" cy="65" r="2.5" fill="#fff" /><circle cx="60" cy="95" r="2.5" fill="#fff" /><circle cx="140" cy="95" r="2.5" fill="#fff" /><circle cx="70" cy="125" r="2.5" fill="#fff" /><circle cx="130" cy="125" r="2.5" fill="#fff" /></svg></div><h1>AIDA \u2014 Sun\'iy Ong</h1><p>Men umumiy sun\'iy ongman. Istalgan vazifani bajara olaman: kod, reja, tarjima, tahlil, internet qidiruv, fayllar bilan ishlash va boshqalar.</p><div class="tips"><button onclick="sendMsg(\'Salom\')">Salom</button><button onclick="sendMsg(\'Menga html login formasi kodini yoz\')">Kod</button><button onclick="sendMsg(\'Python da yangi funksiya qosh\')">Self-Modify</button><button onclick="sendMsg(\'Internetdan AIDA haqida qidir\')">Internet</button><button onclick="sendMsg(\'Django vs FastAPI taqqosla\')">Taqqoslash</button><button onclick="window.open(\'/code/\',\'_self\')">AIDA Code</button></div></div>';
   feed.innerHTML=w;
-  welcome=document.getElementById('welcome')
+  welcome=document.getElementById('welcome');
+  initWelcomeMatrix();
 }
 
 function addMsg(role,text,sources){

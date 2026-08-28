@@ -27,30 +27,30 @@ logger = logging.getLogger("webapp.agents.orchestrator")
 
 WORKFLOW_TEMPLATES: dict[str, list[dict]] = {
     "full_project": [
-        {"agent": "planner", "description": "Break down the project into tasks"},
-        {"agent": "research", "description": "Research requirements and best practices"},
-        {"agent": "code", "description": "Implement the code", "depends_on": ["planner"]},
-        {"agent": "test", "description": "Write and run tests", "depends_on": ["code"]},
-        {"agent": "debug", "description": "Fix any issues found", "depends_on": ["test"]},
-        {"agent": "security", "description": "Security audit", "depends_on": ["code"]},
-        {"agent": "documentation", "description": "Generate documentation", "depends_on": ["code"]},
-        {"agent": "deployment", "description": "Create deployment config", "depends_on": ["code", "security"]},
+        {"agent": "planner", "description": "Loyihani vazifalarga ajratish"},
+        {"agent": "research", "description": "Talablar va eng yaxshi amaliyotlarni tadqiq qilish"},
+        {"agent": "code", "description": "Kodni ishlab chiqish", "depends_on": ["planner"]},
+        {"agent": "test", "description": "Testlar yozish va tekshirish", "depends_on": ["code"]},
+        {"agent": "debug", "description": "Topilgan muammolarni tuzatish", "depends_on": ["test"]},
+        {"agent": "security", "description": "Xavfsizlik auditi", "depends_on": ["code"]},
+        {"agent": "documentation", "description": "Hujjatlar yaratish", "depends_on": ["code"]},
+        {"agent": "deployment", "description": "Joylashtirish konfiguratsiyasini yaratish", "depends_on": ["code", "security"]},
     ],
     "code_review": [
-        {"agent": "code", "description": "Review and improve code"},
-        {"agent": "security", "description": "Security analysis", "depends_on": ["code"]},
-        {"agent": "test", "description": "Verify test coverage", "depends_on": ["code"]},
-        {"agent": "documentation", "description": "Update documentation", "depends_on": ["code"]},
+        {"agent": "code", "description": "Kodni ko'rib chiqish va yaxshilash"},
+        {"agent": "security", "description": "Xavfsizlik tahlili", "depends_on": ["code"]},
+        {"agent": "test", "description": "Test qamrovini tekshirish", "depends_on": ["code"]},
+        {"agent": "documentation", "description": "Hujjatlarni yangilash", "depends_on": ["code"]},
     ],
     "bug_fix": [
-        {"agent": "debug", "description": "Analyze and fix the bug"},
-        {"agent": "test", "description": "Verify the fix", "depends_on": ["debug"]},
-        {"agent": "monitoring", "description": "Verify system health", "depends_on": ["debug"]},
+        {"agent": "debug", "description": "Xatoni tahlil qilish va tuzatish"},
+        {"agent": "test", "description": "Tuzatishni tekshirish", "depends_on": ["debug"]},
+        {"agent": "monitoring", "description": "Tizim sog'ligini tekshirish", "depends_on": ["debug"]},
     ],
     "deploy": [
-        {"agent": "security", "description": "Pre-deployment security check"},
-        {"agent": "deployment", "description": "Generate deployment config", "depends_on": ["security"]},
-        {"agent": "monitoring", "description": "Configure monitoring", "depends_on": ["deployment"]},
+        {"agent": "security", "description": "Joylashtirishdan oldin xavfsizlik tekshiruvi"},
+        {"agent": "deployment", "description": "Joylashtirish konfiguratsiyasini yaratish", "depends_on": ["security"]},
+        {"agent": "monitoring", "description": "Monitoringni sozlash", "depends_on": ["deployment"]},
     ],
 }
 
@@ -88,13 +88,13 @@ class MultiAgentOrchestrator:
     def detect_task_type(self, prompt: str) -> str:
         prompt_lower = prompt.lower()
         type_map = {
-            "code": ["kod yoz", "write code", "create", "implement", "function", "class"],
-            "debug": ["debug", "bug", "xato", "tuzat", "fix", "not working", "error"],
-            "research": ["research", "qidir", "search", "find", "what is", "how to"],
-            "test": ["test", "unit test", "pytest"],
-            "security": ["security", "vulnerability", "xavfsiz", "owasp"],
-            "deploy": ["deploy", "docker", "ci/cd", "kubernetes", "deployment"],
-            "documentation": ["document", "readme", "doc", "docs"],
+            "code": ["kod yoz", "kod", "yarat", "dastur", "function", "class", "write code", "create", "implement"],
+            "debug": ["debug", "bug", "xato", "tuzat", "fix", "not working", "error", "muammo", "sabab"],
+            "research": ["research", "qidir", "search", "find", "what is", "how to", "tadqiq", "ma'lumot"],
+            "test": ["test", "unit test", "pytest", "sinov"],
+            "security": ["security", "vulnerability", "xavfsiz", "owasp", "xavfsizlik"],
+            "deploy": ["deploy", "docker", "ci/cd", "kubernetes", "deployment", "joylashtir"],
+            "documentation": ["document", "readme", "doc", "docs", "hujjat"],
         }
         for task_type, keywords in type_map.items():
             for kw in keywords:
@@ -212,20 +212,8 @@ class MultiAgentOrchestrator:
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                import threading
-                result = []
-                exc = []
-                def _run():
-                    try:
-                        result.append(asyncio.run(coro))
-                    except Exception as e:
-                        exc.append(e)
-                t = threading.Thread(target=_run)
-                t.start()
-                t.join()
-                if exc:
-                    raise exc[0]
-                return result[0] if result else None
+                future = asyncio.run_coroutine_threadsafe(coro, loop)
+                return future.result()
             else:
                 return asyncio.run(coro)
         except RuntimeError:

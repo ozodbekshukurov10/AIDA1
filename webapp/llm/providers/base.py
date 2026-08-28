@@ -30,12 +30,13 @@ class OpenAICompatibleProvider(BaseProvider):
         headers = self._build_headers()
 
         try:
-            resp = await self.client.post(
-                f"{self.base_url}/v1/chat/completions",
-                json=payload, headers=headers,
-            )
-            resp.raise_for_status()
-            data = resp.json()
+            async with httpx.AsyncClient(timeout=self.config.timeout) as client:
+                resp = await client.post(
+                    f"{self.base_url}/v1/chat/completions",
+                    json=payload, headers=headers,
+                )
+                resp.raise_for_status()
+                data = resp.json()
             choice = data["choices"][0]
             self.status = ProviderStatus.ONLINE
             return Completion(
@@ -91,10 +92,11 @@ class OpenAICompatibleProvider(BaseProvider):
 
     async def check_health(self) -> bool:
         try:
-            resp = await self.client.get(f"{self.base_url}/v1/models", timeout=5)
-            if resp.status_code == 200:
-                self.status = ProviderStatus.ONLINE
-                return True
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(f"{self.base_url}/v1/models", timeout=5)
+                if resp.status_code == 200:
+                    self.status = ProviderStatus.ONLINE
+                    return True
         except Exception:
             pass
         self.status = ProviderStatus.OFFLINE
@@ -102,10 +104,11 @@ class OpenAICompatibleProvider(BaseProvider):
 
     async def list_models(self) -> list[str]:
         try:
-            resp = await self.client.get(f"{self.base_url}/v1/models", timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            return [m["id"] for m in data.get("data", [])]
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(f"{self.base_url}/v1/models", timeout=10)
+                resp.raise_for_status()
+                data = resp.json()
+                return [m["id"] for m in data.get("data", [])]
         except Exception:
             return []
 

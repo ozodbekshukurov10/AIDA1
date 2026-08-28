@@ -211,20 +211,8 @@ class BaseAgent(ABC):
         try:
             loop = asyncio.get_event_loop()
             if loop.is_running():
-                import threading
-                result = []
-                exc = []
-                def _run():
-                    try:
-                        result.append(asyncio.run(coro))
-                    except Exception as e:
-                        exc.append(e)
-                t = threading.Thread(target=_run)
-                t.start()
-                t.join()
-                if exc:
-                    raise exc[0]
-                return result[0] if result else None
+                future = asyncio.run_coroutine_threadsafe(coro, loop)
+                return future.result()
             else:
                 return asyncio.run(coro)
         except RuntimeError:

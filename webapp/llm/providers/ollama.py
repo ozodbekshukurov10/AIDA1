@@ -47,9 +47,10 @@ class OllamaPlugin(ModelPlugin):
             },
         }
         try:
-            resp = await self.client.post(f"{self.base_url}/api/chat", json=payload)
-            resp.raise_for_status()
-            data = resp.json()
+            async with httpx.AsyncClient(timeout=self.config.timeout) as client:
+                resp = await client.post(f"{self.base_url}/api/chat", json=payload)
+                resp.raise_for_status()
+                data = resp.json()
             self.status = ProviderStatus.ONLINE
             return Completion(
                 content=data.get("message", {}).get("content", ""),
@@ -92,10 +93,11 @@ class OllamaPlugin(ModelPlugin):
 
     async def check_health(self) -> bool:
         try:
-            resp = await self.client.get(f"{self.base_url}/api/tags", timeout=5)
-            if resp.status_code == 200:
-                self.status = ProviderStatus.ONLINE
-                return True
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(f"{self.base_url}/api/tags", timeout=5)
+                if resp.status_code == 200:
+                    self.status = ProviderStatus.ONLINE
+                    return True
         except Exception:
             pass
         self.status = ProviderStatus.OFFLINE
@@ -103,9 +105,10 @@ class OllamaPlugin(ModelPlugin):
 
     async def list_models(self) -> list[str]:
         try:
-            resp = await self.client.get(f"{self.base_url}/api/tags", timeout=10)
-            resp.raise_for_status()
-            return [m["name"] for m in resp.json().get("models", [])]
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(f"{self.base_url}/api/tags", timeout=10)
+                resp.raise_for_status()
+                return [m["name"] for m in resp.json().get("models", [])]
         except Exception:
             return []
 

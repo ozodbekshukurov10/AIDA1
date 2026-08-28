@@ -9,9 +9,9 @@ const children = [];
 
 mkdirSync(path.join(root, 'logs'), { recursive: true });
 
-function startProcess(label, command, args, extraEnv = {}) {
+function startProcess(label, command, args, extraEnv = {}, opts = {}) {
   const child = spawn(command, args, {
-    cwd: root,
+    cwd: opts.cwd || root,
     stdio: 'inherit',
     env: { ...process.env, ...extraEnv },
     shell: false,
@@ -86,5 +86,6 @@ const djangoEnv = {
 await runOnce('migrate', python, ['manage.py', 'migrate', '--noinput'], djangoEnv);
 startProcess('django', python, ['manage.py', 'runserver', '127.0.0.1:8001'], djangoEnv);
 
-const viteBin = path.join(root, 'node_modules', '.bin', isWindows ? 'vite.cmd' : 'vite');
-startProcess('vite', viteBin, ['--port=3000', '--host=0.0.0.0']);
+const frontendRoot = path.join(root, 'frontend');
+const viteBin = path.join(frontendRoot, 'node_modules', '.bin', isWindows ? 'vite.cmd' : 'vite');
+startProcess('vite', viteBin, ['--port=3000', '--host=0.0.0.0'], {}, { cwd: frontendRoot });

@@ -7,17 +7,19 @@ from .base_agent import BaseAgent, AgentContext, AgentResult, AgentStatus, Agent
 
 logger = logging.getLogger("webapp.agents.docs")
 
-DOCS_PROMPT = """You are AIDA Documentation Agent — an expert technical writer.
-Generate clear, comprehensive documentation:
-1. Overview — what this does and why
-2. Installation/setup instructions
-3. Usage examples with code snippets
-4. API reference (parameters, return values)
-5. Configuration options
-6. Troubleshooting guide
+DOCS_PROMPT = """Sen AIDA Hujjat Agentisan — professional texnik yozuvchi.
+Aniq va to'liq hujjatlar yozing:
 
-Use Markdown formatting. Be concise yet thorough.
-Target audience: developers."""
+1. Umumiy ko'rinish — bu nima va nima uchun kerak
+2. O'rnatish/yaratish ko'rsatmalari
+3. Ishlatish misollari (kod bloklari bilan)
+4. API havolasi (parametrlar, qaytarilgan qiymatlar)
+5. Konfiguratsiya variantlari
+6. Muammolarni hal qilish qo'llanmasi
+
+Markdown formatini ishlating. Qisqa va to'liq bo'ling.
+Maqsadli auditoriya: dasturchilar.
+Har doim o'zbek tilida javob ber."""
 
 
 class DocumentationAgent(BaseAgent):

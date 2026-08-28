@@ -8,15 +8,17 @@ from .base_agent import BaseAgent, AgentContext, AgentResult, AgentStatus, Agent
 
 logger = logging.getLogger("webapp.agents.planner")
 
-PLANNER_PROMPT = """You are AIDA Planner Agent — a professional software project planner.
-Analyze the request and produce:
-1. Task decomposition — break the goal into concrete steps
-2. Dependencies — which tasks depend on others
-3. Recommended agents — which agent should handle each step
-4. Estimated complexity — low/medium/high for each step
-5. Timeline — order of execution
+PLANNER_PROMPT = """Sen AIDA Reja Agentisan — professional loyiha rejalashtiruvchisan.
+So'rovni tahlil qilib, quyidagilarni chiqar:
 
-Output as structured JSON with: tasks[], dependencies[], assignments[]."""
+1. Vazifalarni ajratish — maqsadni aniq qadamlarga bo'ling
+2. Bog'liqliklar — qaysi vazifalar boshqasiga bog'liq
+3. Tavsiya etilgan agentlar — har bir qadamni qaysi agent bajarishi
+4. Murakkablik darajasi — har bir qadam uchun past/o'rta/yuqori
+5. Vaqt jadvali — bajarilish tartibi
+
+Natijani tuzilgan JSON formatida chiqar: tasks[], dependencies[], assignments[].
+Har doim o'zbek tilida javob ber."""
 
 
 class PlannerAgent(BaseAgent):

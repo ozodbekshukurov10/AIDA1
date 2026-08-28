@@ -390,10 +390,16 @@ class PythonTool(BaseTool):
 
         if action == "eval":
             try:
-                result = eval(code, {"__builtins__": {}}, {})
+                import ast
+                tree = ast.parse(code, mode="eval")
+                allowed_nodes = {ast.Expression, ast.Constant, ast.Name, ast.Load, ast.UnaryOp, ast.BinOp, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod, ast.USub, ast.List, ast.Tuple, ast.Dict, ast.Set}
+                for node in ast.walk(tree):
+                    if type(node) not in allowed_nodes:
+                        return ToolResult(success=False, error=f"Disallowed construct: {type(node).__name__}")
+                result = ast.literal_eval(code)
                 return ToolResult(success=True, output=str(result))
-            except Exception as e:
-                return ToolResult(success=False, error=str(e))
+            except (ValueError, SyntaxError, TypeError) as e:
+                return ToolResult(success=False, error=f"Eval error: {e}")
 
         if action == "pip":
             if not packages:
@@ -693,6 +699,9 @@ class DatabaseTool(BaseTool):
             elif action == "describe":
                 if not table:
                     return ToolResult(success=False, error="Table name required")
+                valid_tables = {r["name"] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                if table not in valid_tables:
+                    return ToolResult(success=False, error=f"Table not found: {table}")
                 cur = conn.execute(f"PRAGMA table_info({table})")
                 cols = [dict(r) for r in cur.fetchall()]
                 conn.close()
@@ -717,12 +726,16 @@ class DatabaseTool(BaseTool):
                 import csv
                 if not table:
                     return ToolResult(success=False, error="Table name required")
+                valid_tables = {r["name"] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                if table not in valid_tables:
+                    return ToolResult(success=False, error=f"Table not found: {table}")
                 with open(file, "r", encoding="utf-8") as f:
                     reader = csv.reader(f)
                     headers = next(reader)
                     placeholders = ",".join("?" for _ in headers)
+                    cols = ",".join(headers)
                     for row in reader:
-                        conn.execute(f"INSERT INTO {table} VALUES ({placeholders})", row)
+                        conn.execute(f"INSERT INTO [{table}] ({cols}) VALUES ({placeholders})", row)
                 conn.commit()
                 conn.close()
                 return ToolResult(success=True, output=f"Imported CSV to {table}")
@@ -731,8 +744,11 @@ class DatabaseTool(BaseTool):
                 if not table:
                     return ToolResult(success=False, error="Table name required")
                 import csv
+                valid_tables = {r["name"] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                if table not in valid_tables:
+                    return ToolResult(success=False, error=f"Table not found: {table}")
                 export_path = file or f"{table}.csv"
-                cur = conn.execute(f"SELECT * FROM {table}")
+                cur = conn.execute(f"SELECT * FROM [{table}]")
                 with open(export_path, "w", newline="", encoding="utf-8") as f:
                     writer = csv.writer(f)
                     writer.writerow([d[0] for d in cur.description])
@@ -741,15 +757,15 @@ class DatabaseTool(BaseTool):
                 return ToolResult(success=True, output=f"Exported to: {export_path}")
 
             elif action == "stats":
-                cur = conn.execute("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='table'")
-                num_tables = cur.fetchone()["cnt"]
+                cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+                tables = [dict(r) for r in cur.fetchall()]
                 total_rows = 0
-                cur = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
-                for r in cur.fetchall():
-                    cnt = conn.execute(f"SELECT COUNT(*) as c FROM [{r['name']}]").fetchone()["c"]
+                for t in tables:
+                    cnt = conn.execute("SELECT COUNT(*) as c FROM [{}]".format(t["name"])).fetchone()["c"]
+                    t["row_count"] = cnt
                     total_rows += cnt
                 conn.close()
-                stats = {"tables": num_tables, "total_rows": total_rows, "db_path": db}
+                stats = {"tables": tables, "total_rows": total_rows, "db_path": db}
                 return ToolResult(success=True, output=json.dumps(stats, indent=2), data=stats)
 
             elif action == "list":

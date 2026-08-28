@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 
-from ..agents import get_orchestrator
+from ..agents.orchestrator import get_orchestrator
 from .decorators import api_endpoint
 
 

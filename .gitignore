@@ -29,3 +29,6 @@ test_code_engine.py
 test_context_engine.py
 test_multimodel.py
 logs/
+
+.self_improvement_backups/
+*.bak

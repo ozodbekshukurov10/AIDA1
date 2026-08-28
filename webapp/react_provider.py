@@ -67,11 +67,30 @@ class ReActProvider:
             return "\n".join(lines)
 
         def calculate(expression: str) -> str:
+            import ast
             import math
-            allowed = {k: v for k, v in math.__dict__.items() if not k.startswith("_")}
-            allowed["__builtins__"] = {}
+            SAFE_OPS = {
+                ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod,
+                ast.USub, ast.UAdd, ast.FloorDiv,
+                ast.Name, ast.Constant, ast.Call, ast.Attribute,
+            }
+            def _check(node):
+                if type(node) not in SAFE_OPS:
+                    raise ValueError(f"Not allowed: {type(node).__name__}")
+                if isinstance(node, ast.Name):
+                    if node.id not in dir(math):
+                        raise ValueError(f"Unknown name: {node.id}")
+                if isinstance(node, ast.Call):
+                    if not isinstance(node.func, ast.Attribute) or \
+                       not isinstance(node.func.value, ast.Name) or \
+                       node.func.value.id != "math":
+                        raise ValueError("Only math.* calls allowed")
+                for child in ast.iter_child_nodes(node):
+                    _check(child)
             try:
-                result = eval(expression, allowed)
+                tree = ast.parse(expression.strip(), mode="eval")
+                _check(tree.body)
+                result = eval(compile(tree, "<safe>", "eval"), {"math": math, "__builtins__": {}})
                 return f"Natija: {result}"
             except Exception as e:
                 return f"Xatolik: {str(e)}"

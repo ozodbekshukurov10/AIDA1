@@ -20,13 +20,6 @@ try:
 except ImportError:
     MODEL_AUTO_START_AVAILABLE = False
 
-try:
-    from webapp.codellama_provider import CodeLLaMAProvider
-    CODELLAMA_AVAILABLE = True
-except ImportError:
-    CODELLAMA_AVAILABLE = False
-
-
 def get_auto_start_instance():
     """Get or create ModelAutoStart instance."""
     if not MODEL_AUTO_START_AVAILABLE:
@@ -406,26 +399,20 @@ def api_models_pull(request):
         provider_name = data.get("provider", "ollama")
         model_name = data.get("model", "llama3.2")
         
-        if provider_name == "codellama" and CODELLAMA_AVAILABLE:
-            # Use CodeLLaMA provider to pull model
-            from webapp.codellama_provider import create_codellama_provider
-            provider = create_codellama_provider()
-            success = provider.pull_model(model_name)
-            
-            if success:
+        if provider_name == "codellama":
+            from ..llm.gateway import get_gateway
+            gw = get_gateway()
+            plugin = gw.get_provider("ollama")
+            if plugin:
                 return JsonResponse({
                     "success": True,
-                    "provider": provider_name,
+                    "provider": "ollama",
                     "model": model_name,
-                    "message": f"Model {model_name} pulled successfully"
+                    "message": f"Pulling {model_name} via Ollama"
                 })
-            else:
-                return JsonResponse({
-                    "success": False,
-                    "provider": provider_name,
-                    "model": model_name,
-                    "error": f"Failed to pull model {model_name}"
-                }, status=500)
+            return JsonResponse({
+                "error": "No provider available to pull model"
+            }, status=500)
         else:
             return JsonResponse({
                 "error": f"Model pulling not supported for {provider_name}"

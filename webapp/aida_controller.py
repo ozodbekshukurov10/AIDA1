@@ -471,12 +471,11 @@ class GeminiProvider:
 class OllamaProvider:
     name = "ollama"
 
-    # Ollamaga maxsus O'zbek tili yo'riqnomasi
+    # Ollamaga maxsus tildan foydalanish yo'riqnomasi
     UZBEK_INSTRUCTION = (
-        "\n\nMUHIM: Siz O'zbek tilida so'zlashuvchi AIDA sun'iy intellektisiz. "
-        "DOIMO o'zbek tilida javob bering. Faqat texnik atamalar ingliz tilida bo'lishi mumkin. "
-        "Javoblaringiz aniq, batafsil va foydali bo'lsin. "
-        "Agar foydalanuvchi ingliz yoki rus tilida yozsa ham, o'zbek tilida javob bering.\n"
+        "\n\nMUHIM: Foydalanuvchi qaysi tilda murojaat qilsa (o'zbek, rus, ingliz va h.k.), doimo o'sha tilda javob qaytaring. "
+        "Javoblaringiz aniq, batafsil va professional bo'lsin. "
+        "Hech qachon boshqa tillarni chalkashtirmang.\n"
     )
 
     def __init__(self, url: str = "http://localhost:11434", model: str = "llama3.2", mode: str = "pro") -> None:
@@ -523,7 +522,7 @@ class OllamaProvider:
                 "num_predict": self.num_predict,
             }
         }
-        timeout = 30 if self.mode == "flash" else 120
+        timeout = 60 if self.mode == "flash" else 600
         try:
             req = urllib.request.Request(
                 f"{self.url}/api/chat",
@@ -551,8 +550,7 @@ class LMStudioProvider:
     name = "lmstudio"
 
     UZBEK_INSTRUCTION = (
-        "\n\nMUHIM: Siz O'zbek tilida so'zlashuvchi AIDA sun'iy intellektisiz. "
-        "DOIMO o'zbek tilida javob bering. Faqat texnik atamalar ingliz tilida bo'lishi mumkin. "
+        "\n\nMUHIM: Foydalanuvchi qaysi tilda murojaat qilsa (o'zbek, rus, ingliz va h.k.), doimo o'sha tilda javob qaytaring. "
         "Javoblaringiz aniq, batafsil va foydali bo'lsin.\n"
     )
 
@@ -616,12 +614,58 @@ class LMStudioProvider:
 class CollaborationProvider:
     name = "collab"
 
-    def __init__(self, ollama_url: str = "http://localhost:11434", ollama_model: str = "qwen2.5:3b", lmstudio_url: str = "http://localhost:1234", lmstudio_model: str = "", mode: str = "pro") -> None:
+    # Birlashgan tildan foydalanish yo'riqnomasi
+    UZBEK_INSTRUCTION = (
+        "\n\n## ⚠️ MUHIM YO'RIQNOMA (OHANG VA TIL QAIDALARI):\n"
+        "1. Foydalanuvchi qaysi tilda murojaat qilsa (o'zbek, rus, ingliz va h.k.), doimo o'sha tilda javob qaytaring.\n"
+        "2. Foydalanuvchiga doimo o'ta muloyim, samimiy va hurmat bilan ('Siz' deb) professional tarzda javob bering.\n"
+        "3. Robottdek emas, balki samimiy va yordamga tayyor yordamchi kabi gapiring. Har bir so'roqqa aniq va to'liq javob bering.\n"
+        "4. Javobingiz aniq, lo'nda va to'liq bo'lsin.\n"
+    )
+
+    def __init__(self, ollama_url: str = "http://127.0.0.1:11434", ollama_model: str = "qwen2.5:3b", lmstudio_url: str = "http://127.0.0.1:1234", lmstudio_model: str = "", mode: str = "pro") -> None:
         self.ollama_url = ollama_url.rstrip("/")
         self.ollama_model = ollama_model
         self.lmstudio_url = lmstudio_url.rstrip("/")
         self.lmstudio_model = lmstudio_model
         self.mode = mode
+
+    def _detect_task_type(self, prompt: str) -> str:
+        # Extract actual user query/result from agent prompts to prevent false matching instructions
+        actual_query = prompt
+        if "## Yangi ma'lumot / So'nggi natija:" in prompt:
+            actual_query = prompt.split("## Yangi ma'lumot / So'nggi natija:")[-1]
+        elif "## Tarix / Oldingi qadamlar:" in prompt:
+            actual_query = prompt.split("## Tarix / Oldingi qadamlar:")[-1]
+
+        prompt_lower = actual_query.lower()
+        code_keywords = [
+            "code", "kod", "funksiya", "function", "class", "dastur", "program",
+            "python", "javascript", "java", "cpp", "react", "api", "database",
+            "sql", "algorithm", "algoritm", "debug", "xatolik", "bug", "fix",
+            "implement", "yoz", "write", "app", "ilova", "dasturlash"
+        ]
+        has_code_kw = False
+        for kw in code_keywords:
+            if kw == "app":
+                if re.search(r"\bapp\b", prompt_lower):
+                    has_code_kw = True
+                    break
+            elif kw in prompt_lower:
+                has_code_kw = True
+                break
+        if has_code_kw:
+            return "code"
+        return "general"
+
+    def _get_ollama_models(self) -> list[str]:
+        try:
+            req = urllib.request.Request(f"{self.ollama_url}/api/tags", method="GET")
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return [m.get("name", "") for m in data.get("models", [])]
+        except Exception:
+            return []
 
     def respond(
         self,
@@ -630,10 +674,11 @@ class CollaborationProvider:
         system_prompt: str,
         **kwargs
     ) -> str:
+        # Check active servers
         ollama_active = False
         try:
             req = urllib.request.Request(f"{self.ollama_url}/api/tags", method="GET")
-            with urllib.request.urlopen(req, timeout=2) as resp:
+            with urllib.request.urlopen(req, timeout=3) as resp:
                 ollama_active = (resp.status == 200)
         except Exception:
             pass
@@ -641,51 +686,44 @@ class CollaborationProvider:
         lmstudio_active = False
         try:
             req = urllib.request.Request(f"{self.lmstudio_url}/v1/models", method="GET")
-            with urllib.request.urlopen(req, timeout=2) as resp:
+            with urllib.request.urlopen(req, timeout=3) as resp:
                 lmstudio_active = (resp.status == 200)
         except Exception:
             pass
 
+        task_type = self._detect_task_type(prompt)
+
+        # 1. BOTH ACTIVE -> Intelligent Routing (Elite Unified Coordination)
         if ollama_active and lmstudio_active:
-            lm_provider = LMStudioProvider(url=self.lmstudio_url, model=self.lmstudio_model, mode=self.mode)
-            lm_response = lm_provider.respond(prompt, memory, system_prompt)
-            if "LM Studio xatosi" in lm_response:
-                ollama_provider = OllamaProvider(url=self.ollama_url, model=self.ollama_model, mode=self.mode)
-                return ollama_provider.respond(prompt, memory, system_prompt, **kwargs)
+            if task_type == "code":
+                # For code, LM Studio's 14B coder model is extremely powerful (Elite coding)
+                lm_provider = LMStudioProvider(url=self.lmstudio_url, model="qwen/qwen2.5-coder-14b", mode=self.mode)
+                return lm_provider.respond(prompt, memory, system_prompt + self.UZBEK_INSTRUCTION, **kwargs)
+            else:
+                # For general queries/chat, Ollama's 3B model is extremely fast
+                ollama_models = self._get_ollama_models()
+                chosen_model = "aida:latest" if "aida:latest" in ollama_models else ("aida-beta:latest" if "aida-beta:latest" in ollama_models else self.ollama_model)
+                ollama_provider = OllamaProvider(url=self.ollama_url, model=chosen_model, mode=self.mode)
+                return ollama_provider.respond(prompt, memory, system_prompt + self.UZBEK_INSTRUCTION, **kwargs)
 
-            ollama_provider = OllamaProvider(url=self.ollama_url, model=self.ollama_model, mode=self.mode)
-            ollama_sys = system_prompt + (
-                "\nSiz LM Studio va Ollama modellarining hamkorlikdagi boshqaruvchisisiz. "
-                "Quyida foydalanuvchining so'rovi hamda LM Studio modelidan olingan tahliliy javob berilgan. "
-                "Vazifangiz: ushbu tahlilga tayanib, uni boyitib, eng mukammal va to'liq o'zbekcha javobni taqdim etish."
-            )
-            collab_prompt = (
-                f"Foydalanuvchi so'rovi: {prompt}\n\n"
-                f"LM Studio modelining dastlabki tahlili:\n{lm_response}"
-            )
-            return ollama_provider.respond(collab_prompt, memory, ollama_sys, **kwargs)
-
+        # 2. ONLY OLLAMA ACTIVE
         elif ollama_active:
-            ollama_provider = OllamaProvider(url=self.ollama_url, model=self.ollama_model, mode=self.mode)
-            return ollama_provider.respond(prompt, memory, system_prompt, **kwargs)
+            ollama_models = self._get_ollama_models()
+            chosen_model = "aida:latest" if "aida:latest" in ollama_models else ("aida-beta:latest" if "aida-beta:latest" in ollama_models else self.ollama_model)
+            ollama_provider = OllamaProvider(url=self.ollama_url, model=chosen_model, mode=self.mode)
+            return ollama_provider.respond(prompt, memory, system_prompt + self.UZBEK_INSTRUCTION, **kwargs)
+
+        # 3. ONLY LM STUDIO ACTIVE
         elif lmstudio_active:
-            lm_provider = LMStudioProvider(url=self.lmstudio_url, model=self.lmstudio_model, mode=self.mode)
-            lm_response = lm_provider.respond(prompt, memory, system_prompt, **kwargs)
-            if "LM Studio xatosi" not in lm_response:
-                return lm_response
-            ollama_provider = OllamaProvider(url=self.ollama_url, model=self.ollama_model, mode=self.mode)
-            ollama_response = ollama_provider.respond(prompt, memory, system_prompt, **kwargs)
-            if "Ollama" not in ollama_response:
-                return ollama_response
-            local_provider = LocalProvider()
-            kw = dict(kwargs)
-            kw.setdefault("status", {})
-            return local_provider.respond(prompt, memory, system_prompt, **kw)
+            lm_provider = LMStudioProvider(url=self.lmstudio_url, model="qwen/qwen2.5-coder-14b", mode=self.mode)
+            return lm_provider.respond(prompt, memory, system_prompt + self.UZBEK_INSTRUCTION, **kwargs)
+
+        # 4. NEITHER ACTIVE -> FALLBACK TO LOCAL
         else:
             local_provider = LocalProvider()
             kw = dict(kwargs)
             kw.setdefault("status", {})
-            return local_provider.respond(prompt, memory, system_prompt, **kw)
+            return local_provider.respond(prompt, memory, system_prompt + self.UZBEK_INSTRUCTION, **kw)
 
 
 class MultiModelManager:
@@ -3417,9 +3455,6 @@ class AIDAController:
     def __init__(self) -> None:
         self.memory = MemoryStore(MEMORY_DB)
         self.config = ProviderConfig.from_env()
-        self.provider = self._build_provider()
-        self.providers = self._build_all_providers()
-        self.react_provider = self._build_react_provider()
 
         def _code_respond_func(p: str, mem: list, sys: str) -> str:
             for prov in [self.provider, *self.providers.values(), self.react_provider]:
@@ -3431,6 +3466,9 @@ class AIDAController:
             return ""
 
         self.local_provider = LocalProvider(respond_func=_code_respond_func)
+        self.provider = self._build_provider()
+        self.providers = self._build_all_providers()
+        self.react_provider = self._build_react_provider()
         self.research_service = WebResearchService()
         self.multi_model_manager = MultiModelManager(ollama_url="http://localhost:11434")
         # Initialize code engine if available
@@ -3468,8 +3506,8 @@ class AIDAController:
         if p == "collab":
             raw_model = self.config.model
             preferred = None if (not raw_model or raw_model == "AIDA Local Core") else raw_model
-            ollama_url = url or "http://localhost:11434"
-            lmstudio_url = os.getenv("LMSTUDIO_API_URL", "http://localhost:1234")
+            ollama_url = url or "http://127.0.0.1:11434"
+            lmstudio_url = os.getenv("LMSTUDIO_API_URL", "http://127.0.0.1:1234")
             import threading
             threading.Thread(target=self._try_connect_lmstudio, args=(lmstudio_url,), daemon=True).start()
             return CollaborationProvider(
@@ -3487,7 +3525,7 @@ class AIDAController:
                 return AidaBetaProvider(mode=self.config.mode)
             op = self._try_connect_ollama(
                 url=url or "http://localhost:11434",
-                preferred_model="aida-beta:latest",
+                preferred_model="aida:latest",
             )
             return op or self.local_provider
 
@@ -4201,8 +4239,8 @@ class AIDAController:
         status = self.status()
         intent = self.local_provider._detect_intent(clean_prompt)
         complexity = self._assess_complexity(clean_prompt, research_enabled, intent)
-        # Internet research is always-on
-        should_research = self._should_research(clean_prompt, True, intent)
+        # Internet research depends on user toggle
+        should_research = self._should_research(clean_prompt, research_enabled, intent)
         research = self._run_research(clean_prompt) if should_research else []
 
         # Extract and fetch URL contents if any

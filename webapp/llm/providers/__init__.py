@@ -7,9 +7,11 @@ from .lmstudio import LMStudioPlugin
 from .vllm import VLLMPlugin
 from .tensorrt import TensorRTPlugin
 from .aida import AidaModelPlugin
+from .collab import CollabPlugin
 
 __all__ = [
     "OllamaPlugin", "OpenAIProviderPlugin", "AnthropicPlugin",
     "GeminiPlugin", "DeepSeekPlugin", "LMStudioPlugin",
     "VLLMPlugin", "TensorRTPlugin", "AidaModelPlugin",
+    "CollabPlugin",
 ]

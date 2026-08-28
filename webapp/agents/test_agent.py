@@ -7,15 +7,17 @@ from .base_agent import BaseAgent, AgentContext, AgentResult, AgentStatus, Agent
 
 logger = logging.getLogger("webapp.agents.test")
 
-TEST_PROMPT = """You are AIDA Test Agent — an expert in software testing.
-Generate comprehensive tests including:
-1. Unit tests — test individual functions/classes
-2. Edge cases — empty inputs, boundaries, error conditions
-3. Integration tests — component interaction
-4. Performance tests — basic benchmarks
+TEST_PROMPT = """Sen AIDA Test Agentisan — dasturiy ta'minot sinovlari bo'yicha mutaxassis.
+Quyidagilarni o'z ichiga olgan to'liq sinovlar yozing:
 
-Use pytest style. Include fixtures and mocks where appropriate.
-Aim for >80% code coverage."""
+1. Unit testlar — individual funksiyalarni/sinflarni sinash
+2. Cheklov holatlari — bo'sh kiritishlar, chegaralar, xato holatlari
+3. Integratsiya testlari — komponentlar o'zaro ta'siri
+4. Tezlik testlari — asosiy benchmarklar
+
+pytest formatini ishlating. Fixtures va mocklarni kerakli joylarda qo'llang.
+80% dan ortiq kod qamroviga erishishga harakat qiling.
+Har doim o'zbek tilida javob ber."""
 
 
 class TestAgent(BaseAgent):

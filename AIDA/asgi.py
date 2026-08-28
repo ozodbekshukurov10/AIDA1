@@ -15,4 +15,11 @@ from AIDA.env import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'AIDA.settings')
 
+from aidaos.infrastructure.logging import setup_logging
+setup_logging(
+    name="aida",
+    level=os.getenv("AIDA_LOG_LEVEL", "INFO"),
+    json_output=os.getenv("AIDA_LOG_FORMAT", "text") == "json",
+)
+
 application = get_asgi_application()

@@ -6,7 +6,7 @@ import time
 from typing import AsyncIterator
 
 from .base import (
-    BaseProvider, ProviderConfig, Message, Completion,
+    BaseProvider, ProviderConfig, Message, MessageRole, Completion,
     StreamingChunk, ProviderStatus,
 )
 from .plugin import ModelPlugin, PluginRegistry
@@ -37,7 +37,7 @@ class ProfessionalModelGateway:
             if name not in self._providers:
                 self._providers[name] = inst
 
-        priority = ["ollama", "openai", "anthropic", "gemini",
+        priority = ["collab", "ollama", "openai", "anthropic", "gemini",
                      "deepseek", "lm_studio", "vllm", "tensorrt-llm", "aida_model"]
         self._fallback_order = [p for p in priority if p in self._providers]
         self._fallback_order.extend(
@@ -82,8 +82,31 @@ class ProfessionalModelGateway:
             "total_providers": len(self._providers),
         }
 
+    def _prepare_messages(self, messages: list[Message]) -> list[Message]:
+        system_instruction = (
+            "You are AIDA, a highly intelligent agentic AI assistant.\n"
+            "IMPORTANT LANGUAGE RULE: Always detect the language of the user's message (Uzbek, Russian, English, etc.) and respond in that exact same language.\n"
+            "If the user writes in Uzbek, reply in natural Uzbek. If the user writes in Russian, reply in Russian. If the user writes in English, reply in English.\n"
+            "Keep your tone warm, professional, helpful, and concise."
+        )
+        has_system = False
+        prepared = []
+        for m in messages:
+            if m.role == MessageRole.SYSTEM:
+                has_system = True
+                content = m.content
+                if "IMPORTANT LANGUAGE RULE" not in content:
+                    content = f"{content.strip()}\n\n{system_instruction}"
+                prepared.append(Message(role=MessageRole.SYSTEM, content=content))
+            else:
+                prepared.append(m)
+        if not has_system:
+            prepared.insert(0, Message(role=MessageRole.SYSTEM, content=system_instruction))
+        return prepared
+
     async def chat(self, messages: list[Message], provider: str | None = None,
                     fallback: bool = True, **kwargs) -> Completion:
+        messages = self._prepare_messages(messages)
         provider_name = provider or self._active_provider
         if not provider_name and self._fallback_order:
             provider_name = self._fallback_order[0]
@@ -114,6 +137,7 @@ class ProfessionalModelGateway:
 
     async def chat_stream(self, messages: list[Message], provider: str | None = None,
                             **kwargs) -> AsyncIterator[StreamingChunk]:
+        messages = self._prepare_messages(messages)
         provider_name = provider or self._active_provider
         if not provider_name and self._fallback_order:
             provider_name = self._fallback_order[0]

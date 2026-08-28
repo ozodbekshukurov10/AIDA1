@@ -4,6 +4,7 @@ from .plugin import ModelPlugin, PluginRegistry, PluginMetadata, ProviderCapabil
 from .providers import (
     OllamaPlugin, OpenAIProviderPlugin, AnthropicPlugin, GeminiPlugin,
     DeepSeekPlugin, LMStudioPlugin, VLLMPlugin, TensorRTPlugin, AidaModelPlugin,
+    CollabPlugin,
 )
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "ModelPlugin", "PluginRegistry", "PluginMetadata", "ProviderCapability",
     "OllamaPlugin", "OpenAIProviderPlugin", "AnthropicPlugin", "GeminiPlugin",
     "DeepSeekPlugin", "LMStudioPlugin", "VLLMPlugin", "TensorRTPlugin", "AidaModelPlugin",
+    "CollabPlugin",
 ]

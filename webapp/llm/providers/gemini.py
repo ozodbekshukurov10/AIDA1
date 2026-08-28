@@ -36,7 +36,6 @@ class GeminiPlugin(ModelPlugin):
         super().__init__(config)
         self.api_key = config.api_key or os.environ.get("GEMINI_API_KEY", "")
         self.base_url = "https://generativelanguage.googleapis.com/v1beta"
-        self.client = httpx.AsyncClient(timeout=config.timeout)
         self._sys_patched = False
 
     def _convert_messages(self, messages: list[Message]) -> tuple[str, list[dict]]:
@@ -66,10 +65,11 @@ class GeminiPlugin(ModelPlugin):
             payload["systemInstruction"] = {"parts": [{"text": system}]}
 
         try:
-            resp = await self.client.post(
-                f"{self.base_url}/models/{model}:generateContent",
-                params={"key": self.api_key}, json=payload,
-            )
+            async with httpx.AsyncClient(timeout=self.config.timeout) as client:
+                resp = await client.post(
+                    f"{self.base_url}/models/{model}:generateContent",
+                    params={"key": self.api_key}, json=payload,
+                )
             resp.raise_for_status()
             data = resp.json()
             candidate = data.get("candidates", [{}])[0]
@@ -127,9 +127,10 @@ class GeminiPlugin(ModelPlugin):
 
     async def check_health(self) -> bool:
         try:
-            resp = await self.client.get(
-                f"{self.base_url}/models", params={"key": self.api_key}, timeout=5,
-            )
+            async with httpx.AsyncClient(timeout=5) as client:
+                resp = await client.get(
+                    f"{self.base_url}/models", params={"key": self.api_key},
+                )
             if resp.status_code == 200:
                 self.status = ProviderStatus.ONLINE
                 return True
@@ -140,9 +141,10 @@ class GeminiPlugin(ModelPlugin):
 
     async def list_models(self) -> list[str]:
         try:
-            resp = await self.client.get(
-                f"{self.base_url}/models", params={"key": self.api_key}, timeout=10,
-            )
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(
+                    f"{self.base_url}/models", params={"key": self.api_key},
+                )
             resp.raise_for_status()
             return [m["name"].replace("models/", "") for m in resp.json().get("models", [])]
         except Exception:

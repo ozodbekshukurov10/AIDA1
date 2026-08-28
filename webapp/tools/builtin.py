@@ -26,25 +26,54 @@ class WebSearchTool(BaseTool):
 
     async def execute(self, query: str = "", max_results: int = 5, **kwargs) -> ToolResult:
         try:
+            results = []
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
             async with httpx.AsyncClient(timeout=15) as client:
-                resp = await client.get(
-                    "https://api.duckduckgo.com/",
-                    params={"q": query, "format": "json", "no_html": 1},
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    results = []
-                    if data.get("AbstractText"):
-                        results.append(f"[{data.get('Heading', 'Result')}] {data['AbstractText']}")
-                    for topic in data.get("RelatedTopics", [])[:max_results]:
-                        if "Text" in topic:
-                            results.append(topic["Text"])
-                    return ToolResult(
-                        success=True,
-                        output="\n\n".join(results) if results else "No results found",
-                        data={"results": results},
+                try:
+                    resp = await client.get(
+                        "https://html.duckduckgo.com/html/",
+                        params={"q": query},
+                        headers=headers
                     )
-            return ToolResult(success=False, error="Search failed")
+                    if resp.status_code == 200:
+                        import re
+                        html = resp.text
+                        # Find title links and snippets
+                        raw_results = re.findall(r'class="result__snippet"[^>]*>(.*?)</a>', html, re.DOTALL)
+                        raw_titles = re.findall(r'class="result__a"[^>]*>(.*?)</a>', html, re.DOTALL)
+                        
+                        def clean_html(text):
+                            text = re.sub(r'<[^>]*>', '', text)
+                            return text.replace("&quot;", '"').replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").strip()
+                        
+                        for i in range(min(len(raw_titles), max_results)):
+                            title = clean_html(raw_titles[i])
+                            snippet = clean_html(raw_results[i]) if i < len(raw_results) else ""
+                            results.append(f"- **{title}**: {snippet}")
+                except Exception:
+                    pass
+
+                if not results:
+                    # Fallback to DuckDuckGo API
+                    resp = await client.get(
+                        "https://api.duckduckgo.com/",
+                        params={"q": query, "format": "json", "no_html": 1},
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        if data.get("AbstractText"):
+                            results.append(f"[{data.get('Heading', 'Result')}] {data['AbstractText']}")
+                        for topic in data.get("RelatedTopics", [])[:max_results]:
+                            if "Text" in topic:
+                                results.append(topic["Text"])
+
+            return ToolResult(
+                success=True,
+                output="\n\n".join(results) if results else "No results found for search query.",
+                data={"results": results},
+            )
         except Exception as e:
             return ToolResult(success=False, error=str(e))
 

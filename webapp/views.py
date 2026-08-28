@@ -46,10 +46,6 @@ LOGIN_HTML = BASE_DIR / "login.html"
 
 
 def login_page(request):
-    if LOGIN_HTML.exists():
-        with open(LOGIN_HTML, "r", encoding="utf-8") as f:
-            html = f.read()
-        return HttpResponse(html, content_type="text/html; charset=utf-8")
     return spa_index(request)
 
 
@@ -78,6 +74,10 @@ def dist_asset(request, asset_path: str):
     response = FileResponse(open(file_path, "rb"), content_type=content_type or "application/octet-stream")
     if encoding:
         response["Content-Encoding"] = encoding
+    # Force no-cache headers to make sure browser loads updated JS/CSS animations
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
     return response
 
 
@@ -1636,25 +1636,17 @@ def _find_ollama() -> str:
 
 
 
-# ─── AIDA Beta API ────────────────────────────────────────────────────────────
+# ─── AIDA Beta API (LLM Gateway orqali) ───────────────────────────────────────
 
-_aida_beta_provider = None
-
-def _get_aida_beta():
-    global _aida_beta_provider
-    if _aida_beta_provider is None:
-        try:
-            from aida_beta import AidaBetaProvider
-            _aida_beta_provider = AidaBetaProvider()
-        except Exception as e:
-            logger.warning("AidaBetaProvider init failed: %s", e)
-    return _aida_beta_provider
+from webapp.llm.gateway import get_gateway
+from webapp.llm.base import Message, MessageRole
+from webapp.memory.session import get_session_store
 
 
 @safe_api_endpoint
 @require_POST
 def api_aida_beta_chat(request):
-    """POST /api/aida-beta/chat/ — AIDA Beta modeli bilan chat."""
+    """POST /api/aida-beta/chat/ — Gateway orqali chat."""
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except json.JSONDecodeError:
@@ -1666,49 +1658,53 @@ def api_aida_beta_chat(request):
 
     session_id = str(payload.get("session_id", "default")).strip() or "default"
 
-    provider = _get_aida_beta()
-    if not provider:
-        return JsonResponse({"error": "AidaBetaProvider mavjud emas"}, status=503)
+    gw = get_gateway()
+    store = get_session_store()
 
-    # Xotiradan oxirgi suhbatni olish
-    mem = provider.memory.recent(limit=20, session_id=session_id)
-    memory_list = [{"role": m["role"], "content": m["content"]} for m in mem]
+    history = store.get_history(session_id, limit=20)
+    user_msg = Message(role=MessageRole.USER, content=prompt)
+    msgs = history + [user_msg]
 
-    response = provider.respond(prompt=prompt, memory=memory_list, session_id=session_id)
+    from ..api.chat import _run_async
+    completion = _run_async(gw.chat(msgs))
 
-    # Xotiraga saqlash
-    provider.memory.save("user", prompt, session_id=session_id)
-    provider.memory.save("assistant", response, session_id=session_id)
+    response = completion.content if completion else ""
+    store.add_message(session_id, user_msg)
+    if response:
+        assistant_msg = Message(role=MessageRole.ASSISTANT, content=response)
+        store.add_message(session_id, assistant_msg)
 
-    # O'rganish faktlarini tekshirish
     learn_keywords = ["eslab qol", "yodda tut", "bilgin", "men ", "o'rgandim", "aytib o'tay"]
     if any(kw in prompt.lower() for kw in learn_keywords):
-        provider.memory.remember_fact(prompt, session_id=session_id)
+        from ..memory.knowledge import get_knowledge_store
+        kstore = get_knowledge_store()
+        kstore.add(prompt, tags=["learned_fact"])
 
     return JsonResponse({
         "message": response,
         "session_id": session_id,
-        "model": provider.model,
+        "model": completion.model if completion else "",
     })
 
 
 @require_GET
 def api_aida_beta_status(request):
-    """GET /api/aida-beta/status/ — AIDA Beta model holati."""
-    provider = _get_aida_beta()
-    if not provider:
-        return JsonResponse({"available": False, "error": "Provider yuklanmadi"})
+    """GET /api/aida-beta/status/ — Gateway holati."""
+    gw = get_gateway()
+    status = gw.get_status()
+    ollama_plugin = gw.get_provider("ollama")
+    available = ollama_plugin is not None
     return JsonResponse({
-        "available": provider.is_available(),
-        "model": provider.model,
-        "mode": provider.mode,
+        "available": available,
+        "provider": status["active_provider"],
+        "providers": list(status["providers"].keys()),
     })
 
 
 @safe_api_endpoint
 @require_POST
 def api_aida_beta_remember(request):
-    """POST /api/aida-beta/remember/ — Faktni xotiraga saqlash."""
+    """POST /api/aida-beta/remember/ — Bilimga saqlash."""
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except json.JSONDecodeError:
@@ -1717,8 +1713,7 @@ def api_aida_beta_remember(request):
     session_id = str(payload.get("session_id", "default")).strip() or "default"
     if not fact:
         return JsonResponse({"error": "fact kerak"}, status=400)
-    provider = _get_aida_beta()
-    if not provider:
-        return JsonResponse({"error": "Provider mavjud emas"}, status=503)
-    provider.memory.remember_fact(fact, session_id=session_id)
+    from ..memory.knowledge import get_knowledge_store
+    kstore = get_knowledge_store()
+    kstore.add(fact, tags=["learned_fact", session_id])
     return JsonResponse({"saved": True, "fact": fact})

@@ -1,9 +1,8 @@
 import asyncio
 from django.http import JsonResponse
 
-from ..agents import (
-    get_orchestrator, AgentContext, WORKFLOW_TEMPLATES,
-)
+from ..agents.orchestrator import get_orchestrator, WORKFLOW_TEMPLATES
+from ..agents.base_agent import AgentContext
 from .decorators import api_endpoint, parse_json_body
 
 

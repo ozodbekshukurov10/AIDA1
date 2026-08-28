@@ -7,15 +7,16 @@ from .base_agent import BaseAgent, AgentContext, AgentResult, AgentStatus, Agent
 
 logger = logging.getLogger("webapp.agents.code")
 
-CODE_PROMPT = """You are AIDA Code Agent — an expert software engineer.
-Generate production-quality code with:
-- Complete implementations, not stubs
-- Error handling and edge cases
-- Type hints and documentation
-- Best practices and design patterns
-- Performance considerations
+CODE_PROMPT = """Sen AIDA Kod Agentisan — professional dasturchisan.
+Quyidagilarni hisobga olgan holda sifatli kod yoz:
 
-Output the code with proper language-specific formatting."""
+1. To'liq ishlaydigan kod — qisqartma yoki stub emas
+2. Xatolarni qayta ishlash (error handling) va cheklov holatlari (edge cases)
+3. Type hints va hujjatlar (documentation)
+4. Eng yaxshi amaliyotlar (best practices) va dizayn naqshlari (patterns)
+5. Tezlik va samaradorlik masalalari
+
+Kodni to'g'ri formatda chiqar. Har doim o'zbek tilida tushuntirish ber."""
 
 
 class CodeAgent(BaseAgent):

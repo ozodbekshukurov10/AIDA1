@@ -1,0 +1,817 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import {
+  Bot,
+  Aperture,
+  Copy,
+  KeyRound,
+  Command,
+  Cpu,
+  Database,
+  Globe,
+  Layers3,
+  MessageSquarePlus,
+  Play,
+  Shield,
+  Trash2,
+  TerminalSquare,
+  Plus,
+  Mic,
+  ChevronDown,
+  ArrowUp,
+} from 'lucide-react';
+import SplashScreen from './SplashScreen';
+import LandingPage from './pages/LandingPage';
+import AICodeWorkspace from './components/ai/AICodeWorkspace';
+import AICore from './components/ai/AICore';
+import NeuralNetwork from './components/ai/NeuralNetwork';
+
+type TabId = 'overview' | 'chat' | 'code' | 'access';
+
+type StatusPayload = {
+  name: string;
+  provider: string;
+  model: string;
+  platform: string;
+  memory_entries: number;
+  autonomy_mode: string;
+  interfaces: string[];
+  capabilities: string[];
+  default_runserver_address: string;
+  updated_at: string;
+};
+
+type AccessKeyRecord = {
+  id: number;
+  name: string;
+  prefix: string;
+  platform_name: string;
+  business_type: string;
+  audience: string;
+  tone: string;
+  assistant_goal: string;
+  custom_instructions: string;
+  created_at: string;
+  last_used_at: string | null;
+  is_active: boolean;
+};
+
+type Message = {
+  id: string;
+  role: 'user' | 'aida';
+  text: string;
+  sources?: Array<{ title: string; url: string }>;
+};
+
+type ChatSession = {
+  id: string;
+  title: string;
+  messages: Message[];
+  lastActivity: string;
+};
+
+const quickPrompts = [
+  'Menga bugungi ish uchun aniq plan tuzib ber.',
+  'Kod va mahsulot sifati uchun 5 ta kuchli tavsiya ber.',
+  'Murakkab vazifani qanday bo`lib ishlashni ayt.',
+];
+
+const tabs: Array<{ id: TabId; label: string; icon: React.ComponentType<{ size?: number; className?: string }> }> = [
+  { id: 'chat', label: 'Chat', icon: Bot },
+  { id: 'code', label: 'Code Workspace', icon: TerminalSquare },
+  { id: 'overview', label: 'Overview', icon: Layers3 },
+  { id: 'access', label: 'Access', icon: KeyRound },
+];
+
+async function readApiJson<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text.trim()) {
+    throw new Error(`Server bo'sh javob qaytardi (${response.status}). Backend ishga tushganini tekshiring.`);
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    const preview = text.replace(/\s+/g, ' ').slice(0, 140);
+    throw new Error(`Server JSON emas javob qaytardi (${response.status}): ${preview || response.statusText}`);
+  }
+}
+
+function loadStoredSessions(): ChatSession[] {
+  const stored = localStorage.getItem('aida_sessions');
+  if (!stored) return [makeSession()];
+
+  try {
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : [makeSession()];
+  } catch {
+    return [makeSession()];
+  }
+}
+
+function makeSession(): ChatSession {
+  return {
+    id: crypto.randomUUID(),
+    title: 'Yangi suhbat',
+    messages: [
+      {
+        id: 'boot',
+        role: 'aida',
+        text: 'AIDA tayyor. Vazifani yozing, men uni tartibli, foydali va ishchi javobga aylantiraman.',
+      },
+    ],
+    lastActivity: new Date().toISOString(),
+  };
+}
+
+export default function App() {
+  const [isBooting, setIsBooting] = useState(true);
+  const [showDashboard, setShowDashboard] = useState(false);
+  const [tab, setTab] = useState<TabId>('chat');
+  const [status, setStatus] = useState<StatusPayload | null>(null);
+  const [statusError, setStatusError] = useState('');
+
+  // Multi-session state
+  const [sessions, setSessions] = useState<ChatSession[]>(loadStoredSessions);
+  const [activeSessionId, setActiveSessionId] = useState<string>(() => {
+    const storedActiveId = localStorage.getItem('aida_active_session');
+    const storedSessions = loadStoredSessions();
+    if (storedActiveId && storedSessions.some(session => session.id === storedActiveId)) {
+      return storedActiveId;
+    }
+    return storedSessions[0]?.id ?? makeSession().id;
+  });
+
+  // Model/Provider selection — persisted to localStorage
+  const [selectedProvider, setSelectedProvider] = useState(
+    () => localStorage.getItem('aida_provider') || 'ollama'
+  );
+  const [selectedModel, setSelectedModel] = useState(
+    () => localStorage.getItem('aida_model') || ''
+  );
+  const [availableModels, setAvailableModels] = useState<Array<{ id: string; name: string; provider: string }>>([]);
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
+
+  const handleProviderChange = (p: string) => {
+    setSelectedProvider(p);
+    localStorage.setItem('aida_provider', p);
+  };
+  const handleModelChange = (m: string) => {
+    setSelectedModel(m);
+    localStorage.setItem('aida_model', m);
+  };
+
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+  const [researchMode, setResearchMode] = useState(false);
+  const [autoCopy, setAutoCopy] = useState(false);
+  const [copiedId, setCopiedId] = useState('');
+  const [keys, setKeys] = useState<AccessKeyRecord[]>([]);
+  const [newKeyName, setNewKeyName] = useState('Platform key');
+  const [platformName, setPlatformName] = useState('');
+  const [businessType, setBusinessType] = useState('Kiyim do`koni');
+  const [audience, setAudience] = useState('');
+  const [tone, setTone] = useState('Iliq va ishonchli');
+  const [assistantGoal, setAssistantGoal] = useState('');
+  const [customInstructions, setCustomInstructions] = useState('');
+  const [newSecret, setNewSecret] = useState('');
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('aida_api_key') || '');
+  const apiKeyRef = useRef(apiKey);
+  const feedRef = useRef<HTMLDivElement>(null);
+
+  function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
+    const key = apiKeyRef.current || localStorage.getItem('aida_api_key');
+    if (key) {
+      const sep = url.includes('?') ? '&' : '?';
+      url = `${url}${sep}key=${encodeURIComponent(key)}`;
+    }
+    return fetch(url, options);
+  }
+
+  const activeSession = sessions.find(s => s.id === activeSessionId) ?? sessions[0];
+  const messages = activeSession?.messages ?? [];
+  const isWelcomeState = messages.length === 1 && messages[0].id === 'boot' && !sending;
+
+  // Persist sessions to localStorage on every change
+  useEffect(() => {
+    localStorage.setItem('aida_sessions', JSON.stringify(sessions));
+    localStorage.setItem('aida_active_session', activeSessionId);
+  }, [sessions, activeSessionId]);
+
+  useEffect(() => {
+    const fetchBootstrap = async () => {
+      try {
+        const [statusResponse, keyResponse, modelsResponse] = await Promise.all([
+          fetch('/api/status/'),
+          fetch('/api/keys/'),
+          fetch('/api/models/manage/list/').catch(() => null),
+        ]);
+        if (!statusResponse.ok) throw new Error('Status endpoint unavailable');
+        const statusPayload = await readApiJson<StatusPayload>(statusResponse);
+        setStatus(statusPayload);
+        if (keyResponse.ok) {
+          const keyPayload = await readApiJson<{ items?: AccessKeyRecord[] }>(keyResponse);
+          setKeys(keyPayload.items ?? []);
+        }
+        if (modelsResponse && modelsResponse.ok) {
+          const modelsPayload = await readApiJson<{ models?: Array<{ id: string; name: string; provider: string }> }>(modelsResponse);
+          if (modelsPayload.models) {
+            setAvailableModels(modelsPayload.models);
+          }
+        }
+        setStatusError('');
+
+        if (!localStorage.getItem('aida_api_key')) {
+          const createResponse = await fetch('/api/keys/create/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: 'Frontend key' }),
+          });
+          if (createResponse.ok) {
+            const payload = await readApiJson<{ secret: string }>(createResponse);
+            localStorage.setItem('aida_api_key', payload.secret);
+            apiKeyRef.current = payload.secret;
+            setApiKey(payload.secret);
+          }
+        }
+      } catch (error) {
+        setStatusError(error instanceof Error ? error.message : 'Unknown status error');
+      }
+    };
+    fetchBootstrap();
+  }, []);
+
+  useEffect(() => {
+    feedRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, sending]);
+
+  useEffect(() => {
+    setAutoCopy(localStorage.getItem('aida_auto_copy') === 'true');
+    setResearchMode(localStorage.getItem('aida_research_mode') === 'true');
+  }, []);
+
+  const updateSession = (id: string, updater: (s: ChatSession) => ChatSession) => {
+    setSessions(prev => prev.map(s => s.id === id ? updater(s) : s));
+  };
+
+  const addNewSession = () => {
+    const newSession = makeSession();
+    setSessions(prev => [newSession, ...prev]);
+    setActiveSessionId(newSession.id);
+    setTab('chat');
+  };
+
+  const deleteSession = (id: string) => {
+    setSessions(prev => {
+      const next = prev.filter(s => s.id !== id);
+      if (next.length === 0) {
+        const fresh = makeSession();
+        setActiveSessionId(fresh.id);
+        return [fresh];
+      }
+      if (id === activeSessionId) {
+        setActiveSessionId(next[0].id);
+      }
+      return next;
+    });
+  };
+
+  const copyText = async (value: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedId(id);
+      window.setTimeout(() => setCopiedId(''), 1600);
+    } catch {
+      setCopiedId('');
+    }
+  };
+
+  const sendPrompt = async (promptText?: string) => {
+    const prompt = (promptText ?? input).trim();
+    if (!prompt || sending) return;
+
+    const userMessage: Message = { id: crypto.randomUUID(), role: 'user', text: prompt };
+
+    // Derive session title from first user message
+    const sessionTitle = activeSession.title === 'Yangi suhbat' ? prompt.slice(0, 40) : activeSession.title;
+
+    updateSession(activeSessionId, s => ({
+      ...s,
+      title: sessionTitle,
+      messages: [...s.messages, userMessage],
+      lastActivity: new Date().toISOString(),
+    }));
+    setInput('');
+    setSending(true);
+
+    try {
+      const response = await apiFetch('/api/chat/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          research: researchMode,
+          session_id: activeSessionId,
+          provider: selectedProvider,
+          model: selectedModel,
+        }),
+      });
+      const payload = await readApiJson<{ error?: string; message?: string; sources?: Array<{ title: string; url: string }>; status?: StatusPayload }>(response);
+
+      if (!response.ok) throw new Error(payload.error || 'AIDA request failed');
+
+      const aidaMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'aida',
+        text: payload.message ?? '',
+        sources: payload.sources ?? [],
+      };
+      updateSession(activeSessionId, s => ({
+        ...s,
+        messages: [...s.messages, aidaMessage],
+        lastActivity: new Date().toISOString(),
+      }));
+      if (payload.status) setStatus(payload.status);
+      if (autoCopy && payload.message) await copyText(payload.message, 'auto-copy');
+    } catch (error) {
+      updateSession(activeSessionId, s => ({
+        ...s,
+        messages: [...s.messages, {
+          id: crypto.randomUUID(),
+          role: 'aida',
+          text: `So'rovda uzilish bo'ldi: ${error instanceof Error ? error.message : 'unknown error'}`,
+        }],
+      }));
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const stats = [
+    { label: 'Provider', value: status?.provider ?? 'loading', icon: Cpu, tone: 'mint' },
+    { label: 'Platform', value: status?.platform ?? 'loading', icon: Globe, tone: 'amber' },
+    { label: 'Memory', value: String(status?.memory_entries ?? 0), icon: Database, tone: 'ice' },
+    { label: 'Mode', value: status?.autonomy_mode ?? 'guarded', icon: Shield, tone: 'rose' },
+  ];
+
+  const createKey = async () => {
+    if (!newKeyName.trim() || creatingKey) return;
+    setCreatingKey(true);
+    try {
+      const response = await fetch('/api/keys/create/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newKeyName, platform_name: platformName, business_type: businessType, audience, tone, assistant_goal: assistantGoal, custom_instructions: customInstructions }),
+      });
+      const payload = await readApiJson<any>(response);
+      if (!response.ok) throw new Error(payload.error || 'Key create failed');
+      setNewSecret(payload.secret);
+      setKeys(c => [{ id: payload.id, name: payload.name, prefix: payload.prefix, platform_name: payload.platform_name, business_type: payload.business_type, audience: payload.audience, tone: payload.tone, assistant_goal: payload.assistant_goal, custom_instructions: payload.custom_instructions, created_at: payload.created_at, last_used_at: null, is_active: true }, ...c]);
+      setPlatformName(''); setBusinessType('Kiyim do`koni'); setAudience(''); setTone('Iliq va ishonchli'); setAssistantGoal(''); setCustomInstructions('');
+    } finally {
+      setCreatingKey(false);
+    }
+  };
+
+  const handleAutoCopyChange = (v: boolean) => { setAutoCopy(v); localStorage.setItem('aida_auto_copy', String(v)); };
+  const handleResearchChange = (v: boolean) => { setResearchMode(v); localStorage.setItem('aida_research_mode', String(v)); };
+
+  return (
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden">
+      <AnimatePresence mode="wait">
+        {isBooting ? (
+          <SplashScreen onComplete={() => setIsBooting(false)} />
+        ) : !showDashboard ? (
+          <motion.div
+            key="landing-page-view"
+            initial={{ opacity: 0, filter: 'blur(10px)', scale: 0.98 }}
+            animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+            exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.02 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <LandingPage onGetStarted={() => setShowDashboard(true)} />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="dashboard-shell-view"
+            className="min-h-screen bg-[#03050A] flex flex-col"
+            initial={{ opacity: 0, filter: 'blur(10px)', scale: 0.98 }}
+            animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+            exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.02 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {/* MAIN */}
+            <main className="main-panel flex-1 flex flex-col max-w-4xl w-full mx-auto p-6 md:p-8">
+              <header className="topbar flex items-center justify-between border-b border-white/8 pb-4 mb-6">
+                <motion.div
+                  initial={{ opacity: 0, x: -25 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="flex items-center gap-4"
+                >
+                  <button 
+                    type="button"
+                    onClick={() => setShowDashboard(false)}
+                    className="text-xs font-mono tracking-widest text-[#9CA9BC] hover:text-[#5DE8FF] transition-colors duration-200 flex items-center gap-1 cursor-pointer bg-transparent border border-white/8 py-1.5 px-3.5 rounded-full"
+                  >
+                    &larr; Home
+                  </button>
+                  <div>
+                    <div className="eyebrow">AIDA Intelligent Chat</div>
+                    <div className="topbar-title text-xl md:text-2xl font-['Space_Grotesk'] font-bold text-[#F5F7FF]">
+                      {activeSession?.title ?? 'AIDA Chat'}
+                    </div>
+                  </div>
+                </motion.div>
+                <div className="topbar-meta">
+                  <button
+                    type="button"
+                    onClick={addNewSession}
+                    className="text-xs font-mono tracking-widest text-[#5DE8FF] hover:text-[#F5F7FF] transition-all duration-200 border border-[#5DE8FF]/20 hover:border-[#5DE8FF] py-2 px-4 rounded-xl bg-[#5DE8FF]/5 cursor-pointer flex items-center gap-1.5 font-bold"
+                  >
+                    <MessageSquarePlus size={14} /> New Chat
+                  </button>
+                </div>
+              </header>
+
+              <AnimatePresence mode="wait">
+                {tab === 'code' && (
+                  <motion.section key="code" className="view" initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -14, filter: 'blur(6px)' }} transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
+                    <AICodeWorkspace />
+                  </motion.section>
+                )}
+                {tab === 'overview' && (
+                  <motion.section key="overview" className="view" initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -14, filter: 'blur(6px)' }} transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
+                    <section className="hero-band">
+                      <motion.div className="hero-copy" initial="initial" animate="animate" variants={{ initial: { opacity: 0 }, animate: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } } }}>
+                        <motion.div className="hero-badge" variants={{ initial: { opacity: 0, scale: 0.8 }, animate: { opacity: 1, scale: 1, transition: { duration: 0.5 } } }}>
+                          <Aperture size={14} /><span>AIDA online</span>
+                        </motion.div>
+                        <motion.div className="hero-wordmark" variants={{ initial: { opacity: 0, y: 30 }, animate: { opacity: 1, y: 0, transition: { duration: 0.8 } } }}>AIDA</motion.div>
+                        <motion.h2 variants={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}>
+                          Kirishingiz bilan tayyor turadigan chiroyli va aniq sun'iy ong paneli.
+                        </motion.h2>
+                        <motion.p variants={{ initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0, transition: { duration: 0.6 } } }}>
+                          Birinchi ekranning o'zida brend, holat va ishga kirish nuqtalari ko'rinadi. AIDA esa local core sifatida javoblarni tartibli va foydali shaklda tayyorlaydi.
+                        </motion.p>
+                        <motion.div className="hero-signals" variants={{ initial: { opacity: 0, y: 15 }, animate: { opacity: 1, y: 0, transition: { duration: 0.5 } } }}>
+                          <span>Local core</span><span>Fast response</span><span>Memory active</span>
+                          <span>{sessions.length} ta suhbat</span>
+                        </motion.div>
+                      </motion.div>
+                      <motion.div className="hero-visual" aria-hidden="true" initial={{ opacity: 0, scale: 0.8, rotate: -5 }} animate={{ opacity: 1, scale: 1, rotate: 0 }} transition={{ duration: 1.2, delay: 0.3 }}>
+                        <div className="visual-grid">
+                          <div className="visual-plaque">
+                            <div className="visual-plaque-label">AIDA Presence</div>
+                            <div className="visual-plaque-title">AIDA</div>
+                            <div className="visual-plaque-copy">Tizim markazi ishga tayyor.</div>
+                          </div>
+                        </div>
+                        <motion.div 
+                          className="visual-core"
+                          initial={{ opacity: 0, scale: 0.2 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 120,
+                            damping: 11,
+                            delay: 0.55
+                          }}
+                        >
+                          <Command size={46} />
+                        </motion.div>
+                        <div className="visual-ring visual-ring-a" />
+                        <div className="visual-ring visual-ring-b" />
+                      </motion.div>
+                    </section>
+
+                    <section className="stats-grid">
+                      {stats.map((item, i) => (
+                        <motion.article 
+                          key={item.label} 
+                          className={`stat-card tone-${item.tone}`} 
+                          initial={{ opacity: 0, scale: 0.4, y: 35 }} 
+                          animate={{ opacity: 1, scale: 1, y: 0 }} 
+                          transition={{ 
+                            type: "spring",
+                            stiffness: 130,
+                            damping: 13,
+                            mass: 0.9,
+                            delay: 0.35 + i * 0.08
+                          }}
+                        >
+                          <item.icon size={18} />
+                          <div className="stat-label">{item.label}</div>
+                          <div className="stat-value">{item.value}</div>
+                        </motion.article>
+                      ))}
+                    </section>
+
+                    <section className="detail-grid">
+                      <motion.article 
+                        className="detail-panel"
+                        initial={{ opacity: 0, y: 25 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.65 }}
+                      >
+                        <div className="panel-kicker">Capabilities</div>
+                        <div className="cap-list">
+                          {(status?.capabilities ?? []).map((c, i) => (
+                            <motion.span 
+                              key={c} 
+                              className="cap-chip"
+                              initial={{ opacity: 0, scale: 0.4, y: 15 }}
+                              animate={{ opacity: 1, scale: 1, y: 0 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 140,
+                                damping: 12,
+                                delay: 0.75 + Math.min(i, 8) * 0.05
+                              }}
+                            >
+                              {c}
+                            </motion.span>
+                          ))}
+                        </div>
+                      </motion.article>
+                      <motion.article 
+                        className="detail-panel"
+                        initial={{ opacity: 0, y: 25 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.72 }}
+                      >
+                        <div className="panel-kicker">Focus mode</div>
+                        <p className="panel-copy">Javoblar foydali, aniq va operatsion usulda beriladi. Ortiqcha ichki texnik tafsilotlar foydalanuvchi ekraniga chiqarilmaydi.</p>
+                      </motion.article>
+                      <motion.article 
+                        className="detail-panel"
+                        initial={{ opacity: 0, y: 25 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.8 }}
+                      >
+                        <div className="panel-kicker">Runserver memory</div>
+                        <p className="panel-copy">
+                          {statusError ? `Status xatosi: ${statusError}` : `Default manzil: ${status?.default_runserver_address ?? '127.0.0.1:8001'}`}
+                        </p>
+                      </motion.article>
+                    </section>
+                  </motion.section>
+                )}
+
+                {tab === 'chat' && (
+                  <motion.section key={`chat-${activeSessionId}`} className="view chat-view flex-1 flex flex-col min-h-0" initial={{ opacity: 0, y: 14, filter: 'blur(6px)' }} animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }} exit={{ opacity: 0, y: -14, filter: 'blur(6px)' }} transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
+                    <div className={`chat-column flex-1 flex flex-col min-h-0 relative ${isWelcomeState ? 'justify-center items-center py-12' : 'justify-between pb-6 pt-2'}`}>
+                      
+                      {/* Custom 4K Video Background inside Chat Column */}
+                      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden rounded-2xl">
+                        <video
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="w-full h-full object-cover"
+                          style={{ filter: 'blur(2px) saturate(0.65) brightness(0.32)' }}
+                        >
+                          <source src="/bg-video.mp4" type="video/mp4" />
+                        </video>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#03050A] via-[#03050A]/70 to-[#03050A]/40" />
+                      </div>
+
+                      {/* Central ambient glow */}
+                      {isWelcomeState && (
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#4C7DFF]/6 blur-[130px] pointer-events-none z-0" />
+                      )}
+
+                      {/* Welcome screen — Copilot-style premium greeting */}
+                      <AnimatePresence>
+                        {isWelcomeState && (
+                          <motion.div 
+                            key="welcome-prompt"
+                            initial={{ opacity: 0, y: -18 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -30, scale: 0.95 }}
+                            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                            className="flex flex-col items-center justify-center text-center mb-10 relative z-10 w-full px-4"
+                          >
+                            {/* AIDA Brand Glow Orb */}
+                            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#5DE8FF]/20 to-[#7C5CFF]/20 border border-[#5DE8FF]/25 flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(93,232,255,0.18)]">
+                              <AICore state="idle" className="scale-75" />
+                            </div>
+                            <h1 className="font-['Space_Grotesk'] text-3xl md:text-5xl font-bold text-white tracking-tight mb-3 leading-tight">
+                              Salom!{' '}
+                              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5DE8FF] to-[#7C5CFF]">
+                                Nima haqida o'ylayapsiz?
+                              </span>
+                            </h1>
+                            <p className="text-[#9CA9BC] text-sm md:text-base max-w-md mx-auto">
+                              AIDA — sun'iy intellekt yordamida ish unumdorligini yangi darajaga olib chiqing
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Messages scrollable feed (only shown when we have messages) */}
+                      {!isWelcomeState && (
+                        <div className="chat-feed flex-1 overflow-y-auto min-h-0 w-full max-w-4xl mx-auto mb-4 pr-1 mt-2">
+                          {messages.map(message => (
+                            <motion.div 
+                              key={message.id} 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className={`message-row ${message.role === 'user' ? 'message-user' : 'message-aida'}`}
+                            >
+                              <div className="message-meta-row">
+                                <div className="message-meta">
+                                  {message.role === 'user' ? <Play size={12} /> : <Bot size={12} />}
+                                  <span>{message.role === 'user' ? 'Operator' : 'AIDA'}</span>
+                                </div>
+                                {message.role === 'aida' && (
+                                  <button type="button" className="copy-button" onClick={() => copyText(message.text, message.id)}>
+                                    <Copy size={12} />
+                                    <span>{copiedId === message.id ? 'Copied' : 'Copy'}</span>
+                                  </button>
+                                )}
+                              </div>
+                              <div className="message-bubble" style={{ whiteSpace: 'pre-wrap' }}>{message.text}</div>
+                              {!!message.sources?.length && (
+                                <div className="source-list">
+                                  {message.sources.map(src => (
+                                    <a key={src.url} href={src.url} target="_blank" rel="noreferrer">{src.title}</a>
+                                  ))}
+                                </div>
+                              )}
+                            </motion.div>
+                          ))}
+                          {sending && (
+                            <div className="message-row message-aida">
+                              <div className="message-meta"><Bot size={12} /><span>AIDA</span></div>
+                              <div className="message-bubble typing-indicator">
+                                <span /><span /><span />
+                              </div>
+                            </div>
+                          )}
+                          <div ref={feedRef} />
+                        </div>
+                      )}
+
+                      {/* Unified Composer capsule form */}
+                      <motion.form 
+                        layout="position"
+                        key="chat-composer"
+                        className={`w-full z-10 ${isWelcomeState ? 'max-w-2xl px-4' : 'max-w-4xl mx-auto'}`}
+                        onSubmit={e => { e.preventDefault(); sendPrompt(); }}
+                      >
+                        <div className="relative flex items-center rounded-full border border-white/10 bg-[#07101A]/85 backdrop-blur-xl px-4 py-2.5 gap-3 shadow-2xl focus-within:border-[#4C7DFF]/50 focus-within:ring-1 focus-within:ring-[#4C7DFF]/20 transition-all duration-300 w-full">
+                          <Plus className="text-[#9CA9BC] hover:text-[#F5F7FF] cursor-pointer transition-colors shrink-0" size={20} />
+                          <input 
+                            value={input} 
+                            onChange={e => setInput(e.target.value)} 
+                            placeholder="AIDA'dan so'rang..." 
+                            className="flex-1 bg-transparent border-none outline-none text-[#F5F7FF] placeholder-[#9CA9BC]/45 text-sm md:text-base py-1 px-1 min-w-0" 
+                          />
+                          <div className="flex items-center gap-3 relative shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => setShowModelDropdown(!showModelDropdown)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/5 text-[#F5F7FF]/70 hover:text-[#F5F7FF] text-xs font-mono font-medium transition-all"
+                            >
+                              <span>{selectedModel ? selectedModel.split(':')[0] : 'aida'}</span>
+                              <ChevronDown size={14} className={`opacity-60 transition-transform duration-200 ${showModelDropdown ? 'rotate-180' : ''}`} />
+                            </button>
+                            <Mic className="text-[#9CA9BC] hover:text-[#F5F7FF] cursor-pointer transition-colors" size={18} />
+                            <button
+                              type="submit"
+                              disabled={sending || !input.trim()}
+                              className="flex items-center justify-center w-8 h-8 rounded-full bg-[#4C7DFF] hover:bg-[#5DE8FF] text-[#03050A] hover:scale-105 disabled:opacity-30 disabled:hover:bg-[#4C7DFF] disabled:hover:text-[#03050A] disabled:hover:scale-100 transition-all duration-300 shrink-0"
+                            >
+                              <ArrowUp size={16} />
+                            </button>
+
+                            {showModelDropdown && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowModelDropdown(false)} />
+                                <div className="absolute bottom-full right-0 mb-3 w-64 rounded-2xl border border-white/10 bg-[#07101A]/95 backdrop-blur-2xl p-2 shadow-2xl flex flex-col gap-1 z-50">
+                                  <div className="px-3 py-1.5 text-[10px] text-[#9CA9BC]/60 font-mono tracking-widest uppercase border-b border-white/5 mb-1">AI Modellari</div>
+                                  {(availableModels.length > 0 ? availableModels : [
+                                    { id: 'aida:latest', name: 'aida:latest', provider: 'ollama' },
+                                    { id: 'aida-beta:latest', name: 'aida-beta:latest', provider: 'ollama' },
+                                    { id: 'qwen2.5:3b', name: 'qwen2.5:3b', provider: 'ollama' }
+                                  ]).map(model => (
+                                    <button
+                                      key={model.id}
+                                      type="button"
+                                      className={`flex flex-col items-start text-left px-3 py-2 rounded-xl transition-all duration-200 ${selectedModel === model.id ? 'bg-[#4C7DFF]/20 text-[#5DE8FF]' : 'text-[#F5F7FF]/70 hover:bg-white/5 hover:text-[#F5F7FF]'}`}
+                                      onClick={() => {
+                                        handleModelChange(model.id);
+                                        handleProviderChange(model.provider);
+                                        setShowModelDropdown(false);
+                                      }}
+                                    >
+                                      <span className="text-sm font-semibold">{model.name}</span>
+                                      <span className="text-[10px] opacity-60 uppercase tracking-widest">{model.provider}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </motion.form>
+
+                      {/* Quick Suggestion Chips — only in welcome state */}
+                      {isWelcomeState && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.5, delay: 0.35 }}
+                          className="flex flex-wrap justify-center gap-2.5 mt-4 max-w-2xl w-full z-10"
+                        >
+                          {[
+                            'Loyiha rejasi tuz',
+                            'Kod yoz va tushuntir',
+                            'Yangi g\'oya ber',
+                            'Kunlik vazifalarni aniqla',
+                          ].map((chip, i) => (
+                            <motion.button
+                              key={chip}
+                              type="button"
+                              initial={{ opacity: 0, scale: 0.88 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: 0.42 + i * 0.07, duration: 0.35 }}
+                              onClick={() => { setInput(chip); }}
+                              className="px-4 py-2 rounded-full border border-white/12 bg-white/4 hover:bg-[#5DE8FF]/10 hover:border-[#5DE8FF]/35 text-[#F5F7FF]/70 hover:text-[#F5F7FF] text-sm font-medium transition-all duration-250 backdrop-blur-sm cursor-pointer"
+                            >
+                              {chip}
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+
+
+                    </div>
+                  </motion.section>
+                )}
+
+                {tab === 'access' && (
+                  <motion.section key="access" className="view architecture-view" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}>
+                    <section className="architecture-band">
+                      <article className="arch-step"><div className="arch-index">01</div><h3>Local core</h3><p>AIDA default holatda local core rejimida ishlaydi va tashqi modelga bog'lanmaydi.</p></article>
+                      <article className="arch-step"><div className="arch-index">02</div><h3>Saved address</h3><p>Oxirgi ishlatilgan `runserver` manzili eslab qolinadi va keyingi safar o'sha port ochiladi.</p></article>
+                      <article className="arch-step"><div className="arch-index">03</div><h3>Access key</h3><p>Bu yerda yaratilgan key bilan boshqa platforma sizning AIDA endpoint'ingizga ulanadi.</p></article>
+                      <article className="arch-step"><div className="arch-index">04</div><h3>External endpoint</h3><p>`/api/platform/chat/` orqali platformalararo chat oqimi ishlaydi.</p></article>
+                    </section>
+                    <section className="detail-grid">
+                      <article className="detail-panel">
+                        <div className="panel-kicker">Create access key</div>
+                        <div className="key-create-block">
+                          <input value={newKeyName} onChange={e => setNewKeyName(e.target.value)} placeholder="Key nomi" />
+                          <input value={platformName} onChange={e => setPlatformName(e.target.value)} placeholder="Platforma nomi" />
+                          <input value={businessType} onChange={e => setBusinessType(e.target.value)} placeholder="Business type" />
+                          <input value={audience} onChange={e => setAudience(e.target.value)} placeholder="Auditoriya" />
+                          <input value={tone} onChange={e => setTone(e.target.value)} placeholder="Javob ohangi" />
+                          <input value={assistantGoal} onChange={e => setAssistantGoal(e.target.value)} placeholder="Assistant goal" />
+                          <textarea value={customInstructions} onChange={e => setCustomInstructions(e.target.value)} placeholder="Maxsus ko'rsatmalar" />
+                          <button type="button" onClick={createKey} disabled={creatingKey || !newKeyName.trim()}>
+                            {creatingKey ? 'Yaratilmoqda...' : 'Key yaratish'}
+                          </button>
+                        </div>
+                        {newSecret && (
+                          <div className="secret-box">
+                            <div className="panel-kicker">Yangi secret</div>
+                            <code>{newSecret}</code>
+                          </div>
+                        )}
+                      </article>
+                      <article className="detail-panel">
+                        <div className="panel-kicker">Platform ulanish</div>
+                        <p className="panel-copy">Endpoint: <code>/api/platform/chat/</code><br />Header: <code>X-AIDA-Key: sizning_secret</code></p>
+                      </article>
+                      <article className="detail-panel">
+                        <div className="panel-kicker">Mavjud keylar</div>
+                        <div className="key-list">
+                          {keys.length === 0 && <p className="panel-copy">Hali access key yaratilmagan.</p>}
+                          {keys.map(item => (
+                            <div key={item.id} className="key-item">
+                              <div className="key-item-head"><KeyRound size={14} /><span>{item.name}</span></div>
+                              <div className="key-item-meta"><span>{item.prefix}...</span><span>{item.last_used_at ? 'used' : 'new'}</span></div>
+                              <div className="key-item-profile">
+                                <span>{item.platform_name || 'Platforma yo`q'}</span>
+                                <span>{item.business_type || 'Umumiy'}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </article>
+                    </section>
+                  </motion.section>
+                )}
+              </AnimatePresence>
+            </main>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
