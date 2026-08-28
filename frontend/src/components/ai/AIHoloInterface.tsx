@@ -12,18 +12,18 @@ interface AbilityNode {
 }
 
 const ABILITIES: AbilityNode[] = [
-  { id: '1', name: 'LIGHTNING REASONING', icon: 'âš¡', category: 'LOGIC', description: 'Multi-step parallel logical chain validation with sub-second breakdown.', stats: { accuracy: '99.4%', speed: '12ms', energy: 'OPTIMAL' } },
-  { id: '2', name: 'INFINITE MEMORY', icon: 'â™¾ï¸-', category: 'STORAGE', description: 'Context vector index matching across database knowledge chunks.', stats: { accuracy: '98.9%', speed: '8ms', energy: 'ACTIVE' } },
-  { id: '3', name: 'NEURAL CASCADE', icon: 'ðŸŒŒ', category: 'COGNITION', description: 'All computational nodes enter peak synchronized parallel inference.', stats: { accuracy: '99.8%', speed: '15ms', energy: 'MAXIMUM' } },
-  { id: '4', name: 'SELF-HEALING SHIELD', icon: 'ðŸ›¡ï¸-', category: 'SECURITY', description: 'Autonomous syntax repair & rate-limit resilience failover engine.', stats: { accuracy: '100.0%', speed: '4ms', energy: 'PROTECTED' } },
-  { id: '5', name: 'WEB SEARCH RAG', icon: 'ðŸŒ-', category: 'RETRIEVAL', description: 'DuckDuckGo HTML query injection for real-time fresh web context.', stats: { accuracy: '97.5%', speed: '450ms', energy: 'ONLINE' } },
-  { id: '6', name: 'MODEL AUTO-START', icon: 'âš™ï¸-', category: 'SYSTEM', description: 'Automatic local Ollama / LM Studio plugin auto-discovery.', stats: { accuracy: '99.1%', speed: '2ms', energy: 'READY' } },
-  { id: '7', name: 'CODE GENERATOR', icon: 'ðŸ’»', category: 'DEVELOPMENT', description: 'AST-validated Python and React code synthesis with instant syntax checks.', stats: { accuracy: '98.7%', speed: '22ms', energy: 'HIGH' } },
-  { id: '8', name: 'TASK DECOMPOSITION', icon: 'ðŸŽ¯', category: 'PLANNING', description: 'Decomposes complex requests into executable micro-tasks.', stats: { accuracy: '99.3%', speed: '18ms', energy: 'BALANCED' } },
-  { id: '9', name: 'ASTROLOGY & PHYSICS', icon: 'ðŸ”¬', category: 'SCIENCE', description: 'Rayleigh scattering & spectrum analysis reasoning engine.', stats: { accuracy: '99.9%', speed: '14ms', energy: 'OPTIMAL' } },
-  { id: '10', name: 'LIVE API GATEWAY', icon: 'ðŸ“¡', category: 'NETWORK', description: 'Token-secured REST API & WebSockets streaming endpoints.', stats: { accuracy: '100.0%', speed: '1ms', energy: 'SECURE' } },
-  { id: '11', name: 'AUTONOMOUS LOOP', icon: 'ðŸš€', category: 'AUTOMATION', description: 'Self-reflection background loop for continuous model tuning.', stats: { accuracy: '98.4%', speed: '30ms', energy: 'CRUISING' } },
-  { id: '12', name: 'TOKEN SECURITY', icon: 'ðŸ”-', category: 'SECURITY', description: 'Strict HTTP header X-AIDA-Security-Token authorization layer.', stats: { accuracy: '100.0%', speed: '0ms', energy: 'ENFORCED' } },
+  { id: '1', name: 'LIGHTNING REASONING', icon: 'Å¡Â¡', category: 'LOGIC', description: 'Multi-step parallel logical chain validation with sub-second breakdown.', stats: { accuracy: '99.4%', speed: '12ms', energy: 'OPTIMAL' } },
+  { id: '2', name: 'INFINITE MEMORY', icon: 'â„¢Â¾Ã¯Â¸-', category: 'STORAGE', description: 'Context vector index matching across database knowledge chunks.', stats: { accuracy: '98.9%', speed: '8ms', energy: 'ACTIVE' } },
+  { id: '3', name: 'NEURAL CASCADE', icon: 'Å¸Å’Å’', category: 'COGNITION', description: 'All computational nodes enter peak synchronized parallel inference.', stats: { accuracy: '99.8%', speed: '15ms', energy: 'MAXIMUM' } },
+  { id: '4', name: 'SELF-HEALING SHIELD', icon: 'Å¸â€ºÂ¡Ã¯Â¸-', category: 'SECURITY', description: 'Autonomous syntax repair & rate-limit resilience failover engine.', stats: { accuracy: '100.0%', speed: '4ms', energy: 'PROTECTED' } },
+  { id: '5', name: 'WEB SEARCH RAG', icon: 'Å¸Å’-', category: 'RETRIEVAL', description: 'DuckDuckGo HTML query injection for real-time fresh web context.', stats: { accuracy: '97.5%', speed: '450ms', energy: 'ONLINE' } },
+  { id: '6', name: 'MODEL AUTO-START', icon: 'Å¡â„¢Ã¯Â¸-', category: 'SYSTEM', description: 'Automatic local Ollama / LM Studio plugin auto-discovery.', stats: { accuracy: '99.1%', speed: '2ms', energy: 'READY' } },
+  { id: '7', name: 'CODE GENERATOR', icon: 'Å¸â€™Â»', category: 'DEVELOPMENT', description: 'AST-validated Python and React code synthesis with instant syntax checks.', stats: { accuracy: '98.7%', speed: '22ms', energy: 'HIGH' } },
+  { id: '8', name: 'TASK DECOMPOSITION', icon: 'Å¸Å½Â¯', category: 'PLANNING', description: 'Decomposes complex requests into executable micro-tasks.', stats: { accuracy: '99.3%', speed: '18ms', energy: 'BALANCED' } },
+  { id: '9', name: 'ASTROLOGY & PHYSICS', icon: 'Å¸â€-Â¬', category: 'SCIENCE', description: 'Rayleigh scattering & spectrum analysis reasoning engine.', stats: { accuracy: '99.9%', speed: '14ms', energy: 'OPTIMAL' } },
+  { id: '10', name: 'LIVE API GATEWAY', icon: 'Å¸â€œÂ¡', category: 'NETWORK', description: 'Token-secured REST API & WebSockets streaming endpoints.', stats: { accuracy: '100.0%', speed: '1ms', energy: 'SECURE' } },
+  { id: '11', name: 'AUTONOMOUS LOOP', icon: 'Å¸Å¡â‚¬', category: 'AUTOMATION', description: 'Self-reflection background loop for continuous model tuning.', stats: { accuracy: '98.4%', speed: '30ms', energy: 'CRUISING' } },
+  { id: '12', name: 'TOKEN SECURITY', icon: 'Å¸â€--', category: 'SECURITY', description: 'Strict HTTP header X-AIDA-Security-Token authorization layer.', stats: { accuracy: '100.0%', speed: '0ms', energy: 'ENFORCED' } },
 ];
 
 export default function AIHoloInterface() {
@@ -41,7 +41,7 @@ export default function AIHoloInterface() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(93,232,255,0.06)_0,transparent_70%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(93,232,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(93,232,255,0.03)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
 
-      {/* â”€â”€â”€ 1. TOP HUD NAVBAR TABS (Cortana HUD style) â”€â”€â”€ */}
+      {/* â€-â‚¬â€-â‚¬â€-â‚¬ 1. TOP HUD NAVBAR TABS (Cortana HUD style) â€-â‚¬â€-â‚¬â€-â‚¬ */}
       <div className="flex items-center justify-between border-b border-[#5DE8FF]/15 pb-4 mb-8 relative z-20">
         <div className="flex items-center gap-6 md:gap-12 overflow-x-auto">
           {[
@@ -82,7 +82,7 @@ export default function AIHoloInterface() {
         </div>
       </div>
 
-      {/* â”€â”€â”€ 2. MAIN HUD BODY LAYOUT (Left Matrix + Right 3D Orb) â”€â”€â”€ */}
+      {/* â€-â‚¬â€-â‚¬â€-â‚¬ 2. MAIN HUD BODY LAYOUT (Left Matrix + Right 3D Orb) â€-â‚¬â€-â‚¬â€-â‚¬ */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-20">
         
         {/* LEFT COLUMN: Skill Matrix Grid & Ability Specs */}

@@ -112,7 +112,7 @@ export default function FullscreenScrollSection() {
       className="relative w-full h-screen bg-[#03050A] text-[#F5F7FF] overflow-hidden select-none font-sans"
     >
       
-      {/* â”€â”€ 1. Fullscreen Background Image â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 1. Fullscreen Background Image Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id}
@@ -128,7 +128,7 @@ export default function FullscreenScrollSection() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-[#03050A] via-transparent to-[#03050A]/70 pointer-events-none z-0" />
 
-      {/* â”€â”€ 2. Top Bar UI Frame â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 2. Top Bar UI Frame Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="absolute top-0 left-0 w-full p-8 md:p-12 flex items-start justify-between z-20 pointer-events-none">
         
         {/* Top Left: "+ DISCOVER MORE" */}
@@ -142,12 +142,12 @@ export default function FullscreenScrollSection() {
 
         {/* Top Right: Frame Title */}
         <div className="text-right text-xs font-mono tracking-widest text-[#9CA9BC] uppercase">
-          AIDA 2.0 // NEURAL ENGINE ONLINE â†’
+          AIDA 2.0 // NEURAL ENGINE ONLINE Ã¢â€ â€™
         </div>
 
       </div>
 
-      {/* â”€â”€ 3. Bottom UI Frame â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 3. Bottom UI Frame Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 flex flex-col md:flex-row md:items-end justify-between gap-6 z-20 pointer-events-none">
         
         {/* Bottom Left Navigation Menu */}
@@ -179,17 +179,17 @@ export default function FullscreenScrollSection() {
           onClick={handleNext}
           className="pointer-events-auto text-center font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.3em] text-[#9CA9BC] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase animate-bounce"
         >
-          â†“ SCROLL OR CLICK â†“
+          Ã¢â€ â€œ SCROLL OR CLICK Ã¢â€ â€œ
         </div>
 
         {/* Bottom Right: Slide Indicator */}
         <div className="text-right font-['JetBrains_Mono',monospace] text-xs font-bold tracking-widest text-[#5DE8FF] uppercase">
-          SLIDESHOW 0{currentSlide + 1} / 0{slidesData.length} â†—
+          SLIDESHOW 0{currentSlide + 1} / 0{slidesData.length} Ã¢â€ â€”
         </div>
 
       </div>
 
-      {/* â”€â”€ 4. Main Slide Overlay Card â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 4. Main Slide Overlay Card Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="absolute inset-0 flex items-center justify-center p-6 z-10 pointer-events-none">
         <motion.div
           key={activeSlide.id}
@@ -223,12 +223,12 @@ export default function FullscreenScrollSection() {
             onClick={() => setIsOpen(true)}
             className="mt-4 px-8 py-3 rounded-full bg-white text-[#03050A] font-['Space_Grotesk'] text-xs font-bold tracking-widest hover:bg-[#5DE8FF] transition-all duration-300 cursor-pointer uppercase shadow-[0_0_20px_rgba(255,255,255,0.3)]"
           >
-            DISCOVER MORE â†’
+            DISCOVER MORE Ã¢â€ â€™
           </button>
         </motion.div>
       </div>
 
-      {/* â”€â”€ 5. Full-Bleed Content Detail Drawer â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 5. Full-Bleed Content Detail Drawer Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <AnimatePresence>
         {isOpen && (
           <motion.div

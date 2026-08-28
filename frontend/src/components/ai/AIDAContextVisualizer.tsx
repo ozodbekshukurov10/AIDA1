@@ -53,7 +53,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, []);
 
-  // â”€â”€ TAB 1: Three.js 3D WebGL Neural Funnel Canvas â”€â”€
+  // â€-â‚¬â€-â‚¬ TAB 1: Three.js 3D WebGL Neural Funnel Canvas â€-â‚¬â€-â‚¬
   useEffect(() => {
     if (activeTab !== 'funnel') return;
     const container = funnelMountRef.current;
@@ -158,7 +158,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab]);
 
-  // â”€â”€ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain (Exact Match to Image 2) â”€â”€
+  // â€-â‚¬â€-â‚¬ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain (Exact Match to Image 2) â€-â‚¬â€-â‚¬
   useEffect(() => {
     if (activeTab !== 'earth') return;
     const container = earthMountRef.current;
@@ -375,7 +375,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab]);
 
-  // â”€â”€ TAB 3: Three.js 3D Interactive Synaptic Neural Network Matrix (Exact Match to Image 1) â”€â”€
+  // â€-â‚¬â€-â‚¬ TAB 3: Three.js 3D Interactive Synaptic Neural Network Matrix (Exact Match to Image 1) â€-â‚¬â€-â‚¬
   useEffect(() => {
     if (activeTab !== 'network') return;
     const container = networkMountRef.current;
@@ -529,7 +529,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab, activeTheme, density, formation, isPaused]);
 
-  // â”€â”€ TAB 4: Three.js 3D Depth Point-Cloud Human-AI Symbiosis Shader Engine (Exact Match to Image 3 from threejs-depth-points-image-main) â”€â”€
+  // â€-â‚¬â€-â‚¬ TAB 4: Three.js 3D Depth Point-Cloud Human-AI Symbiosis Shader Engine (Exact Match to Image 3 from threejs-depth-points-image-main) â€-â‚¬â€-â‚¬
   useEffect(() => {
     if (activeTab !== 'symbiosis') return;
     const container = symbiosisMountRef.current;
@@ -710,7 +710,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
   return (
     <div className="fixed inset-0 w-screen h-screen z-[100000] bg-[#03050A]/95 backdrop-blur-xl flex flex-col justify-between p-6 md:p-10 select-none font-sans overflow-hidden">
       
-      {/* â”€â”€ 1. Top Bar Navigation, Tabs & Close â”€â”€ */}
+      {/* â€-â‚¬â€-â‚¬ 1. Top Bar Navigation, Tabs & Close â€-â‚¬â€-â‚¬ */}
       <div className="flex flex-wrap items-center justify-between gap-4 z-20">
         <div className="flex items-center gap-3">
           <div className="w-3 h-3 bg-[#5DE8FF] rounded-full animate-ping" />
@@ -742,7 +742,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
                 : 'text-[#9CA9BC] hover:text-white'
             }`}
           >
-            [2] PLANETARY ðŸŒ-
+            [2] PLANETARY Å¸Å’-
           </button>
 
           <button
@@ -754,7 +754,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
                 : 'text-[#9CA9BC] hover:text-white'
             }`}
           >
-            [3] MATRIX âš¡
+            [3] MATRIX Å¡Â¡
           </button>
 
           <button
@@ -766,7 +766,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
                 : 'text-[#9CA9BC] hover:text-white'
             }`}
           >
-            [4] HUMAN-AI SYMBIOSIS ðŸ§¬
+            [4] HUMAN-AI SYMBIOSIS Å¸Â§Â¬
           </button>
         </div>
 
@@ -779,7 +779,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
         </button>
       </div>
 
-      {/* â”€â”€ 2. 3D WebGL Canvas Render Area â”€â”€ */}
+      {/* â€-â‚¬â€-â‚¬ 2. 3D WebGL Canvas Render Area â€-â‚¬â€-â‚¬ */}
       <div className="absolute inset-0 z-0 flex items-center justify-center">
         {activeTab === 'funnel' && <div ref={funnelMountRef} className="w-full h-full" />}
         {activeTab === 'earth' && <div ref={earthMountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />}
@@ -787,7 +787,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
         {activeTab === 'symbiosis' && <div ref={symbiosisMountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />}
       </div>
 
-      {/* â”€â”€ 3. Overlay Telemetry HUD Widgets â”€â”€ */}
+      {/* â€-â‚¬â€-â‚¬ 3. Overlay Telemetry HUD Widgets â€-â‚¬â€-â‚¬ */}
       {activeTab === 'funnel' && (
         <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-none mt-auto">
           <motion.div

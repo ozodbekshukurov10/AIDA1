@@ -16,14 +16,14 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
       id="hero"
       className="relative min-h-screen bg-[#03050A] flex flex-col items-center justify-center overflow-hidden pt-28 pb-16 px-6 md:px-12 z-10 select-none"
     >
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 1. Ambient Pulsing Radial Blur Glow Blobs Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ 1. Ambient Pulsing Radial Blur Glow Blobs ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ */}
       <div className="absolute w-[650px] h-[650px] bg-[#5DE8FF]/8 blur-[180px] rounded-full pointer-events-none animate-pulse" />
       <div className="absolute w-[500px] h-[500px] bg-[#7C5CFF]/8 blur-[150px] rounded-full pointer-events-none" />
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 2. Animated Header Canvas Background (from AnimatedHeaderBackgrounds) Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ 2. Animated Header Canvas Background (from AnimatedHeaderBackgrounds) ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ */}
       <AnimatedHeaderCanvas />
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 3. Ambient background video & gradient overlay Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ 3. Ambient background video & gradient overlay ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-25">
         <video
           autoPlay
@@ -38,7 +38,7 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
         <div className="absolute inset-0 bg-gradient-to-b from-[#03050A] via-transparent to-[#03050A]" />
       </div>
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 4. Main Central Hero Title & AIDA Branding (Pure Minimalist + Blur Animation) Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ 4. Main Central Hero Title & AIDA Branding (Pure Minimalist + Blur Animation) ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ */}
       <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-8 relative z-10">
         
         {/* Micro Status Badge */}
@@ -82,11 +82,11 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
           className="flex flex-wrap items-center justify-center gap-4 mt-2"
         >
           <Button variant="primary" onClick={onStart}>
-            Start with AIDA â†’
+            Start with AIDA â€ â€™
           </Button>
           {onOpenContext && (
             <Button variant="secondary" onClick={onOpenContext}>
-              <span>ðŸ§ </span> AIDA Context
+              <span>Å¸Â§Â </span> AIDA Context
             </Button>
           )}
           <Button variant="ghost" onClick={onExplore}>
