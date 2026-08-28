@@ -7,9 +7,10 @@ interface NavbarProps {
   onGetStarted: () => void;
   onNavigate: (sectionId: string) => void;
   onReplayIntro?: () => void;
+  onOpenContext?: () => void;
 }
 
-export default function Navbar({ onGetStarted, onNavigate, onReplayIntro }: NavbarProps) {
+export default function Navbar({ onGetStarted, onNavigate, onReplayIntro, onOpenContext }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
@@ -92,6 +93,16 @@ export default function Navbar({ onGetStarted, onNavigate, onReplayIntro }: Navb
 
           {/* Right Column Action */}
           <div className="flex items-center gap-4">
+            {onOpenContext && (
+              <button 
+                type="button"
+                onClick={onOpenContext}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#7C5CFF]/40 text-xs font-mono text-[#7C5CFF] hover:bg-[#7C5CFF]/15 bg-[#7C5CFF]/8 shadow-[0_0_15px_rgba(124,92,255,0.2)] transition-all cursor-pointer font-bold tracking-wider"
+                title="Launch 3D WebGL AIDA Context Visualizer"
+              >
+                <span>🧠</span> AIDA Context
+              </button>
+            )}
             {onReplayIntro && (
               <button 
                 type="button"

@@ -13,6 +13,7 @@ import CustomCursor from '../components/ui/CustomCursor';
 import IntroManager from '../components/intro/IntroManager';
 import OnScrollShapeMorphSection from '../sections/OnScrollShapeMorphSection';
 import BackgroundScrollTextMotion from '../components/intro/BackgroundScrollTextMotion';
+import AIDAContextVisualizer from '../components/ai/AIDAContextVisualizer';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -20,6 +21,7 @@ interface LandingPageProps {
 
 export default function LandingPage({ onGetStarted }: LandingPageProps) {
   const [showIntro, setShowIntro] = useState(false);
+  const [showContext, setShowContext] = useState(false);
   const [fromIntro, setFromIntro] = useState(false);
   
   const handleNavigate = (sectionId: string) => {
@@ -39,6 +41,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
       
       {/* Ambient Scroll Text Motion Background Layer */}
       <BackgroundScrollTextMotion />
+
+      {/* AIDA Context 3D WebGL Telemetry Overlay */}
+      <AnimatePresence>
+        {showContext && (
+          <AIDAContextVisualizer onClose={() => setShowContext(false)} />
+        )}
+      </AnimatePresence>
 
       {/* Intro Experience Overlay */}
       <AnimatePresence>
@@ -60,12 +69,22 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         transition={{ duration: 1.5, ease: "easeOut" }}
       >
         {/* Sticky Premium Glassmorphism Navbar */}
-        <Navbar onGetStarted={onGetStarted} onNavigate={handleNavigate} onReplayIntro={handleReplayIntro} />
+        <Navbar 
+          onGetStarted={onGetStarted} 
+          onNavigate={handleNavigate} 
+          onReplayIntro={handleReplayIntro}
+          onOpenContext={() => setShowContext(true)}
+        />
 
         {/* Main Sections */}
-        <Hero onStart={onGetStarted} onExplore={() => handleNavigate('morph')} morphFromIntro={fromIntro} />
+        <Hero 
+          onStart={onGetStarted} 
+          onExplore={() => handleNavigate('morph')} 
+          onOpenContext={() => setShowContext(true)}
+          morphFromIntro={fromIntro} 
+        />
 
-        {/* Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ On-Scroll Shape Morphing Kinetic Showcase Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+        {/* â”€â”€â”€ On-Scroll Shape Morphing Kinetic Showcase â”€â”€â”€ */}
         <OnScrollShapeMorphSection />
 
         <CTA onStart={onGetStarted} />

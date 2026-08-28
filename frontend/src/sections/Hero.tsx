@@ -6,10 +6,11 @@ import Button from '../components/ui/Button';
 interface HeroProps {
   onStart: () => void;
   onExplore: () => void;
+  onOpenContext?: () => void;
   morphFromIntro?: boolean;
 }
 
-export default function Hero({ onStart, onExplore, morphFromIntro = false }: HeroProps) {
+export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro = false }: HeroProps) {
   return (
     <section
       id="hero"
@@ -78,11 +79,20 @@ export default function Hero({ onStart, onExplore, morphFromIntro = false }: Her
           initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-row items-center gap-5 mt-2"
+          className="flex flex-wrap items-center justify-center gap-4 mt-2"
         >
           <Button variant="primary" onClick={onStart}>
-            Start with AIDA â†’
+            Start with AIDA →
           </Button>
+          {onOpenContext && (
+            <button
+              type="button"
+              onClick={onOpenContext}
+              className="px-7 py-3.5 rounded-2xl border border-[#7C5CFF]/50 bg-[#7C5CFF]/15 text-[#F5F7FF] font-['Space_Grotesk'] text-sm font-bold tracking-wider hover:bg-[#7C5CFF]/30 hover:border-[#7C5CFF] shadow-[0_0_20px_rgba(124,92,255,0.3)] transition-all duration-300 cursor-pointer flex items-center gap-2"
+            >
+              <span>🧠</span> AIDA Context
+            </button>
+          )}
           <Button variant="secondary" onClick={onExplore}>
             Explore 3D World
           </Button>
