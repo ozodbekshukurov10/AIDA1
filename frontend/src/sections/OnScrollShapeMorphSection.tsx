@@ -82,14 +82,14 @@ export default function OnScrollShapeMorphSection() {
 
       charsArray.forEach((charArray) => {
         if (charArray.length > 0) {
-          gsap.set(charArray, { opacity: 0.35, y: 15, filter: 'blur(3px)' });
+          gsap.set(charArray, { opacity: 1, y: 0, filter: 'blur(0px)' });
         }
       });
 
       return charsArray;
     };
 
-    // â”€â”€ FX 1 â”€â”€
+    // Ã¢â€-â‚¬Ã¢â€-â‚¬ FX 1 Ã¢â€-â‚¬Ã¢â€-â‚¬
     const fx1 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -142,7 +142,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // â”€â”€ FX 2 â”€â”€
+    // Ã¢â€-â‚¬Ã¢â€-â‚¬ FX 2 Ã¢â€-â‚¬Ã¢â€-â‚¬
     const fx2 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -195,7 +195,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // â”€â”€ FX 3 â”€â”€
+    // Ã¢â€-â‚¬Ã¢â€-â‚¬ FX 3 Ã¢â€-â‚¬Ã¢â€-â‚¬
     const fx3 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -248,7 +248,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // â”€â”€ FX 4 â”€â”€
+    // Ã¢â€-â‚¬Ã¢â€-â‚¬ FX 4 Ã¢â€-â‚¬Ã¢â€-â‚¬
     const fx4 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -298,7 +298,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // â”€â”€ FX 5 â”€â”€
+    // Ã¢â€-â‚¬Ã¢â€-â‚¬ FX 5 Ã¢â€-â‚¬Ã¢â€-â‚¬
     const fx5 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -348,7 +348,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // â”€â”€ FX 6 â”€â”€
+    // Ã¢â€-â‚¬Ã¢â€-â‚¬ FX 6 Ã¢â€-â‚¬Ã¢â€-â‚¬
     const fx6 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
