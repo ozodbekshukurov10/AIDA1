@@ -93,16 +93,6 @@ export default function Navbar({ onGetStarted, onNavigate, onReplayIntro, onOpen
 
           {/* Right Column Action */}
           <div className="flex items-center gap-4">
-            {onOpenContext && (
-              <button 
-                type="button"
-                onClick={onOpenContext}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#7C5CFF]/40 text-xs font-mono text-[#7C5CFF] hover:bg-[#7C5CFF]/15 bg-[#7C5CFF]/8 shadow-[0_0_15px_rgba(124,92,255,0.2)] transition-all cursor-pointer font-bold tracking-wider"
-                title="Launch 3D WebGL AIDA Context Visualizer"
-              >
-                <span>🧠</span> AIDA Context
-              </button>
-            )}
             {onReplayIntro && (
               <button 
                 type="button"
@@ -110,7 +100,7 @@ export default function Navbar({ onGetStarted, onNavigate, onReplayIntro, onOpen
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#5DE8FF]/35 text-xs font-mono text-[#5DE8FF] hover:bg-[#5DE8FF]/15 bg-[#5DE8FF]/8 shadow-[0_0_15px_rgba(93,232,255,0.2)] transition-all cursor-pointer font-bold tracking-wider"
                 title="Replay Cinematic Intro"
               >
-                <span>🎬</span> Replay Intro
+                <span>ðŸŽ¬</span> Replay Intro
               </button>
             )}
             <button 
