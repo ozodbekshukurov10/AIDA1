@@ -12,6 +12,7 @@ import Footer from '../sections/Footer';
 import CustomCursor from '../components/ui/CustomCursor';
 import IntroManager from '../components/intro/IntroManager';
 import OnScrollShapeMorphSection from '../sections/OnScrollShapeMorphSection';
+import BackgroundScrollTextMotion from '../components/intro/BackgroundScrollTextMotion';
 
 interface LandingPageProps {
   onGetStarted: () => void;
@@ -36,6 +37,9 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
   return (
     <div className="bg-[#05070D] text-[#F5F7FA] font-sans antialiased min-h-screen overflow-x-hidden relative selection:bg-[#5FE8FF]/20 selection:text-[#5FE8FF]">
       
+      {/* Ambient Scroll Text Motion Background Layer */}
+      <BackgroundScrollTextMotion />
+
       {/* Intro Experience Overlay */}
       <AnimatePresence>
         {showIntro && (
@@ -61,7 +65,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         {/* Main Sections */}
         <Hero onStart={onGetStarted} onExplore={() => handleNavigate('morph')} morphFromIntro={fromIntro} />
 
-        {/* â”€â”€â”€ On-Scroll Shape Morphing Kinetic Showcase â”€â”€â”€ */}
+        {/* Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ On-Scroll Shape Morphing Kinetic Showcase Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
         <OnScrollShapeMorphSection />
 
         <CTA onStart={onGetStarted} />
