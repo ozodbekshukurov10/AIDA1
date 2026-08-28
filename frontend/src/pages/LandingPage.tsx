@@ -18,7 +18,7 @@ interface LandingPageProps {
 }
 
 export default function LandingPage({ onGetStarted }: LandingPageProps) {
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState(false);
   const [fromIntro, setFromIntro] = useState(false);
   
   const handleNavigate = (sectionId: string) => {
@@ -29,7 +29,6 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
   };
 
   const handleReplayIntro = () => {
-    sessionStorage.removeItem('aida_intro_seen');
     setFromIntro(false);
     setShowIntro(true);
   };
@@ -62,13 +61,13 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
         {/* Main Sections */}
         <Hero onStart={onGetStarted} onExplore={() => handleNavigate('demo')} morphFromIntro={fromIntro} />
 
-        {/* â”€â”€â”€ Holographic Cortana AI HUD Workspace â”€â”€â”€ */}
+        {/* Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ Holographic Cortana AI HUD Workspace Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
         <Demo />
 
-        {/* â”€â”€â”€ On-Scroll Shape Morphing Kinetic Showcase â”€â”€â”€ */}
+        {/* Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ On-Scroll Shape Morphing Kinetic Showcase Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
         <OnScrollShapeMorphSection />
 
-        {/* â”€â”€â”€ City Intelligence Strip â”€â”€â”€ */}
+        {/* Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ City Intelligence Strip Ã¢â€-â‚¬Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
         <section className="relative overflow-hidden -mt-1">
           <div className="relative h-[240px] md:h-[340px] overflow-hidden">
             <img
@@ -82,7 +81,7 @@ export default function LandingPage({ onGetStarted }: LandingPageProps) {
             {/* Centered white text overlay */}
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
               <p className="font-['JetBrains_Mono',monospace] text-[10px] tracking-[0.35em] text-[#5DE8FF] uppercase mb-3">
-                AIDA Intelligence â€” Everywhere
+                AIDA Intelligence Ã¢â‚¬â€- Everywhere
               </p>
               <h2
                 className="font-['Space_Grotesk',sans-serif] font-bold text-white tracking-tight leading-tight max-w-2xl"
