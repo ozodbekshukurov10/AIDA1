@@ -7,11 +7,12 @@ interface AIDAContextVisualizerProps {
 }
 
 export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizerProps) {
-  const [activeTab, setActiveTab] = useState<'funnel' | 'earth' | 'network'>('earth');
+  const [activeTab, setActiveTab] = useState<'funnel' | 'earth' | 'network' | 'symbiosis'>('symbiosis');
   
   const funnelMountRef = useRef<HTMLDivElement>(null);
   const earthMountRef = useRef<HTMLDivElement>(null);
   const networkMountRef = useRef<HTMLDivElement>(null);
+  const symbiosisMountRef = useRef<HTMLDivElement>(null);
 
   // Tab 3 States
   const [activeTheme, setActiveTheme] = useState(0);
@@ -38,7 +39,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       "Compressing Context Window (Lossless 99.8%)",
       "Swarm Agent Sync: 16 Parallel Pipelines",
       "Embedding Synaptic Attention Matrix",
-      "Global Planetary Hub: Tashkent - Tokyo Arc Sync",
+      "Human-AI Symbiosis Neural Sync Active",
     ];
 
     const logInterval = setInterval(() => {
@@ -157,7 +158,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab]);
 
-  // â”€â”€ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain (Exact Match to Image) â”€â”€
+  // â”€â”€ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain â”€â”€
   useEffect(() => {
     if (activeTab !== 'earth') return;
     const container = earthMountRef.current;
@@ -176,7 +177,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Deep Space Starfield
     const starCount = 3000;
     const starPos = [];
     for (let i = 0; i < starCount; i++) {
@@ -195,7 +195,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     const starField = new THREE.Points(starGeo, starMat);
     scene.add(starField);
 
-    // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
 
@@ -203,7 +202,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     sunLight.position.set(120, 80, 100);
     scene.add(sunLight);
 
-    // 3D Earth Globe
     const earthRadius = 38;
     const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
     const textureLoader = new THREE.TextureLoader();
@@ -219,7 +217,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     earthMesh.rotation.y = -Math.PI / 2;
     scene.add(earthMesh);
 
-    // Glowing Outer Atmosphere Halo
     const atmosGeo = new THREE.SphereGeometry(earthRadius * 1.06, 64, 64);
     const atmosMat = new THREE.MeshBasicMaterial({
       color: 0x5de8ff,
@@ -231,7 +228,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
     scene.add(atmosMesh);
 
-    // Latitude & Longitude helper
     const latLngToVector3 = (lat: number, lng: number, r: number) => {
       const phi = (90 - lat) * (Math.PI / 180);
       const theta = (lng + 180) * (Math.PI / 180);
@@ -241,7 +237,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       return new THREE.Vector3(x, y, z);
     };
 
-    // Major Global Cities & Neural Hubs Coordinates
     const cities = [
       { name: "Tashkent", lat: 41.2995, lng: 69.2401 },
       { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
@@ -258,18 +253,11 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       { name: "Cape Town", lat: -33.9249, lng: 18.4241 },
       { name: "Cairo", lat: 30.0444, lng: 31.2357 },
       { name: "Moscow", lat: 55.7558, lng: 37.6173 },
-      { name: "Istanbul", lat: 41.0082, lng: 28.9784 },
-      { name: "Seoul", lat: 37.5665, lng: 126.9780 },
-      { name: "Mumbai", lat: 19.0760, lng: 72.8777 },
-      { name: "Los Angeles", lat: 34.0522, lng: -118.2437 },
-      { name: "Toronto", lat: 43.6532, lng: -79.3832 },
     ];
 
-    // Create 180 Dense Synaptic Arcs matching the exact image color spectrum!
     const arcsGroup = new THREE.Group();
     const pulseParticlesGroup = new THREE.Group();
 
-    // Node markers at every city hub
     cities.forEach((city) => {
       const pos = latLngToVector3(city.lat, city.lng, earthRadius * 1.015);
       const dotGeo = new THREE.SphereGeometry(0.8, 16, 16);
@@ -281,11 +269,9 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
 
     const pulses: { curve: THREE.QuadraticBezierCurve3; progress: number; speed: number; mesh: THREE.Mesh }[] = [];
 
-    let arcCount = 0;
     for (let i = 0; i < cities.length; i++) {
       for (let j = 0; j < cities.length; j++) {
-        if (i === j) continue;
-        if (Math.random() > 0.45) continue; // High density connections
+        if (i === j || Math.random() > 0.45) continue;
 
         const cityA = cities[i];
         const cityB = cities[j];
@@ -301,7 +287,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
         const points = curve.getPoints(60);
         const curveGeo = new THREE.BufferGeometry().setFromPoints(points);
 
-        // Color coding based on departure longitude (exact hue formula from flights-tracker-main)
         const hue = ((cityA.lng + 180) % 360) / 360;
         const color = new THREE.Color().setHSL(hue, 1.0, 0.6);
 
@@ -313,9 +298,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
 
         const line = new THREE.Line(curveGeo, curveMat);
         arcsGroup.add(line);
-        arcCount++;
 
-        // Add animated pulse dot along curve
         const pGeo = new THREE.SphereGeometry(0.5, 12, 12);
         const pMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const pMesh = new THREE.Mesh(pGeo, pMat);
@@ -333,7 +316,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     earthMesh.add(arcsGroup);
     earthMesh.add(pulseParticlesGroup);
 
-    // Mouse Drag Rotation
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
 
@@ -361,14 +343,11 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
 
-    // Animation Loop
     let animationFrameId: number;
     const animate = () => {
       if (!isDragging) {
         earthMesh.rotation.y += 0.0025;
       }
-
-      // Animate live pulses along curves
       pulses.forEach((p) => {
         p.progress += p.speed;
         if (p.progress > 1) p.progress = 0;
@@ -550,6 +529,149 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab, activeTheme, density, formation, isPaused]);
 
+  // â”€â”€ TAB 4: Three.js 3D Depth Point-Cloud Human-AI Symbiosis Engine â”€â”€
+  useEffect(() => {
+    if (activeTab !== 'symbiosis') return;
+    const container = symbiosisMountRef.current;
+    if (!container) return;
+
+    let width = container.clientWidth;
+    let height = container.clientHeight;
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    camera.position.set(0, 0, 75);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // Create 3D Depth Point Cloud Mesh of Human Face/Body & Neural Synapses
+    const cols = 120;
+    const rows = 120;
+    const numPoints = cols * rows;
+
+    const positions = new Float32Array(numPoints * 3);
+    const colors = new Float32Array(numPoints * 3);
+
+    const colorHuman = new THREE.Color(0x5de8ff);
+    const colorAI = new THREE.Color(0x7c5cff);
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c;
+        const u = c / cols - 0.5;
+        const v = r / rows - 0.5;
+
+        // Human Silhouette & Head Depth Profile Math
+        const x = u * 45;
+        const y = v * 45;
+
+        // Depth profile equation simulating human facial head contour
+        const distFromCenter = Math.sqrt(u * u + v * v);
+        const z = Math.max(0, Math.cos(distFromCenter * Math.PI * 1.8) * 12);
+
+        positions[idx * 3] = x;
+        positions[idx * 3 + 1] = y;
+        positions[idx * 3 + 2] = z;
+
+        const mixRatio = Math.random();
+        const finalColor = colorHuman.clone().lerp(colorAI, mixRatio);
+        colors[idx * 3] = finalColor.r;
+        colors[idx * 3 + 1] = finalColor.g;
+        colors[idx * 3 + 2] = finalColor.b;
+      }
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const mat = new THREE.PointsMaterial({
+      size: 1.8,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.88,
+      blending: THREE.AdditiveBlending,
+    });
+
+    const humanMesh = new THREE.Points(geo, mat);
+    scene.add(humanMesh);
+
+    // Surrounding Neural Synapse Lines connecting Human & AI
+    const linesGeo = new THREE.BufferGeometry();
+    const linePoints: number[] = [];
+    for (let i = 0; i < 90; i++) {
+      const angle = (i / 90) * Math.PI * 2;
+      const r1 = 15;
+      const r2 = 28 + Math.random() * 8;
+      linePoints.push(
+        Math.cos(angle) * r1, Math.sin(angle) * r1, 4,
+        Math.cos(angle) * r2, Math.sin(angle) * r2, -10
+      );
+    }
+    linesGeo.setAttribute('position', new THREE.Float32BufferAttribute(linePoints, 3));
+    const linesMat = new THREE.LineBasicMaterial({ color: 0x5de8ff, transparent: true, opacity: 0.35 });
+    const linesMesh = new THREE.LineSegments(linesGeo, linesMat);
+    scene.add(linesMesh);
+
+    // Mouse Interaction
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDragging = true;
+      prevMouse = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevMouse.x;
+      const dy = e.clientY - prevMouse.y;
+
+      humanMesh.rotation.y += dx * 0.005;
+      humanMesh.rotation.x += dy * 0.005;
+      linesMesh.rotation.y += dx * 0.005;
+
+      prevMouse = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseUp = () => {
+      isDragging = false;
+    };
+
+    container.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+
+    let animationFrameId: number;
+    const animate = () => {
+      if (!isDragging) {
+        humanMesh.rotation.y += 0.003;
+        linesMesh.rotation.y -= 0.002;
+      }
+      renderer.render(scene, camera);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      container.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      renderer.dispose();
+      geo.dispose();
+      mat.dispose();
+      if (container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+    };
+  }, [activeTab]);
+
   const formationsList = ["QUANTUM CORTEX", "HYPERDIMENSIONAL MESH", "NEURAL VORTEX", "SYNAPTIC CLOUD"];
   const themesList = [
     { name: "CYBER CYAN", class: "from-[#4F46E5] to-[#DB2777]" },
@@ -575,37 +697,49 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
           <button
             type="button"
             onClick={() => setActiveTab('funnel')}
-            className={`px-4 py-2 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
               activeTab === 'funnel'
                 ? 'bg-gradient-to-r from-[#5DE8FF] to-[#4C7DFF] text-[#03050A] shadow-[0_0_15px_rgba(93,232,255,0.4)]'
                 : 'text-[#9CA9BC] hover:text-white'
             }`}
           >
-            [1] CONTEXT STREAM
+            [1] STREAM
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('earth')}
-            className={`px-4 py-2 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
               activeTab === 'earth'
                 ? 'bg-gradient-to-r from-[#7C5CFF] to-[#5DE8FF] text-[#03050A] shadow-[0_0_15px_rgba(124,92,255,0.4)]'
                 : 'text-[#9CA9BC] hover:text-white'
             }`}
           >
-            [2] PLANETARY BRAIN ðŸŒ-
+            [2] PLANETARY ðŸŒ-
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('network')}
-            className={`px-4 py-2 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
               activeTab === 'network'
                 ? 'bg-gradient-to-r from-[#FF007F] to-[#7C5CFF] text-[#F5F7FF] shadow-[0_0_15px_rgba(255,0,127,0.4)]'
                 : 'text-[#9CA9BC] hover:text-white'
             }`}
           >
-            [3] INTERACTIVE NEURAL MATRIX âš¡
+            [3] MATRIX âš¡
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('symbiosis')}
+            className={`px-3.5 py-1.5 rounded-full font-['JetBrains_Mono',monospace] text-xs font-bold tracking-wider transition-all duration-300 cursor-pointer ${
+              activeTab === 'symbiosis'
+                ? 'bg-gradient-to-r from-[#00F2FF] to-[#7C5CFF] text-[#03050A] shadow-[0_0_15px_rgba(0,242,255,0.4)]'
+                : 'text-[#9CA9BC] hover:text-white'
+            }`}
+          >
+            [4] HUMAN-AI SYMBIOSIS ðŸ§¬
           </button>
         </div>
 
@@ -623,6 +757,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
         {activeTab === 'funnel' && <div ref={funnelMountRef} className="w-full h-full" />}
         {activeTab === 'earth' && <div ref={earthMountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />}
         {activeTab === 'network' && <div ref={networkMountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />}
+        {activeTab === 'symbiosis' && <div ref={symbiosisMountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />}
       </div>
 
       {/* â”€â”€ 3. Overlay Telemetry HUD Widgets â”€â”€ */}
@@ -823,6 +958,52 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
                 {isPaused ? 'Play' : 'Pause'}
               </button>
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {activeTab === 'symbiosis' && (
+        /* â”€â”€ TAB 4 HUMAN-AI SYMBIOSIS EXPLANATION WIDGET â”€â”€ */
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-none mt-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-5 rounded-2xl border border-[#00F2FF]/30 bg-[#03050A]/85 backdrop-blur-md flex flex-col gap-2 shadow-[0_0_25px_rgba(0,242,255,0.2)] pointer-events-auto"
+          >
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#00F2FF] tracking-widest uppercase font-bold">
+              01. HUMAN CREATIVE INTENT
+            </span>
+            <p className="font-['Space_Grotesk'] text-xs text-[#C4CEDF] leading-relaxed">
+              Insonlar g'oya, ijodiy qarash, maqsad va axloqiy mezonlarni belgilab beradi. Inson miyasi yuqori darajadagi mantiqiy yo'nalish va hissiyotni ta'minlaydi.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="p-5 rounded-2xl border border-[#7C5CFF]/30 bg-[#03050A]/85 backdrop-blur-md flex flex-col gap-2 shadow-[0_0_25px_rgba(124,92,255,0.2)] pointer-events-auto"
+          >
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#7C5CFF] tracking-widest uppercase font-bold">
+              02. AIDA SWARM SPEED
+            </span>
+            <p className="font-['Space_Grotesk'] text-xs text-[#C4CEDF] leading-relaxed">
+              AIDA sekundning mingdan bir ulushida milliardlab neyron hisoblashlarni, kodlarni o'z-o'zini davolash va ma'lumotlarni qidirishni amalga oshiradi.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="p-5 rounded-2xl border border-white/25 bg-[#03050A]/90 backdrop-blur-md flex flex-col gap-2 pointer-events-auto"
+          >
+            <span className="font-['JetBrains_Mono',monospace] text-xs text-[#00F2FF] font-bold tracking-widest uppercase">
+              03. SYMBIOTIC AUGMENTATION
+            </span>
+            <p className="font-['Space_Grotesk'] text-xs text-[#F5F7FF] leading-relaxed">
+              Inson va Sun'iy Ong alohida emas, balki yagona simbiotik intellekt tizimi sifatida birlashib, inson imkoniyatlarini chegarasiz kengaytiradi!
+            </p>
           </motion.div>
         </div>
       )}
