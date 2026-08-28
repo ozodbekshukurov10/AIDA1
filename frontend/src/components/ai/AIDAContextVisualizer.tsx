@@ -7,14 +7,13 @@ interface AIDAContextVisualizerProps {
 }
 
 export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizerProps) {
-  const [activeTab, setActiveTab] = useState<'funnel' | 'earth' | 'network'>('funnel');
+  const [activeTab, setActiveTab] = useState<'funnel' | 'earth' | 'network'>('earth');
   
-  // Tab 1 & Tab 2 refs
   const funnelMountRef = useRef<HTMLDivElement>(null);
   const earthMountRef = useRef<HTMLDivElement>(null);
   const networkMountRef = useRef<HTMLDivElement>(null);
 
-  // Tab 3 Interactive States
+  // Tab 3 States
   const [activeTheme, setActiveTheme] = useState(0);
   const [density, setDensity] = useState(100);
   const [formation, setFormation] = useState(0);
@@ -158,7 +157,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     };
   }, [activeTab]);
 
-  // â”€â”€ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain Canvas â”€â”€
+  // â”€â”€ TAB 2: Three.js 3D WebGL Planetary Earth Neural Brain (Exact Match to Image) â”€â”€
   useEffect(() => {
     if (activeTab !== 'earth') return;
     const container = earthMountRef.current;
@@ -170,20 +169,41 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 110);
+    camera.position.set(0, 0, 115);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    // Deep Space Starfield
+    const starCount = 3000;
+    const starPos = [];
+    for (let i = 0; i < starCount; i++) {
+      const r = THREE.MathUtils.randFloat(150, 400);
+      const phi = Math.acos(THREE.MathUtils.randFloatSpread(2));
+      const theta = THREE.MathUtils.randFloat(0, Math.PI * 2);
+      starPos.push(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+      );
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8, transparent: true, opacity: 0.7 });
+    const starField = new THREE.Points(starGeo, starMat);
+    scene.add(starField);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0x5de8ff, 1.8);
-    dirLight.position.set(100, 50, 100);
-    scene.add(dirLight);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    sunLight.position.set(120, 80, 100);
+    scene.add(sunLight);
 
+    // 3D Earth Globe
     const earthRadius = 38;
     const earthGeo = new THREE.SphereGeometry(earthRadius, 64, 64);
     const textureLoader = new THREE.TextureLoader();
@@ -191,34 +211,27 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
 
     const earthMat = new THREE.MeshPhongMaterial({
       map: earthTexture,
-      shininess: 15,
-      specular: new THREE.Color(0x333333),
+      shininess: 12,
+      specular: new THREE.Color(0x222222),
     });
 
     const earthMesh = new THREE.Mesh(earthGeo, earthMat);
+    earthMesh.rotation.y = -Math.PI / 2;
     scene.add(earthMesh);
 
-    const atmosGeo = new THREE.SphereGeometry(earthRadius * 1.08, 64, 64);
+    // Glowing Outer Atmosphere Halo
+    const atmosGeo = new THREE.SphereGeometry(earthRadius * 1.06, 64, 64);
     const atmosMat = new THREE.MeshBasicMaterial({
       color: 0x5de8ff,
       transparent: true,
-      opacity: 0.18,
+      opacity: 0.16,
       side: THREE.BackSide,
       blending: THREE.AdditiveBlending,
     });
     const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
     scene.add(atmosMesh);
 
-    const globalHubs = [
-      { name: "Tashkent", lat: 41.2995, lng: 69.2401 },
-      { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
-      { name: "London", lat: 51.5074, lng: -0.1278 },
-      { name: "New York", lat: 40.7128, lng: -74.006 },
-      { name: "San Francisco", lat: 37.7749, lng: -122.4194 },
-      { name: "Sydney", lat: -33.8688, lng: 151.2093 },
-      { name: "Dubai", lat: 25.2048, lng: 55.2708 },
-    ];
-
+    // Latitude & Longitude helper
     const latLngToVector3 = (lat: number, lng: number, r: number) => {
       const phi = (90 - lat) * (Math.PI / 180);
       const theta = (lng + 180) * (Math.PI / 180);
@@ -228,41 +241,99 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       return new THREE.Vector3(x, y, z);
     };
 
+    // Major Global Cities & Neural Hubs Coordinates
+    const cities = [
+      { name: "Tashkent", lat: 41.2995, lng: 69.2401 },
+      { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
+      { name: "London", lat: 51.5074, lng: -0.1278 },
+      { name: "New York", lat: 40.7128, lng: -74.006 },
+      { name: "San Francisco", lat: 37.7749, lng: -122.4194 },
+      { name: "Sydney", lat: -33.8688, lng: 151.2093 },
+      { name: "Dubai", lat: 25.2048, lng: 55.2708 },
+      { name: "Beijing", lat: 39.9042, lng: 116.4074 },
+      { name: "Singapore", lat: 1.3521, lng: 103.8198 },
+      { name: "Berlin", lat: 52.5200, lng: 13.4050 },
+      { name: "Paris", lat: 48.8566, lng: 2.3522 },
+      { name: "Sao Paulo", lat: -23.5505, lng: -46.6333 },
+      { name: "Cape Town", lat: -33.9249, lng: 18.4241 },
+      { name: "Cairo", lat: 30.0444, lng: 31.2357 },
+      { name: "Moscow", lat: 55.7558, lng: 37.6173 },
+      { name: "Istanbul", lat: 41.0082, lng: 28.9784 },
+      { name: "Seoul", lat: 37.5665, lng: 126.9780 },
+      { name: "Mumbai", lat: 19.0760, lng: 72.8777 },
+      { name: "Los Angeles", lat: 34.0522, lng: -118.2437 },
+      { name: "Toronto", lat: 43.6532, lng: -79.3832 },
+    ];
+
+    // Create 180 Dense Synaptic Arcs matching the exact image color spectrum!
     const arcsGroup = new THREE.Group();
-    globalHubs.forEach((hub) => {
-      const pos = latLngToVector3(hub.lat, hub.lng, earthRadius * 1.02);
-      const dotGeo = new THREE.SphereGeometry(1.2, 16, 16);
-      const dotMat = new THREE.MeshBasicMaterial({ color: 0x5de8ff });
+    const pulseParticlesGroup = new THREE.Group();
+
+    // Node markers at every city hub
+    cities.forEach((city) => {
+      const pos = latLngToVector3(city.lat, city.lng, earthRadius * 1.015);
+      const dotGeo = new THREE.SphereGeometry(0.8, 16, 16);
+      const dotMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
       const dotMesh = new THREE.Mesh(dotGeo, dotMat);
       dotMesh.position.copy(pos);
       arcsGroup.add(dotMesh);
     });
 
-    for (let i = 0; i < globalHubs.length; i++) {
-      for (let j = i + 1; j < globalHubs.length; j++) {
-        const v1 = latLngToVector3(globalHubs[i].lat, globalHubs[i].lng, earthRadius * 1.02);
-        const v2 = latLngToVector3(globalHubs[j].lat, globalHubs[j].lng, earthRadius * 1.02);
-        const mid = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
+    const pulses: { curve: THREE.QuadraticBezierCurve3; progress: number; speed: number; mesh: THREE.Mesh }[] = [];
+
+    let arcCount = 0;
+    for (let i = 0; i < cities.length; i++) {
+      for (let j = 0; j < cities.length; j++) {
+        if (i === j) continue;
+        if (Math.random() > 0.45) continue; // High density connections
+
+        const cityA = cities[i];
+        const cityB = cities[j];
+
+        const v1 = latLngToVector3(cityA.lat, cityA.lng, earthRadius * 1.015);
+        const v2 = latLngToVector3(cityB.lat, cityB.lng, earthRadius * 1.015);
+
         const distance = v1.distanceTo(v2);
-        mid.normalize().multiplyScalar(earthRadius + distance * 0.35);
+        const mid = new THREE.Vector3().addVectors(v1, v2).multiplyScalar(0.5);
+        mid.normalize().multiplyScalar(earthRadius + Math.min(22, distance * 0.45));
 
         const curve = new THREE.QuadraticBezierCurve3(v1, mid, v2);
-        const points = curve.getPoints(50);
+        const points = curve.getPoints(60);
         const curveGeo = new THREE.BufferGeometry().setFromPoints(points);
 
+        // Color coding based on departure longitude (exact hue formula from flights-tracker-main)
+        const hue = ((cityA.lng + 180) % 360) / 360;
+        const color = new THREE.Color().setHSL(hue, 1.0, 0.6);
+
         const curveMat = new THREE.LineBasicMaterial({
-          color: i % 2 === 0 ? 0x5de8ff : 0x7c5cff,
+          color: color,
           transparent: true,
-          opacity: 0.6,
+          opacity: 0.75,
         });
 
         const line = new THREE.Line(curveGeo, curveMat);
         arcsGroup.add(line);
+        arcCount++;
+
+        // Add animated pulse dot along curve
+        const pGeo = new THREE.SphereGeometry(0.5, 12, 12);
+        const pMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const pMesh = new THREE.Mesh(pGeo, pMat);
+        pulseParticlesGroup.add(pMesh);
+
+        pulses.push({
+          curve,
+          progress: Math.random(),
+          speed: 0.003 + Math.random() * 0.008,
+          mesh: pMesh,
+        });
       }
     }
 
     earthMesh.add(arcsGroup);
+    earthMesh.add(pulseParticlesGroup);
 
+    // Mouse Drag Rotation
     let isDragging = false;
     let previousMousePosition = { x: 0, y: 0 };
 
@@ -290,11 +361,21 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
 
+    // Animation Loop
     let animationFrameId: number;
     const animate = () => {
       if (!isDragging) {
-        earthMesh.rotation.y += 0.003;
+        earthMesh.rotation.y += 0.0025;
       }
+
+      // Animate live pulses along curves
+      pulses.forEach((p) => {
+        p.progress += p.speed;
+        if (p.progress > 1) p.progress = 0;
+        const pos = p.curve.getPoint(p.progress);
+        p.mesh.position.copy(pos);
+      });
+
       renderer.render(scene, camera);
       animationFrameId = requestAnimationFrame(animate);
     };
@@ -335,7 +416,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
-    // Starfield Background
     const count = 4000;
     const starPos = [];
     for (let i = 0; i < count; i++) {
@@ -359,7 +439,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
     const starField = new THREE.Points(starGeo, starMat);
     scene.add(starField);
 
-    // 3D Neural Nodes & Connections Mesh Generator
     const nodesGroup = new THREE.Group();
     const nodeCount = Math.floor(180 * (density / 100));
     const nodes: { pos: THREE.Vector3; connections: number[] }[] = [];
@@ -390,7 +469,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       nodesGroup.add(nodeMesh);
     }
 
-    // Connect Nodes with Lines
     const linesGeo = new THREE.BufferGeometry();
     const linePoints: number[] = [];
 
@@ -417,7 +495,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
 
     scene.add(nodesGroup);
 
-    // Mouse Interaction
     let isDragging = false;
     let prevMouse = { x: 0, y: 0 };
 
@@ -639,7 +716,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
               1.2 ms ROUND-TRIP
             </div>
             <span className="font-['JetBrains_Mono',monospace] text-xs text-[#9CA9BC]">
-              Synaptic arcs connect Tashkent, Tokyo, London & NYC
+              Multicolor Arcs connect Tashkent, Tokyo, London, NYC & Sydney
             </span>
           </motion.div>
 
@@ -660,10 +737,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
       )}
 
       {activeTab === 'network' && (
-        /* â”€â”€ TAB 3 INTERACTIVE NEURAL MATRIX CONTROLS & EXPLANATION â”€â”€ */
         <div className="relative z-10 flex flex-col md:flex-row items-end justify-between gap-6 pointer-events-none mt-auto">
-          
-          {/* Left Panel: Step-by-Step AI Working Explanation */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -691,7 +765,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
             </ul>
           </motion.div>
 
-          {/* Right Panel: Interactive Formation, Theme & Density Controls */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -703,7 +776,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
               </span>
             </div>
 
-            {/* Density Slider */}
             <div className="flex flex-col gap-1.5">
               <div className="flex justify-between font-['JetBrains_Mono',monospace] text-xs text-[#9CA9BC]">
                 <span>DENSITY</span>
@@ -719,7 +791,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
               />
             </div>
 
-            {/* Themes Grid */}
             <div className="flex items-center justify-between gap-2">
               <span className="font-['JetBrains_Mono',monospace] text-xs text-[#9CA9BC]">THEME</span>
               <div className="flex items-center gap-2">
@@ -736,7 +807,6 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex items-center gap-2.5 mt-1">
               <button
                 type="button"
@@ -753,9 +823,7 @@ export default function AIDAContextVisualizer({ onClose }: AIDAContextVisualizer
                 {isPaused ? 'Play' : 'Pause'}
               </button>
             </div>
-
           </motion.div>
-
         </div>
       )}
 
