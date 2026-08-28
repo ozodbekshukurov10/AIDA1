@@ -10,7 +10,7 @@ const slidesData = [
     shortDesc: 'Multi-dimensional context processing engine with 99.8% lossless vector compression.',
     fullDesc: 'AIDA processes multi-dimensional context windows in real-time, retrieving vector embeddings across millions of tokens with 99.8% lossless compression. Our synaptic matrix ensures zero information degradation across massive multi-turn conversation trajectories.',
     icon: Brain,
-    image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1600&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=85&w=2000&auto=format&fit=crop',
     color: '#5DE8FF',
   },
   {
@@ -20,7 +20,7 @@ const slidesData = [
     shortDesc: 'Self-organizing AI agents coordinate across global infrastructure hubs.',
     fullDesc: 'Self-organizing AI agents coordinate across global infrastructure hubs, executing complex multi-step workflows, code debugging, and autonomous task execution with microsecond-level synchronization.',
     icon: Cpu,
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1600&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=85&w=2000&auto=format&fit=crop',
     color: '#7C5CFF',
   },
   {
@@ -30,7 +30,7 @@ const slidesData = [
     shortDesc: 'Continuous static & dynamic analysis inspects runtime stack traces.',
     fullDesc: 'Continuous static & dynamic analysis inspects runtime stack traces, auto-corrects syntax errors, and validates API contracts before deployment. If an execution pipeline encounters a fault, AIDA re-routes logic autonomously.',
     icon: Zap,
-    image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1600&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=85&w=2000&auto=format&fit=crop',
     color: '#FF007F',
   },
   {
@@ -40,7 +40,7 @@ const slidesData = [
     shortDesc: 'High-speed optical neural arcs connect Tashkent, Tokyo, London & NYC.',
     fullDesc: 'High-speed optical neural arcs connect Tashkent, Tokyo, London, NYC, and Sydney in a unified cognitive mesh spanning the entire globe, delivering instant planetary-scale intelligence.',
     icon: Globe,
-    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1600&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=85&w=2000&auto=format&fit=crop',
     color: '#00F2FF',
   },
   {
@@ -50,7 +50,7 @@ const slidesData = [
     shortDesc: 'Human creative vision fuses seamlessly with AIDA\'s computational engine.',
     fullDesc: 'Human creative vision and ethical intent fuse seamlessly with AIDA\'s ultra-fast computational engine, transcending single-brain limitations to create an augmented human-AI supermind.',
     icon: Sparkles,
-    image: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=1600&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1677442136019-21780efad99a?q=85&w=2000&auto=format&fit=crop',
     color: '#5DE8FF',
   },
 ];
@@ -81,7 +81,7 @@ export default function FullscreenScrollSection() {
     setTimeout(() => setIsAnimating(false), 750);
   };
 
-  // â”€â”€ Bulletproof Scroll-Lock & Pinning Controller â”€â”€
+  // Ã¢â€-â‚¬Ã¢â€-â‚¬ Bulletproof Scroll-Lock & Pinning Controller Ã¢â€-â‚¬Ã¢â€-â‚¬
   useEffect(() => {
     const el = sectionRef.current;
     if (!el || isOpen) return;
@@ -140,7 +140,7 @@ export default function FullscreenScrollSection() {
       className="relative w-full h-screen bg-[#03050A] text-[#F5F7FF] overflow-hidden select-none font-sans"
     >
       
-      {/* â”€â”€ 1. Fullscreen Background Image â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 1. Fullscreen Background Image Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id}
@@ -156,7 +156,7 @@ export default function FullscreenScrollSection() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-[#03050A] via-transparent to-[#03050A]/70 pointer-events-none z-0" />
 
-      {/* â”€â”€ 2. Top Bar UI Frame â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 2. Top Bar UI Frame Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="absolute top-0 left-0 w-full p-8 md:p-12 flex items-start justify-between z-20 pointer-events-none">
         
         {/* Top Left: "+ DISCOVER MORE" */}
@@ -170,12 +170,12 @@ export default function FullscreenScrollSection() {
 
         {/* Top Right: Frame Title */}
         <div className="text-right text-xs font-mono tracking-widest text-[#9CA9BC] uppercase">
-          AIDA 2.0 // NEURAL ENGINE ONLINE â†’
+          AIDA 2.0 // NEURAL ENGINE ONLINE Ã¢â€ â€™
         </div>
 
       </div>
 
-      {/* â”€â”€ 3. Bottom UI Frame â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 3. Bottom UI Frame Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 flex flex-col md:flex-row md:items-end justify-between gap-6 z-20 pointer-events-none">
         
         {/* Bottom Left Navigation Menu */}
@@ -205,17 +205,17 @@ export default function FullscreenScrollSection() {
           }}
           className="pointer-events-auto text-center font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.3em] text-[#9CA9BC] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase animate-bounce"
         >
-          {currentSlide === slidesData.length - 1 ? 'â†“ SCROLL FOR NEXT SECTION â†“' : 'â†“ SCROLL OR CLICK â†“'}
+          {currentSlide === slidesData.length - 1 ? 'Ã¢â€ â€œ SCROLL FOR NEXT SECTION Ã¢â€ â€œ' : 'Ã¢â€ â€œ SCROLL OR CLICK Ã¢â€ â€œ'}
         </div>
 
         {/* Bottom Right: Slide Indicator */}
         <div className="text-right font-['JetBrains_Mono',monospace] text-xs font-bold tracking-widest text-[#5DE8FF] uppercase">
-          SLIDESHOW 0{currentSlide + 1} / 0{slidesData.length} â†—
+          SLIDESHOW 0{currentSlide + 1} / 0{slidesData.length} Ã¢â€ â€”
         </div>
 
       </div>
 
-      {/* â”€â”€ 4. Main Floating Side-Blur Content (No Background Box!) â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 4. Main Floating Side-Blur Content (No Background Box!) Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <div className="absolute inset-0 flex items-center justify-center p-6 z-10 pointer-events-none">
         <AnimatePresence mode="wait">
           <motion.div
@@ -253,13 +253,13 @@ export default function FullscreenScrollSection() {
               onClick={() => setIsOpen(true)}
               className="mt-4 px-9 py-3.5 rounded-full bg-white text-[#03050A] font-['Space_Grotesk'] text-xs font-bold tracking-widest hover:bg-[#5DE8FF] hover:scale-105 transition-all duration-300 cursor-pointer uppercase shadow-[0_0_30px_rgba(255,255,255,0.4)]"
             >
-              DISCOVER MORE â†’
+              DISCOVER MORE Ã¢â€ â€™
             </button>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* â”€â”€ 5. Full-Bleed Content Detail Drawer â”€â”€ */}
+      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 5. Full-Bleed Content Detail Drawer Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -277,7 +277,7 @@ export default function FullscreenScrollSection() {
                 className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[#5DE8FF] hover:text-white transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>â†- GO BACK</span>
+                <span>Ã¢â€ - GO BACK</span>
               </button>
 
               <button

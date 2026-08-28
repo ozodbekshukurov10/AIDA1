@@ -89,7 +89,7 @@ export default function OnScrollShapeMorphSection() {
       return charsArray;
     };
 
-    // ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ FX 1 ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬
+    // ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ FX 1 ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬
     const fx1 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -142,7 +142,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ FX 2 ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬
+    // ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ FX 2 ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬
     const fx2 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -195,7 +195,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ FX 3 ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬
+    // ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ FX 3 ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬
     const fx3 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -248,7 +248,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ FX 4 ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬
+    // ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ FX 4 ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬
     const fx4 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -298,7 +298,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ FX 5 ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬
+    // ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ FX 5 ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬
     const fx5 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -348,7 +348,7 @@ export default function OnScrollShapeMorphSection() {
       });
     };
 
-    // ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ FX 6 ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬
+    // ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ FX 6 ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢Ã¢â€šÂ¬-Ã¢â‚¬Å¡Ã‚Â¬
     const fx6 = (itemElement: Element, options: any) => {
       const settings = setupAnimationDefaults(itemElement, options);
       const imageElement = itemElement.querySelector('.content__img') as HTMLElement;
@@ -511,8 +511,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-1" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--1">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&q=85&fit=crop)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=85&w=2000&auto=format&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=85&w=2000&auto=format&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--center content__text--large font-['Space_Grotesk'] text-[#F5F7FF]">
@@ -525,8 +525,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-2" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--1">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1600&q=85&fit=crop)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=85&w=2000&auto=format&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?q=85&w=2000&auto=format&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--left font-['Space_Grotesk'] text-[#5DE8FF]">
@@ -539,8 +539,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-3" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--2">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1600&q=85&fit=crop)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1677442136019-21780efad99a?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=85&w=2000&auto=format&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1677442136019-21780efad99a?q=85&w=2000&auto=format&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--left font-['Space_Grotesk'] text-[#F5F7FF]">
@@ -556,8 +556,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-4" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--4">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=1600&q=85&fit=crop)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=85&w=2000&auto=format&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=85&w=2000&auto=format&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--center font-['Space_Grotesk'] text-[#7C5CFF]">
@@ -570,8 +570,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-5" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--5">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?w=1600&q=85&fit=crop)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1614741118887-7a4ee193a5fa?q=85&w=2000&auto=format&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=85&w=2000&auto=format&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--left font-['Space_Grotesk'] text-[#5DE8FF]">
@@ -584,8 +584,8 @@ export default function OnScrollShapeMorphSection() {
         <div id="item-6" className="content">
           <div className="content__img-wrap">
             <div className="content__img content__img--6">
-              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1677442136019-21780efad99a?w=1600&q=85&fit=crop)' }} />
-              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1600&q=85&fit=crop)' }} />
+              <div className="content__img-inner" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1677442136019-21780efad99a?q=85&w=2000&auto=format&fit=crop)' }} />
+              <div className="content__img-inner content__img-inner--hidden" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=85&w=2000&auto=format&fit=crop)' }} />
             </div>
           </div>
           <p className="content__text content__text--center font-['Space_Grotesk'] text-[#F5F7FF]">
