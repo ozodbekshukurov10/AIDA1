@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ArrowUpRight, Sparkles, Brain, Globe, Cpu, Zap, X } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const slidesData = [
   {
@@ -60,6 +61,8 @@ export default function FullscreenScrollSection() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   
+  const { t } = useLanguage();
+
   const sectionRef = useRef<HTMLElement>(null);
   const currentSlideRef = useRef(currentSlide);
   const isAnimatingRef = useRef(isAnimating);
@@ -81,7 +84,7 @@ export default function FullscreenScrollSection() {
     setTimeout(() => setIsAnimating(false), 750);
   };
 
-  // Ã¢â€-â‚¬Ã¢â€-â‚¬ Bulletproof Scroll-Lock & Pinning Controller Ã¢â€-â‚¬Ã¢â€-â‚¬
+  // â”€â”€ Bulletproof Scroll-Lock & Pinning Controller â”€â”€
   useEffect(() => {
     const el = sectionRef.current;
     if (!el || isOpen) return;
@@ -107,7 +110,6 @@ export default function FullscreenScrollSection() {
       const maxIndex = slidesData.length - 1;
 
       if (e.deltaY > 15) {
-        // User scrolling DOWN
         if (curr < maxIndex) {
           e.preventDefault();
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -116,7 +118,6 @@ export default function FullscreenScrollSection() {
           setTimeout(() => { wheelCooldown = false; }, 800);
         }
       } else if (e.deltaY < -15) {
-        // User scrolling UP
         if (curr > 0) {
           e.preventDefault();
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -140,7 +141,7 @@ export default function FullscreenScrollSection() {
       className="relative w-full h-screen bg-[#03050A] text-[#F5F7FF] overflow-hidden select-none font-sans"
     >
       
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 1. Fullscreen Background Image Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 1. Fullscreen Background Image â”€â”€ */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeSlide.id}
@@ -156,7 +157,7 @@ export default function FullscreenScrollSection() {
 
       <div className="absolute inset-0 bg-gradient-to-t from-[#03050A] via-transparent to-[#03050A]/70 pointer-events-none z-0" />
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 2. Top Bar UI Frame Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 2. Top Bar UI Frame â”€â”€ */}
       <div className="absolute top-0 left-0 w-full p-8 md:p-12 flex items-start justify-between z-20 pointer-events-none">
         
         {/* Top Left: "+ DISCOVER MORE" */}
@@ -165,17 +166,17 @@ export default function FullscreenScrollSection() {
           onClick={() => setIsOpen(true)}
           className="pointer-events-auto flex items-center gap-2 text-xs font-mono font-bold tracking-[0.25em] text-[#F5F7FF] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase"
         >
-          <span>+ DISCOVER MORE</span>
+          <span>{t.slides.discoverMore}</span>
         </button>
 
         {/* Top Right: Frame Title */}
         <div className="text-right text-xs font-mono tracking-widest text-[#9CA9BC] uppercase">
-          AIDA 2.0 // NEURAL ENGINE ONLINE Ã¢â€ â€™
+          {t.slides.engineOnline}
         </div>
 
       </div>
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 3. Bottom UI Frame Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 3. Bottom UI Frame â”€â”€ */}
       <div className="absolute bottom-0 left-0 w-full p-8 md:p-12 flex flex-col md:flex-row md:items-end justify-between gap-6 z-20 pointer-events-none">
         
         {/* Bottom Left Navigation Menu */}
@@ -205,17 +206,17 @@ export default function FullscreenScrollSection() {
           }}
           className="pointer-events-auto text-center font-['JetBrains_Mono',monospace] text-xs font-bold tracking-[0.3em] text-[#9CA9BC] hover:text-[#5DE8FF] transition-colors cursor-pointer uppercase animate-bounce"
         >
-          {currentSlide === slidesData.length - 1 ? 'Ã¢â€ â€œ SCROLL FOR NEXT SECTION Ã¢â€ â€œ' : 'Ã¢â€ â€œ SCROLL OR CLICK Ã¢â€ â€œ'}
+          {currentSlide === slidesData.length - 1 ? t.slides.scrollForNext : t.slides.scrollOrClick}
         </div>
 
         {/* Bottom Right: Slide Indicator */}
         <div className="text-right font-['JetBrains_Mono',monospace] text-xs font-bold tracking-widest text-[#5DE8FF] uppercase">
-          SLIDESHOW 0{currentSlide + 1} / 0{slidesData.length} Ã¢â€ â€”
+          {t.slides.slideshow} 0{currentSlide + 1} / 0{slidesData.length} â†—
         </div>
 
       </div>
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 4. Main Floating Side-Blur Content (No Background Box!) Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 4. Main Floating Side-Blur Content (No Background Box!) â”€â”€ */}
       <div className="absolute inset-0 flex items-center justify-center p-6 z-10 pointer-events-none">
         <AnimatePresence mode="wait">
           <motion.div
@@ -253,13 +254,13 @@ export default function FullscreenScrollSection() {
               onClick={() => setIsOpen(true)}
               className="mt-4 px-9 py-3.5 rounded-full bg-white text-[#03050A] font-['Space_Grotesk'] text-xs font-bold tracking-widest hover:bg-[#5DE8FF] hover:scale-105 transition-all duration-300 cursor-pointer uppercase shadow-[0_0_30px_rgba(255,255,255,0.4)]"
             >
-              DISCOVER MORE Ã¢â€ â€™
+              {t.slides.discoverMoreBtn}
             </button>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {/* Ã¢â€-â‚¬Ã¢â€-â‚¬ 5. Full-Bleed Content Detail Drawer Ã¢â€-â‚¬Ã¢â€-â‚¬ */}
+      {/* â”€â”€ 5. Full-Bleed Content Detail Drawer â”€â”€ */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -277,7 +278,7 @@ export default function FullscreenScrollSection() {
                 className="flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[#5DE8FF] hover:text-white transition-colors cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Ã¢â€ - GO BACK</span>
+                <span>{t.slides.goBack}</span>
               </button>
 
               <button
@@ -310,12 +311,12 @@ export default function FullscreenScrollSection() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                 <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
-                  <span className="font-mono text-xs text-[#5DE8FF] font-bold uppercase">SWARM PIPELINE STATUS</span>
-                  <span className="font-['Space_Grotesk'] text-2xl font-bold text-white">100% OPERATIONAL</span>
+                  <span className="font-mono text-xs text-[#5DE8FF] font-bold uppercase">{t.slides.swarmStatus}</span>
+                  <span className="font-['Space_Grotesk'] text-2xl font-bold text-white">{t.slides.operational}</span>
                 </div>
                 <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-2">
-                  <span className="font-mono text-xs text-[#7C5CFF] font-bold uppercase">LATENCY INDEX</span>
-                  <span className="font-['Space_Grotesk'] text-2xl font-bold text-white">1.2ms ULTRA-FAST</span>
+                  <span className="font-mono text-xs text-[#7C5CFF] font-bold uppercase">{t.slides.latencyIndex}</span>
+                  <span className="font-['Space_Grotesk'] text-2xl font-bold text-white">{t.slides.fastLatency}</span>
                 </div>
               </div>
             </div>

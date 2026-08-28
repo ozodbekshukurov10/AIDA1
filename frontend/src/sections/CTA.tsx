@@ -3,12 +3,15 @@ import { motion } from 'motion/react';
 import NeuralNetwork from '../components/ai/NeuralNetwork';
 import AIDALogo from '../components/ui/AIDALogo';
 import { Sparkles, ArrowRight, Zap, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CTAProps {
   onStart: () => void;
 }
 
 export default function CTA({ onStart }: CTAProps) {
+  const { t } = useLanguage();
+
   return (
     <section className="relative min-h-[90vh] bg-[#03050A] flex flex-col items-center justify-center overflow-hidden px-6 py-20 text-center z-10 select-none">
       
@@ -45,13 +48,13 @@ export default function CTA({ onStart }: CTAProps) {
           className="flex flex-wrap items-center justify-center gap-3"
         >
           <span className="px-3.5 py-1 rounded-full bg-[#5DE8FF]/15 border border-[#5DE8FF]/30 text-[#5DE8FF] font-['JetBrains_Mono',monospace] text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 animate-spin" /> AIDA 2.0 ONLINE
+            <Sparkles className="w-3.5 h-3.5 animate-spin" /> {t.cta.onlineBadge}
           </span>
           <span className="px-3.5 py-1 rounded-full bg-[#7C5CFF]/15 border border-[#7C5CFF]/30 text-[#7C5CFF] font-['JetBrains_Mono',monospace] text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
-            <Zap className="w-3.5 h-3.5" /> 2M+ CONTEXT TOKENS
+            <Zap className="w-3.5 h-3.5" /> {t.cta.contextBadge}
           </span>
           <span className="px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-white font-['JetBrains_Mono',monospace] text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5" /> 1.2ms SWARM SPEED
+            <ShieldCheck className="w-3.5 h-3.5" /> {t.cta.speedBadge}
           </span>
         </motion.div>
 
@@ -63,7 +66,7 @@ export default function CTA({ onStart }: CTAProps) {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="font-['Space_Grotesk'] font-black text-4xl sm:text-6xl md:text-7xl text-[#F5F7FF] tracking-tight leading-none uppercase max-w-3xl"
         >
-          The future of intelligence starts here.
+          {t.cta.title}
         </motion.h2>
 
         {/* Subtitle */}
@@ -74,7 +77,7 @@ export default function CTA({ onStart }: CTAProps) {
           transition={{ duration: 0.8, delay: 0.3 }}
           className="text-base sm:text-xl text-[#C4CEDF] font-light max-w-xl leading-relaxed"
         >
-          AIDA 2.0 bilan kelajak loyihalaringizni 1,024 ta avtonom neyron agentlar va 2M+ kontekst sig'imi bilan boshlang.
+          {t.cta.subtitle}
         </motion.p>
 
         {/* Action Button */}
@@ -90,7 +93,7 @@ export default function CTA({ onStart }: CTAProps) {
             onClick={onStart}
             className="group relative inline-flex items-center gap-3 px-10 py-4 rounded-full bg-gradient-to-r from-[#5DE8FF] via-[#4C7DFF] to-[#7C5CFF] text-[#03050A] font-['Space_Grotesk'] text-base font-bold tracking-wider hover:scale-105 shadow-[0_0_35px_rgba(93,232,255,0.4)] transition-all duration-300 cursor-pointer uppercase"
           >
-            <span>Start with AIDA</span>
+            <span>{t.cta.startBtn}</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
         </motion.div>

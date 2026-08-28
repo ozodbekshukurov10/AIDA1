@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Globe } from 'lucide-react';
 import MobileMenu from './MobileMenu';
 import AIDALogo from '../ui/AIDALogo';
+import { useLanguage, Language } from '../../context/LanguageContext';
 
 interface NavbarProps {
   onGetStarted: () => void;
@@ -15,11 +16,12 @@ export default function Navbar({ onGetStarted, onNavigate, onReplayIntro, onOpen
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
 
+  const { lang, setLang, t } = useLanguage();
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
 
-      // Simple active link highlight calculation
       const sections = ['hero', 'features', 'technology', 'demo'];
       const scrollPos = window.scrollY + 120;
       
@@ -38,6 +40,13 @@ export default function Navbar({ onGetStarted, onNavigate, onReplayIntro, onOpen
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const navLinks = [
+    { id: 'hero', label: t.nav.home },
+    { id: 'features', label: t.nav.capabilities },
+    { id: 'technology', label: t.nav.technology },
+    { id: 'demo', label: t.nav.demo }
+  ];
 
   return (
     <>
@@ -68,12 +77,7 @@ export default function Navbar({ onGetStarted, onNavigate, onReplayIntro, onOpen
 
           {/* Desktop Menu Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {[
-              { id: 'hero', label: 'Home' },
-              { id: 'features', label: 'Capabilities' },
-              { id: 'technology', label: 'Technology' },
-              { id: 'demo', label: 'AI Demo' }
-            ].map(link => (
+            {navLinks.map(link => (
               <a 
                 key={link.id}
                 href={`#${link.id}`} 
@@ -83,7 +87,6 @@ export default function Navbar({ onGetStarted, onNavigate, onReplayIntro, onOpen
                 }`}
               >
                 {link.label}
-                {/* Active Indicator Underline */}
                 {activeSection === link.id && (
                   <span className="absolute bottom-0 left-0 w-full h-[1.5px] bg-[#5DE8FF] rounded" />
                 )}
@@ -91,26 +94,43 @@ export default function Navbar({ onGetStarted, onNavigate, onReplayIntro, onOpen
             ))}
           </div>
 
-          {/* Right Column Action */}
-          <div className="flex items-center gap-4">
+          {/* Right Column Actions & 3-Language Selector */}
+          <div className="flex items-center gap-3">
+
+            {/* Language Switcher Pill (UZ / EN / RU) */}
+            <div className="flex items-center p-1 rounded-xl bg-white/5 border border-white/10 backdrop-blur-md">
+              {(['uz', 'en', 'ru'] as Language[]).map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setLang(l)}
+                  className={`px-2.5 py-1 rounded-lg font-mono text-xs font-bold tracking-wider uppercase transition-all duration-300 cursor-pointer ${
+                    lang === l
+                      ? 'bg-[#5DE8FF] text-[#03050A] shadow-[0_0_10px_rgba(93,232,255,0.5)]'
+                      : 'text-[#9CA9BC] hover:text-white'
+                  }`}
+                >
+                  {l === 'uz' ? 'UZ' : l === 'en' ? 'EN' : 'RU'}
+                </button>
+              ))}
+            </div>
+
             {onReplayIntro && (
               <button 
                 type="button"
                 onClick={onReplayIntro}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#5DE8FF]/35 text-xs font-mono text-[#5DE8FF] hover:bg-[#5DE8FF]/15 bg-[#5DE8FF]/8 shadow-[0_0_15px_rgba(93,232,255,0.2)] transition-all cursor-pointer font-bold tracking-wider"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-[#5DE8FF]/35 text-xs font-mono text-[#5DE8FF] hover:bg-[#5DE8FF]/15 bg-[#5DE8FF]/8 shadow-[0_0_15px_rgba(93,232,255,0.2)] transition-all cursor-pointer font-bold tracking-wider"
                 title="Replay Cinematic Intro"
               >
-                <span>ðŸŽ¬</span> Replay Intro
+                <span>ðŸŽ¬</span> {t.nav.replayIntro}
               </button>
             )}
+
             <button 
               onClick={onGetStarted}
-              className="relative hidden sm:inline-flex px-6 py-2.5 bg-transparent border border-[#5DE8FF]/30 rounded-xl overflow-hidden group cursor-pointer transition-all duration-300 hover:border-[#5DE8FF] hover:shadow-[0_0_20px_rgba(93,232,255,0.25)] magnetic-target"
+              className="relative hidden sm:inline-flex px-6 py-2 bg-gradient-to-r from-[#5B75FF] to-[#8C52FF] text-white font-['Space_Grotesk'] text-xs font-bold tracking-wider rounded-xl overflow-hidden group cursor-pointer transition-all duration-300 hover:shadow-[0_0_20px_rgba(140,82,255,0.4)]"
             >
-              <div className="absolute inset-0 w-0 bg-gradient-to-r from-[#5DE8FF]/10 to-[#4C7DFF]/10 transition-all duration-300 ease-out group-hover:w-full" />
-              <span className="relative text-sm font-bold tracking-wider text-[#F5F7FF] group-hover:text-[#5DE8FF] transition-colors duration-300">
-                Get Started
-              </span>
+              <span>{t.nav.getStarted}</span>
             </button>
 
             {/* Mobile Sidebar Hamburger Toggle */}

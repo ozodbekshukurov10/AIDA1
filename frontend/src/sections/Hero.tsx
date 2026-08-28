@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'motion/react';
 import AnimatedHeaderCanvas from '../components/intro/AnimatedHeaderCanvas';
 import Button from '../components/ui/Button';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeroProps {
   onStart: () => void;
@@ -11,19 +12,21 @@ interface HeroProps {
 }
 
 export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro = false }: HeroProps) {
+  const { t } = useLanguage();
+
   return (
     <section
       id="hero"
       className="relative min-h-screen bg-[#03050A] flex flex-col items-center justify-center overflow-hidden pt-28 pb-16 px-6 md:px-12 z-10 select-none"
     >
-      {/* ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ 1. Ambient Pulsing Radial Blur Glow Blobs ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ */}
+      {/* â”€â”€ 1. Ambient Pulsing Radial Blur Glow Blobs â”€â”€ */}
       <div className="absolute w-[650px] h-[650px] bg-[#5DE8FF]/8 blur-[180px] rounded-full pointer-events-none animate-pulse" />
       <div className="absolute w-[500px] h-[500px] bg-[#7C5CFF]/8 blur-[150px] rounded-full pointer-events-none" />
 
-      {/* ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ 2. Animated Header Canvas Background (from AnimatedHeaderBackgrounds) ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ */}
+      {/* â”€â”€ 2. Animated Header Canvas Background â”€â”€ */}
       <AnimatedHeaderCanvas />
 
-      {/* ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ 3. Ambient background video & gradient overlay ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ */}
+      {/* â”€â”€ 3. Ambient background video & gradient overlay â”€â”€ */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden opacity-25">
         <video
           autoPlay
@@ -38,7 +41,7 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
         <div className="absolute inset-0 bg-gradient-to-b from-[#03050A] via-transparent to-[#03050A]" />
       </div>
 
-      {/* ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ 4. Main Central Hero Title & AIDA Branding (Pure Minimalist + Blur Animation) ÃƒÂ¢â‚¬-â€šÂ¬ÃƒÂ¢â‚¬-â€šÂ¬ */}
+      {/* â”€â”€ 4. Main Central Hero Title & AIDA Branding â”€â”€ */}
       <div className="max-w-4xl mx-auto flex flex-col items-center text-center gap-8 relative z-10">
         
         {/* Micro Status Badge */}
@@ -50,11 +53,11 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
         >
           <span className="w-2 h-2 bg-[#5DE8FF] rounded-full animate-ping" />
           <span className="font-['JetBrains_Mono',monospace] text-xs tracking-[0.3em] text-[#5DE8FF] uppercase font-bold">
-            AIDA 2.0 // NEURAL ENGINE ONLINE
+            {t.hero.badge}
           </span>
         </motion.div>
 
-        {/* BOLD AIDA HEADLINE (WITH SMOOTH BLUR REVEAL ANIMATION) */}
+        {/* BOLD AIDA HEADLINE */}
         <motion.h1
           initial={{ opacity: 0, scale: 0.8, filter: 'blur(30px)' }}
           animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
@@ -71,10 +74,10 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
           transition={{ duration: 1.0, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className="text-lg sm:text-2xl md:text-3xl font-light text-[#C4CEDF] max-w-xl leading-relaxed font-sans"
         >
-          Sun'iy Ong va Avtonom Intellekt Tizimi
+          {t.hero.subtitle}
         </motion.p>
 
-        {/* Sleek CTA Actions (Matching media_1787942471001.png 100% exactly) */}
+        {/* Sleek CTA Actions */}
         <motion.div
           initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -82,15 +85,15 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
           className="flex flex-wrap items-center justify-center gap-4 mt-2"
         >
           <Button variant="primary" onClick={onStart}>
-            Start with AIDA â€ â€™
+            {t.hero.startBtn}
           </Button>
           {onOpenContext && (
             <Button variant="secondary" onClick={onOpenContext}>
-              <span>Å¸Â§Â </span> AIDA Context
+              <span>ðŸ§ </span> AIDA Context
             </Button>
           )}
           <Button variant="ghost" onClick={onExplore}>
-            Explore 3D World
+            {t.hero.exploreBtn}
           </Button>
         </motion.div>
 
@@ -103,7 +106,7 @@ export default function Hero({ onStart, onExplore, onOpenContext, morphFromIntro
         className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#9CA9BC]/40 pointer-events-none select-none"
       >
         <span className="font-['JetBrains_Mono',monospace] text-[10px] tracking-[0.3em] uppercase">
-          Scroll for 3D Kinetic Showcase
+          {t.hero.scrollHint}
         </span>
         <div className="w-1.5 h-4 bg-[#5DE8FF]/30 rounded-full" />
       </motion.div>

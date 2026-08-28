@@ -25,6 +25,7 @@ import LandingPage from './pages/LandingPage';
 import AICodeWorkspace from './components/ai/AICodeWorkspace';
 import AICore from './components/ai/AICore';
 import NeuralNetwork from './components/ai/NeuralNetwork';
+import { LanguageProvider } from './context/LanguageContext';
 
 type TabId = 'overview' | 'chat' | 'code' | 'access';
 
@@ -142,7 +143,7 @@ export default function App() {
     return storedSessions[0]?.id ?? makeSession().id;
   });
 
-  // Model/Provider selection — persisted to localStorage
+  // Model/Provider selection â€” persisted to localStorage
   const [selectedProvider, setSelectedProvider] = useState(
     () => localStorage.getItem('aida_provider') || 'ollama'
   );
@@ -378,29 +379,30 @@ export default function App() {
   const handleResearchChange = (v: boolean) => { setResearchMode(v); localStorage.setItem('aida_research_mode', String(v)); };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden">
-      <AnimatePresence mode="wait">
-        {isBooting ? (
-          <SplashScreen onComplete={() => setIsBooting(false)} />
-        ) : !showDashboard ? (
-          <motion.div
-            key="landing-page-view"
-            initial={{ opacity: 0, filter: 'blur(10px)', scale: 0.98 }}
-            animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
-            exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.02 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <LandingPage onGetStarted={() => setShowDashboard(true)} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="dashboard-shell-view"
-            className="min-h-screen bg-[#03050A] flex flex-col"
-            initial={{ opacity: 0, filter: 'blur(10px)', scale: 0.98 }}
-            animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
-            exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.02 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          >
+    <LanguageProvider>
+      <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] overflow-hidden">
+        <AnimatePresence mode="wait">
+          {isBooting ? (
+            <SplashScreen onComplete={() => setIsBooting(false)} />
+          ) : !showDashboard ? (
+            <motion.div
+              key="landing-page-view"
+              initial={{ opacity: 0, filter: 'blur(10px)', scale: 0.98 }}
+              animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+              exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.02 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <LandingPage onGetStarted={() => setShowDashboard(true)} />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="dashboard-shell-view"
+              className="min-h-screen bg-[#03050A] flex flex-col"
+              initial={{ opacity: 0, filter: 'blur(10px)', scale: 0.98 }}
+              animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+              exit={{ opacity: 0, filter: 'blur(10px)', scale: 1.02 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            >
             {/* MAIN */}
             <main className="main-panel flex-1 flex flex-col max-w-4xl w-full mx-auto p-6 md:p-8">
               <header className="topbar flex items-center justify-between border-b border-white/8 pb-4 mb-6">
@@ -583,7 +585,7 @@ export default function App() {
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#4C7DFF]/6 blur-[130px] pointer-events-none z-0" />
                       )}
 
-                      {/* Welcome screen — Copilot-style premium greeting */}
+                      {/* Welcome screen â€” Copilot-style premium greeting */}
                       <AnimatePresence>
                         {isWelcomeState && (
                           <motion.div 
@@ -605,7 +607,7 @@ export default function App() {
                               </span>
                             </h1>
                             <p className="text-[#9CA9BC] text-sm md:text-base max-w-md mx-auto">
-                              AIDA — sun'iy intellekt yordamida ish unumdorligini yangi darajaga olib chiqing
+                              AIDA â€” sun'iy intellekt yordamida ish unumdorligini yangi darajaga olib chiqing
                             </p>
                           </motion.div>
                         )}
@@ -720,7 +722,7 @@ export default function App() {
                         </div>
                       </motion.form>
 
-                      {/* Quick Suggestion Chips — only in welcome state */}
+                      {/* Quick Suggestion Chips â€” only in welcome state */}
                       {isWelcomeState && (
                         <motion.div
                           initial={{ opacity: 0, y: 12 }}
@@ -812,6 +814,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </LanguageProvider>
   );
 }
